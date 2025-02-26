@@ -1,0 +1,155 @@
+public final class com/xemantic/ai/golem/GeneratedToolsApiKt {
+	public static final field CODE_TOOLS_API Ljava/lang/String;
+}
+
+public final class com/xemantic/ai/golem/Golem {
+	public fun <init> (Lcom/xemantic/ai/anthropic/Anthropic;Lkotlinx/coroutines/flow/Flow;)V
+	public final fun getAnthropic ()Lcom/xemantic/ai/anthropic/Anthropic;
+	public final fun getGolemTools ()Ljava/util/List;
+	public final fun getInput ()Lkotlinx/coroutines/flow/Flow;
+	public final fun getKotlinScriptExecutor ()Lcom/xemantic/ai/golem/script/KotlinScriptExecutor;
+	public final fun getKotlinScriptTool ()Lcom/xemantic/ai/anthropic/tool/Tool;
+	public final fun output ()Lkotlinx/coroutines/flow/Flow;
+}
+
+public final class com/xemantic/ai/golem/Golem$AgentWorker {
+	public fun <init> (Lcom/xemantic/ai/golem/Golem;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Z)V
+	public synthetic fun <init> (Lcom/xemantic/ai/golem/Golem;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getConversation ()Ljava/util/List;
+	public final fun getHasTools ()Z
+	public final fun getSystemPrompts ()Ljava/util/List;
+	public final fun prompt (Ljava/lang/String;)Lkotlinx/coroutines/flow/Flow;
+}
+
+public final class com/xemantic/ai/golem/Golem$DefaultAgentService : com/xemantic/ai/golem/tool/RecursiveAgentService {
+	public fun <init> (Lcom/xemantic/ai/golem/Golem;)V
+	public fun start (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;ZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/xemantic/ai/golem/GolemMainKt {
+	public static final fun main ()V
+	public static synthetic fun main ([Ljava/lang/String;)V
+}
+
+public final class com/xemantic/ai/golem/GolemXivKt {
+	public static final field SYSTEM_PROMPT Ljava/lang/String;
+	public static final fun environmentContext ()Ljava/lang/String;
+}
+
+public final class com/xemantic/ai/golem/KotlinScript {
+	public static final field Companion Lcom/xemantic/ai/golem/KotlinScript$Companion;
+	public fun <init> (Ljava/lang/String;)V
+	public final fun getScript ()Ljava/lang/String;
+}
+
+public synthetic class com/xemantic/ai/golem/KotlinScript$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/xemantic/ai/golem/KotlinScript$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/xemantic/ai/golem/KotlinScript;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/xemantic/ai/golem/KotlinScript;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+}
+
+public final class com/xemantic/ai/golem/KotlinScript$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/xemantic/ai/golem/StandardInputKt {
+	public static final fun standardInputToFlow ()Lkotlinx/coroutines/flow/Flow;
+}
+
+public final class com/xemantic/ai/golem/script/KotlinScriptExecutor {
+	public fun <init> ()V
+	public final fun execute (Ljava/lang/String;)V
+}
+
+public abstract interface class com/xemantic/ai/golem/tool/BashService {
+	public abstract fun executeShellCommand (Ljava/lang/String;Ljava/lang/String;I)Ljava/lang/String;
+}
+
+public final class com/xemantic/ai/golem/tool/BashService$DefaultImpls {
+	public static synthetic fun executeShellCommand$default (Lcom/xemantic/ai/golem/tool/BashService;Ljava/lang/String;Ljava/lang/String;IILjava/lang/Object;)Ljava/lang/String;
+}
+
+public abstract class com/xemantic/ai/golem/tool/Content {
+	public static final field Companion Lcom/xemantic/ai/golem/tool/Content$Companion;
+	public synthetic fun <init> (ILkotlinx/serialization/internal/SerializationConstructorMarker;)V
+	public static final synthetic fun write$Self (Lcom/xemantic/ai/golem/tool/Content;Lkotlinx/serialization/encoding/CompositeEncoder;Lkotlinx/serialization/descriptors/SerialDescriptor;)V
+}
+
+public final class com/xemantic/ai/golem/tool/Content$Binary : com/xemantic/ai/golem/tool/Content {
+	public static final field Companion Lcom/xemantic/ai/golem/tool/Content$Binary$Companion;
+	public fun <init> ([B)V
+	public final fun getData ()[B
+}
+
+public synthetic class com/xemantic/ai/golem/tool/Content$Binary$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/xemantic/ai/golem/tool/Content$Binary$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/xemantic/ai/golem/tool/Content$Binary;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/xemantic/ai/golem/tool/Content$Binary;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+}
+
+public final class com/xemantic/ai/golem/tool/Content$Binary$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/xemantic/ai/golem/tool/Content$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/xemantic/ai/golem/tool/Content$Text : com/xemantic/ai/golem/tool/Content {
+	public static final field Companion Lcom/xemantic/ai/golem/tool/Content$Text$Companion;
+	public fun <init> (Ljava/lang/String;)V
+	public final fun getText ()Ljava/lang/String;
+}
+
+public synthetic class com/xemantic/ai/golem/tool/Content$Text$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/xemantic/ai/golem/tool/Content$Text$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/xemantic/ai/golem/tool/Content$Text;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/xemantic/ai/golem/tool/Content$Text;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+}
+
+public final class com/xemantic/ai/golem/tool/Content$Text$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public abstract interface class com/xemantic/ai/golem/tool/FileService {
+	public abstract fun createFile (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun readBinaryFiles (Ljava/util/List;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/xemantic/ai/golem/tool/FileService$DefaultImpls {
+	public static synthetic fun createFile$default (Lcom/xemantic/ai/golem/tool/FileService;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class com/xemantic/ai/golem/tool/Message {
+	public fun <init> (Ljava/util/List;)V
+	public final fun getContent ()Ljava/util/List;
+}
+
+public final class com/xemantic/ai/golem/tool/Message$Role : java/lang/Enum {
+	public static final field ASSISTANT Lcom/xemantic/ai/golem/tool/Message$Role;
+	public static final field USER Lcom/xemantic/ai/golem/tool/Message$Role;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/xemantic/ai/golem/tool/Message$Role;
+	public static fun values ()[Lcom/xemantic/ai/golem/tool/Message$Role;
+}
+
+public abstract interface class com/xemantic/ai/golem/tool/RecursiveAgentService {
+	public abstract fun start (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;ZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/xemantic/ai/golem/tool/RecursiveAgentService$DefaultImpls {
+	public static synthetic fun start$default (Lcom/xemantic/ai/golem/tool/RecursiveAgentService;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;ZLkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+

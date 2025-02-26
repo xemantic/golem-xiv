@@ -12,6 +12,7 @@ import org.jreleaser.model.Active
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
+    alias(libs.plugins.kotlin.plugin.serialization)
     alias(libs.plugins.kotlin.plugin.power.assert)
     alias(libs.plugins.kotlinx.binary.compatibility.validator)
     alias(libs.plugins.dokka)
@@ -56,9 +57,6 @@ repositories {
 
 kotlin {
 
-    // TODO remove for a non-library project
-    explicitApi()
-
     compilerOptions {
         apiVersion = kotlinTarget
         languageVersion = kotlinTarget
@@ -78,58 +76,68 @@ kotlin {
         }
     }
 
-    js {
-        browser()
-        nodejs()
-        // TODO remove for a non-library project
-        binaries.library()
-    }
-
-    wasmJs {
-        browser()
-        nodejs()
-        //d8()
-        // TODO remove for a non-library project
-        binaries.library()
-    }
-
-    wasmWasi {
-        nodejs()
-        // TODO remove for a non-library project
-        binaries.library()
-    }
-
-    // native, see https://kotlinlang.org/docs/native-target-support.html
-    // tier 1
-    macosX64()
-    macosArm64()
-    iosSimulatorArm64()
-    iosX64()
-    iosArm64()
-
-    // tier 2
-    linuxX64()
-    linuxArm64()
-    watchosSimulatorArm64()
-    watchosX64()
-    watchosArm32()
-    watchosArm64()
-    tvosSimulatorArm64()
-    tvosX64()
-    tvosArm64()
-
-    // tier 3
-    androidNativeArm32()
-    androidNativeArm64()
-    androidNativeX86()
-    androidNativeX64()
-    mingwX64()
-    watchosDeviceArm64()
-
-    @OptIn(ExperimentalSwiftExportDsl::class)
-    swiftExport {}
+//    js {
+//        browser()
+//        nodejs()
+//        // TODO remove for a non-library project
+//        binaries.library()
+//    }
+//
+//    wasmJs {
+//        browser()
+//        nodejs()
+//        //d8()
+//        // TODO remove for a non-library project
+//        binaries.library()
+//    }
+//
+//    wasmWasi {
+//        nodejs()
+//        // TODO remove for a non-library project
+//        binaries.library()
+//    }
+//
+//    // native, see https://kotlinlang.org/docs/native-target-support.html
+//    // tier 1
+//    macosX64()
+//    macosArm64()
+//    iosSimulatorArm64()
+//    iosX64()
+//    iosArm64()
+//
+//    // tier 2
+//    linuxX64()
+//    linuxArm64()
+//    watchosSimulatorArm64()
+//    watchosX64()
+//    watchosArm32()
+//    watchosArm64()
+//    tvosSimulatorArm64()
+//    tvosX64()
+//    tvosArm64()
+//
+//    // tier 3
+//    androidNativeArm32()
+//    androidNativeArm64()
+//    androidNativeX86()
+//    androidNativeX64()
+//    mingwX64()
+//    watchosDeviceArm64()
+//
+//    @OptIn(ExperimentalSwiftExportDsl::class)
+//    swiftExport {}
 
     sourceSets {
+
+        commonMain {
+            kotlin.srcDir("build/generated/source/golemScriptServiceApi")
+            dependencies {
+                implementation(libs.xemantic.ai.tool.schema)
+                implementation(libs.anthropic.sdk.kotlin)
+                implementation(libs.kotlinx.coroutines.core)
+                implementation(libs.ktor.client.java)
+            }
+        }
 
         commonTest {
             dependencies {
@@ -138,17 +146,63 @@ kotlin {
             }
         }
 
+        jvmMain {
+            dependencies {
+                implementation(libs.kotlin.scripting.common)
+                implementation(libs.kotlin.scripting.jvm)
+                implementation(libs.kotlin.scripting.jvm.host)
+                implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.1.10")
+            }
+        }
     }
 
 }
 
-tasks {
+// Define the task to generate the Kotlin source
+tasks.register("generateToolsApi") {
+    val sourceFile = "src/commonMain/kotlin/service/GolemScriptServiceApi.kt"
+    val outputDir = "build/generated/source/golemScriptServiceApi"
+    val packageName = "com.xemantic.ai.golem"
 
-    // skip tests which require XCode components to be installed
-    named("tvosSimulatorArm64Test") { enabled = false }
-    named("watchosSimulatorArm64Test") { enabled = false }
+    inputs.file(sourceFile)
+    outputs.dir(outputDir)
 
+    doLast {
+        // Create output directory
+        val outputPath = "$outputDir/${packageName.replace('.', '/')}"
+        mkdir(outputPath)
+
+        // Read the source file
+        val sourceContent = file(sourceFile).readText()
+            .substringAfter("*/")
+            .replace("\"", "\\\"") // Escape quotes
+            .replace("\n", "\\n") // Handle newlines
+
+        // Generate Kotlin file with the source as a string constant
+        file("$outputPath/GeneratedGolemScriptServiceApi.kt").writeText("""
+            package $packageName
+
+            const val GOLEM_SCRIPT_SERVICE_API = "$sourceContent"
+        """.trimIndent())
+    }
 }
+
+// Make sure the source is generated before compilation
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+    dependsOn("generateToolsApi")
+}
+
+tasks.withType<JavaExec>().configureEach {
+    standardInput = System.`in`
+}
+
+//tasks {
+//
+//    // skip tests which require XCode components to be installed
+//    named("tvosSimulatorArm64Test") { enabled = false }
+//    named("watchosSimulatorArm64Test") { enabled = false }
+//
+//}
 
 powerAssert {
     functions = listOf(

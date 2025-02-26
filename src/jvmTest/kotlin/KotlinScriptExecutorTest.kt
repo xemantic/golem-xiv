@@ -14,21 +14,28 @@
  * limitations under the License.
  */
 
-// TODO replace with your package
-package com.xemantic.template.kotlin.multiplatform
+package com.xemantic.ai.golem
 
+import com.xemantic.kotlin.test.be
 import com.xemantic.kotlin.test.have
 import com.xemantic.kotlin.test.should
 import kotlin.test.Test
 
-// TODO replace with your code
-class HelloWorldTest {
+class KotlinScriptExecutorTest {
 
     @Test
-    fun `should have singleton object Foo with const BAR equal to buzz`() {
-        Foo should {
-            have(BAR == "buzz")
+    fun `should execute script`() {
+        val executor = KotlinScriptExecutor(
+            props = listOf(ProvidedProperty("foo", String::class, "bar"))
+        )
+        assert(executor.execute("") is Unit)
+        executor.execute("\"foo\"") should {
+            be<String>()
+            have(this == "foo")
         }
+        val result = executor.execute("""
+            foo
+        """.trimIndent())
     }
 
 }

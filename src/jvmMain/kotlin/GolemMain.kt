@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-// TODO replace with your package
-package com.xemantic.template.kotlin.multiplatform
+package com.xemantic.ai.golem
 
-// TODO replace with your code
-public object Foo {
-    public const val BAR: String = "buzz"
-}
+import kotlinx.coroutines.runBlocking
 
-public fun main() {
-    print("Hello World!")
+fun main() {
+    val golem = Golem(input = standardInputFlow())
+    runBlocking {
+        golem.output().collect {
+            print(it)
+        }
+    }
 }

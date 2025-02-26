@@ -4,19 +4,34 @@ javaTarget = "17"
 
 kotlin = "2.1.0"
 
-xemanticKotlinTest = "1.8.2"
+kotlinxCoroutines = "1.10.1"
+xemanticKotlinTest = "1.8.10"
+xemanticAiToolSchema = "1.0.0"
 
 # TODO put your dependencies here
+
+anthropicSdkKotlin = "0.17.0"
 
 versionsPlugin = "0.52.0"
 dokkaPlugin = "2.0.0"
 jreleaserPlugin = "1.16.0"
 binaryCompatibilityValidatorPlugin = "0.17.0"
-xemanticConventionsPlugin = "0.3.0"
+xemanticConventionsPlugin = "0.3.1"
+ktor = "3.1.1"
 
 [libraries]
+kotlin-scripting-common = { module = "org.jetbrains.kotlin:kotlin-scripting-common", version.ref = "kotlin" }
+kotlin-scripting-jvm = { module = "org.jetbrains.kotlin:kotlin-scripting-jvm", version.ref = "kotlin" }
+kotlin-scripting-jvm-host = { module = "org.jetbrains.kotlin:kotlin-scripting-jvm-host", version.ref = "kotlin" }
+
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 xemantic-kotlin-test = { module = "com.xemantic.kotlin:xemantic-kotlin-test", version.ref = "xemanticKotlinTest" }
+xemantic-ai-tool-schema = { module = "com.xemantic.ai:xemantic-ai-tool-schema", version.ref = "xemanticAiToolSchema"}
+
+
+anthropic-sdk-kotlin = { module = "com.xemantic.ai:anthropic-sdk-kotlin", version.ref = "anthropicSdkKotlin" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
+ktor-client-java = { module = "io.ktor:ktor-client-java", version.ref = "ktor" }
 
 [plugins]
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
@@ -26,3 +41,4 @@ versions = { id = "com.github.ben-manes.versions", version.ref = "versionsPlugin
 kotlinx-binary-compatibility-validator = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version.ref = "binaryCompatibilityValidatorPlugin" }
 jreleaser = { id = "org.jreleaser", version.ref = "jreleaserPlugin" }
 xemantic-conventions = { id = "com.xemantic.gradle.xemantic-conventions", version.ref = "xemanticConventionsPlugin" }
+kotlin-plugin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
