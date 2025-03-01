@@ -31,7 +31,7 @@ sealed class Content {
      * The textual content.
      */
     @Serializable
-    class Text(val text: String) : Content()
+    open class Text(val text: String) : Content()
 
     /**
      * The binary content.
@@ -40,7 +40,7 @@ sealed class Content {
     @Serializable
     class Binary(val data: ByteArray) : Content()
 
-    class TextFileContent(
+    class TextResource(
         val path: String,
         val text: String,
         val range: IntRange? = null
@@ -82,109 +82,176 @@ interface RecursiveAgentService {
 
 }
 
-interface FileService {
-
-    /**
-     * Creates a file at given `path`.
-     * Note: if parent directories don't exist, it will create them.
-     *
-     * @param path the absolute file path.
-     * @param content the file content.
-     * @param base64 the indicator if a file should be treated as base64.
-     */
-    suspend fun createFile(
-        path: String,
-        content: String,
-        base64: Boolean = false
-    )
-
-    /**
-     * Reads binary files, so they can be analyzed.
-     *
-     * - Image formats supported by Claude will be provided according to their respective content types. " +
-     * - The contents of other types of files will transferred as Base64 encoded text content."
-     *
-     * @param paths the list of absolute file paths.
-     */
-    suspend fun readBinaryFiles(
-        paths: List<String>
-    ): List<Content.Binary>
-
-}
-
-/*
-{
-    "properties": {
-        "command": {
-            "description": "The commands to run. Allowed options are: `view`, `create`, `str_replace`, `insert`, `undo_edit`.",
-            "enum": [ "create", "str_replace", "insert", "undo_edit"],
-            "type": "string",
-        },
-        "insert_line": {
-            "description": "Required parameter of `insert` command. The `new_str` will be inserted AFTER the line `insert_line` of `path`.",
-            "type": "integer",
-        },
-        "new_str": {
-            "description": "Optional parameter of `str_replace` command containing the new string (if not given, no string will be added). Required parameter of `insert` command containing the string to insert.",
-            "type": "string",
-        },
-        "old_str": {
-            "description": "Required parameter of `str_replace` command containing the string in `path` to replace.",
-            "type": "string",
-        },
-
-    },
-    "required": ["command", "path"],
-    "type": "object",
-}
-
- */
-
 /**
- * All the `path` parameters represent absolute paths, e.g. `/repo/file.py` or `/repo`.
+ * An interface designed for LLMs to efficiently edit text resources asynchronously.
  */
-interface StringEditorService {
+interface LlmTextEditorService {
 
     /**
-     * Views the file at given path.
-     *
-     * @param path the absolute file path.
-     * @param range If none is given, the full file is shown. If provided, the file will be shown in the indicated line number range, e.g. [11, 12] will show lines 11 and 12. Indexing at 1 to start. Setting `[start_line, -1]` shows all lines from `start_line` to the end of the file.
+     * Replaces text in the specified resource
+     * @param resource URI/path to the file or resource
+     * @param oldText Text to be replaced
+     * @param newText Text to replace with
+     * @param replaceAll Whether to replace all occurrences or just the first one
+     * @return Operation identifier for undo functionality
      */
-    suspend fun view(
-        path: String,
-        range: IntRange? = null
-    ): Content.TextFileContent
+    suspend fun replaceText(
+        resource: String,
+        oldText: String,
+        newText: String,
+        replaceAll: Boolean = false
+    ): String
 
     /**
-     * Creates the file.
-     *
-     * @param path the absolute file path.
+     * Inserts text at a location identified by a pattern
+     * @param resource URI/path to the file or resource
+     * @param pattern Text pattern to locate the insertion point
+     * @param textToInsert Text to insert
+     * @param insertBefore Whether to insert before or after the pattern
+     * @return Operation identifier for undo functionality
      */
-    suspend fun create(
-        path: String,
-        content: String
+    suspend fun insertAtPattern(
+        resource: String,
+        pattern: String,
+        textToInsert: String,
+        insertBefore: Boolean = false
+    ): String
+
+    /**
+     * Inserts text at a specific line number
+     * @param resource URI/path to the file or resource
+     * @param lineNumber Line where text should be inserted (1-based index)
+     * @param textToInsert Text to insert
+     * @return Operation identifier for undo functionality
+     */
+    suspend fun insertAtLine(
+        resource: String,
+        lineNumber: Int,
+        textToInsert: String
+    ): String
+
+    /**
+     * Removes specified text from a resource
+     * @param resource URI/path to the file or resource
+     * @param textToRemove Text to remove
+     * @param removeAll Whether to remove all occurrences or just the first one
+     * @return Operation identifier for undo functionality
+     */
+    suspend fun removeText(
+        resource: String,
+        textToRemove: String,
+        removeAll: Boolean = false
+    ): String
+
+    /**
+     * Modifies text between two markers
+     * @param resource URI/path to the file or resource
+     * @param startMarker Text that marks the beginning of the section to modify
+     * @param endMarker Text that marks the end of the section to modify
+     * @param transformation Function that transforms the text between markers
+     * @return Operation identifier for undo functionality
+     */
+    suspend fun modifyBetween(
+        resource: String,
+        startMarker: String,
+        endMarker: String,
+        transformation: suspend (String) -> String
+    ): String
+
+    /**
+     * Wraps specified text with start and end wrappers
+     * @param resource URI/path to the file or resource
+     * @param textToWrap Text to be wrapped
+     * @param wrapperStart Text to insert before the wrapped text
+     * @param wrapperEnd Text to insert after the wrapped text
+     * @return Operation identifier for undo functionality
+     */
+    suspend fun wrapSelection(
+        resource: String,
+        textToWrap: String,
+        wrapperStart: String,
+        wrapperEnd: String
+    ): String
+
+    /**
+     * Applies a transformation to all matches of a regex pattern
+     * @param resource URI/path to the file or resource
+     * @param regex Regular expression to match text
+     * @param transformation Function to transform each match
+     * @return Operation identifier for undo functionality
+     */
+    suspend fun applyToPattern(
+        resource: String,
+        regex: Regex,
+        transformation: suspend (MatchResult) -> String
+    ): String
+
+    /**
+     * Undoes a specific operation by its identifier
+     * @param operationId The identifier of the operation to undo
+     * @return Whether the undo was successful
+     */
+    suspend fun undo(operationId: String): Boolean
+
+    /**
+     * Reads the content of specified resources. Each resource will be enclosed between
+     * <resource id="resource_id"></resource>
+     * @param resource URI/path to the file or resource
+     * @return The content as a string
+     */
+    suspend fun readResources(vararg resources: String): String
+
+    /**
+     * Writes content to a resource
+     * @param resource URI/path to the file or resource
+     * @param content The content to write
+     * @return Whether the write operation was successful
+     */
+    suspend fun writeResource(resource: String, content: String): Boolean
+
+    /**
+     * Finds the line number where a pattern first appears
+     * @param resource URI/path to the file or resource
+     * @param pattern Text to search for
+     * @return Line number (1-based) or -1 if not found
+     */
+    suspend fun findLineNumber(resource: String, pattern: String): Int
+
+    /**
+     * Gets metadata about a resource
+     * @param resource URI/path to the file or resource
+     * @return Information about the resource
+     */
+    suspend fun getResourceInfo(resource: String): ResourceInfo
+
+    /**
+     * Data class representing metadata about a resource
+     */
+    data class ResourceInfo(
+        val exists: Boolean,
+        val size: Long,
+        val lastModified: Long,
+        val isReadOnly: Boolean,
+        val extension: String,
+        val mimeType: String?
     )
+}
+
+interface WebBrowserService {
 
     /**
-     * @param newStr The `new_str` will be inserted AFTER the line `insert_line` of `path`.
-     */
-    suspend fun replace(
-        path: String,
-        oldStr: String,
-        newStr: String? = null
-    )
-
-    /**
+     * Opens given URL.
      *
-     * @param insertLine
-     * @param newStr The new string which will be inserted AFTER the line [insertLine] of [path].
+     * @param url the URL to open.
+     * @param windowId the window ID to use.
+     * @return 2 element list, where the first element is the URL content, either binary or text, and the second element represent unique id of the window being open to server this request.
      */
-    suspend fun insert(
-        path: String,
-        insertLine: Int,
-        newStr: String? = null
-    )
+    suspend fun openUrl(
+        url: String,
+        windowId: Int? = null
+    ): Content
+
+    suspend fun screenshot(): Content.Binary
 
 }
 

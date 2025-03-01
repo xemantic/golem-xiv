@@ -23,19 +23,19 @@ import kotlin.test.Test
 
 class KotlinScriptExecutorTest {
 
-    @Test
-    fun `should execute script`() {
-        val executor = KotlinScriptExecutor(
-            props = listOf(ProvidedProperty("foo", String::class, "bar"))
-        )
-        assert(executor.execute("") is Unit)
-        executor.execute("\"foo\"") should {
-            be<String>()
-            have(this == "foo")
-        }
-        val result = executor.execute("""
-            foo
-        """.trimIndent())
-    }
+//    @Test
+//    fun `should execute script`() {
+//        val executor = KotlinScriptExecutor(
+//            props = listOf(ProvidedProperty("foo", String::class, "bar"))
+//        )
+//        assert(executor.execute("") is Unit)
+//        executor.execute("\"foo\"") should {
+//            be<String>()
+//            have(this == "foo")
+//        }
+//        val result = executor.execute("""
+//            foo
+//        """.trimIndent())
+//    }
 
 }

@@ -38,17 +38,30 @@ class JvmGolemScriptExecutor(
     private val scriptingHost = BasicJvmScriptingHost()
 
     override fun execute(script: String): Any? {
+        val imports = StringBuilder()
+        val code = StringBuilder()
+        val lineNumberingShift = 10
+        script.lines().forEach {
+            if (it.trimStart().startsWith("import")) imports.appendLine(it)
+            else code.appendLine(it)
+        }
+//        val imports = script.lines()
+//            .takeWhile { it.trimStart().startsWith("import") }
+//            .joinToString("\n")
+        val scriptWithoutImports = script.lines()
+            .dropWhile { it.trimStart().startsWith("import") }
+            .joinToString("\n")
         val effectiveScript = """
             import kotlinx.coroutines.runBlocking
-        
+            $imports
+
             runBlocking {
-                $script
+                $code
             }            
         """.trimIndent()
         val compilationConfiguration = ScriptCompilationConfiguration {
             //defaultImports(DependsOn::class, Repository::class)
             jvm {
-                //dependenciesFromClassloader(classLoader = JvmGolemScriptExecutor::class.java.classLoader, wholeClasspath = true)
                 dependenciesFromClassContext(contextClass = JvmGolemScriptExecutor::class, wholeClasspath = true)
             }
             providedProperties(*(dependencies.map { it.name to KotlinType(it.type) }.toTypedArray()))

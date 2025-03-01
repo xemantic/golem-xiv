@@ -4,14 +4,18 @@ import com.xemantic.gradle.conventions.License
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinMultiplatformPlugin
 import org.jetbrains.kotlin.gradle.swiftexport.ExperimentalSwiftExportDsl
 import org.jetbrains.kotlin.gradle.targets.jvm.KotlinJvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.powerassert.gradle.PowerAssertGradleExtension
 import org.jreleaser.model.Active
 
 plugins {
-    alias(libs.plugins.kotlin.multiplatform)
+    alias(libs.plugins.kotlin.multiplatform) apply false
     alias(libs.plugins.kotlin.plugin.serialization)
     alias(libs.plugins.kotlin.plugin.power.assert)
     alias(libs.plugins.kotlinx.binary.compatibility.validator)
@@ -51,109 +55,149 @@ ${xemantic.releasePageUrl}
 val javaTarget = libs.versions.javaTarget.get()
 val kotlinTarget = KotlinVersion.fromVersion(libs.versions.kotlinTarget.get())
 
-repositories {
-    mavenCentral()
-}
 
-kotlin {
-
-    compilerOptions {
-        apiVersion = kotlinTarget
-        languageVersion = kotlinTarget
-        freeCompilerArgs.add("-Xmulti-dollar-interpolation")
-        extraWarnings = true
-        progressiveMode = true
+allprojects {
+    repositories {
+        mavenCentral()
     }
 
-    jvm {
-        // set up according to https://jakewharton.com/gradle-toolchains-are-rarely-a-good-idea/
+    tasks.withType<AbstractArchiveTask> {
+        // Only set if not already set
+        if (!archiveBaseName.isPresent) {
+            archiveBaseName.set(project.name)
+        }
+        archiveVersion.set(project.version.toString())
+    }
+    apply(plugin = "maven-publish")
+}
+
+//kotlin {
+//
+//    compilerOptions {
+//        apiVersion = kotlinTarget
+//        languageVersion = kotlinTarget
+//        freeCompilerArgs.add("-Xmulti-dollar-interpolation")
+//        extraWarnings = true
+//        progressiveMode = true
+//    }
+//
+//    jvm {
+//        // set up according to https://jakewharton.com/gradle-toolchains-are-rarely-a-good-idea/
+//        compilerOptions {
+//            apiVersion = kotlinTarget
+//            languageVersion = kotlinTarget
+//            jvmTarget = JvmTarget.fromTarget(javaTarget)
+//            freeCompilerArgs.add("-Xjdk-release=$javaTarget")
+//            progressiveMode = true
+//        }
+//    }
+//
+////    js {
+////        browser()
+////        nodejs()
+////        // TODO remove for a non-library project
+////        binaries.library()
+////    }
+////
+////    wasmJs {
+////        browser()
+////        nodejs()
+////        //d8()
+////        // TODO remove for a non-library project
+////        binaries.library()
+////    }
+////
+////    wasmWasi {
+////        nodejs()
+////        // TODO remove for a non-library project
+////        binaries.library()
+////    }
+////
+////    // native, see https://kotlinlang.org/docs/native-target-support.html
+////    // tier 1
+////    macosX64()
+////    macosArm64()
+////    iosSimulatorArm64()
+////    iosX64()
+////    iosArm64()
+////
+////    // tier 2
+////    linuxX64()
+////    linuxArm64()
+////    watchosSimulatorArm64()
+////    watchosX64()
+////    watchosArm32()
+////    watchosArm64()
+////    tvosSimulatorArm64()
+////    tvosX64()
+////    tvosArm64()
+////
+////    // tier 3
+////    androidNativeArm32()
+////    androidNativeArm64()
+////    androidNativeX86()
+////    androidNativeX64()
+////    mingwX64()
+////    watchosDeviceArm64()
+////
+////    @OptIn(ExperimentalSwiftExportDsl::class)
+////    swiftExport {}
+//
+//    sourceSets {
+//
+//        commonMain {
+//            kotlin.srcDir("build/generated/source/golemScriptServiceApi")
+//            dependencies {
+//                implementation(libs.xemantic.ai.tool.schema)
+//                implementation(libs.anthropic.sdk.kotlin)
+//                implementation(libs.kotlinx.coroutines.core)
+//                implementation(libs.ktor.client.java)
+//            }
+//        }
+//
+//        commonTest {
+//            dependencies {
+//                implementation(libs.kotlin.test)
+//                implementation(libs.xemantic.kotlin.test)
+//            }
+//        }
+//
+//        jvmMain {
+//            dependencies {
+//                implementation(libs.kotlin.scripting.common)
+//                implementation(libs.kotlin.scripting.jvm)
+//                implementation(libs.kotlin.scripting.jvm.host)
+//                //implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.1.10")
+//                implementation("com.microsoft.playwright:playwright:1.50.0")
+//            }
+//        }
+//    }
+//
+//}
+
+
+allprojects {
+
+    tasks.withType<KotlinCompile>().configureEach {
         compilerOptions {
             apiVersion = kotlinTarget
             languageVersion = kotlinTarget
-            jvmTarget = JvmTarget.fromTarget(javaTarget)
-            freeCompilerArgs.add("-Xjdk-release=$javaTarget")
+            freeCompilerArgs.add("-Xmulti-dollar-interpolation")
+            extraWarnings = true
             progressiveMode = true
         }
     }
 
-//    js {
-//        browser()
-//        nodejs()
-//        // TODO remove for a non-library project
-//        binaries.library()
-//    }
-//
-//    wasmJs {
-//        browser()
-//        nodejs()
-//        //d8()
-//        // TODO remove for a non-library project
-//        binaries.library()
-//    }
-//
-//    wasmWasi {
-//        nodejs()
-//        // TODO remove for a non-library project
-//        binaries.library()
-//    }
-//
-//    // native, see https://kotlinlang.org/docs/native-target-support.html
-//    // tier 1
-//    macosX64()
-//    macosArm64()
-//    iosSimulatorArm64()
-//    iosX64()
-//    iosArm64()
-//
-//    // tier 2
-//    linuxX64()
-//    linuxArm64()
-//    watchosSimulatorArm64()
-//    watchosX64()
-//    watchosArm32()
-//    watchosArm64()
-//    tvosSimulatorArm64()
-//    tvosX64()
-//    tvosArm64()
-//
-//    // tier 3
-//    androidNativeArm32()
-//    androidNativeArm64()
-//    androidNativeX86()
-//    androidNativeX64()
-//    mingwX64()
-//    watchosDeviceArm64()
-//
-//    @OptIn(ExperimentalSwiftExportDsl::class)
-//    swiftExport {}
+    plugins.withType<KotlinMultiplatformPlugin>() {
 
-    sourceSets {
+    }
 
-        commonMain {
-            kotlin.srcDir("build/generated/source/golemScriptServiceApi")
-            dependencies {
-                implementation(libs.xemantic.ai.tool.schema)
-                implementation(libs.anthropic.sdk.kotlin)
-                implementation(libs.kotlinx.coroutines.core)
-                implementation(libs.ktor.client.java)
-            }
-        }
-
-        commonTest {
-            dependencies {
-                implementation(libs.kotlin.test)
-                implementation(libs.xemantic.kotlin.test)
-            }
-        }
-
-        jvmMain {
-            dependencies {
-                implementation(libs.kotlin.scripting.common)
-                implementation(libs.kotlin.scripting.jvm)
-                implementation(libs.kotlin.scripting.jvm.host)
-                implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.1.10")
-            }
-        }
+    //tasks.withType<PowerAssertGradleExtension>()
+    powerAssert {
+        functions = listOf(
+            "com.xemantic.kotlin.test.assert",
+            "com.xemantic.kotlin.test.have"
+        )
     }
 
 }
@@ -204,12 +248,6 @@ tasks.withType<JavaExec>().configureEach {
 //
 //}
 
-powerAssert {
-    functions = listOf(
-        "com.xemantic.kotlin.test.assert",
-        "com.xemantic.kotlin.test.have"
-    )
-}
 
 // https://kotlinlang.org/docs/dokka-migration.html#adjust-configuration-options
 dokka {
@@ -223,14 +261,14 @@ val javadocJar by tasks.registering(Jar::class) {
     from(tasks.dokkaGeneratePublicationHtml)
 }
 
-publishing {
-    publications {
-        withType<MavenPublication> {
-            artifact(javadocJar)
-            xemantic.configurePom(this)
-        }
-    }
-}
+//publishing {
+//    publications {
+//        withType<MavenPublication> {
+//            artifact(javadocJar)
+//            xemantic.configurePom(this)
+//        }
+//    }
+//}
 
 jreleaser {
     project {
@@ -253,22 +291,22 @@ jreleaser {
                     maxRetries = 240
                     stagingRepository(xemantic.stagingDeployDir.path)
                     // workaround: https://github.com/jreleaser/jreleaser/issues/1784
-                    kotlin.targets.forEach { target ->
-                        if (target !is KotlinJvmTarget) {
-                            val nonJarArtifactId = if (target.platformType == KotlinPlatformType.wasm) {
-                                "${name}-wasm-${target.name.lowercase().substringAfter("wasm")}"
-                            } else {
-                                "${name}-${target.name.lowercase()}"
-                            }
-                            artifactOverride {
-                                artifactId = nonJarArtifactId
-                                jar = false
-                                verifyPom = false
-                                sourceJar = false
-                                javadocJar = false
-                            }
-                        }
-                    }
+//                    kotlin.targets.forEach { target ->
+//                        if (target !is KotlinJvmTarget) {
+//                            val nonJarArtifactId = if (target.platformType == KotlinPlatformType.wasm) {
+//                                "${name}-wasm-${target.name.lowercase().substringAfter("wasm")}"
+//                            } else {
+//                                "${name}-${target.name.lowercase()}"
+//                            }
+//                            artifactOverride {
+//                                artifactId = nonJarArtifactId
+//                                jar = false
+//                                verifyPom = false
+//                                sourceJar = false
+//                                javadocJar = false
+//                            }
+//                        }
+//                    }
                 }
             }
         }

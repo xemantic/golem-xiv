@@ -25,6 +25,7 @@ import com.xemantic.ai.anthropic.tool.Tool
 import com.xemantic.ai.golem.service.BashService
 import com.xemantic.ai.golem.service.Content
 import com.xemantic.ai.golem.service.RecursiveAgentService
+import com.xemantic.ai.golem.service.WebBrowserService
 import com.xemantic.ai.golem.service.bashService
 import com.xemantic.ai.tool.schema.meta.Description
 import kotlinx.coroutines.flow.Flow
@@ -67,6 +68,7 @@ class Golem(
     val golemScriptExecutor = golemScriptExecutor(
         dependencies = listOf(
             service<BashService>("bashService", bashService()),
+            service<WebBrowserService>("webBrowserService", com.xemantic.ai.golem.service.webBrowserService())
             //service<StringEditorService>("stringEditorService", stringEditorService())
         )
     )

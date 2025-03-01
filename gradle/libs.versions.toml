@@ -31,7 +31,9 @@ xemantic-ai-tool-schema = { module = "com.xemantic.ai:xemantic-ai-tool-schema", 
 
 anthropic-sdk-kotlin = { module = "com.xemantic.ai:anthropic-sdk-kotlin", version.ref = "anthropicSdkKotlin" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
+ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
 ktor-client-java = { module = "io.ktor:ktor-client-java", version.ref = "ktor" }
+
 
 [plugins]
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }

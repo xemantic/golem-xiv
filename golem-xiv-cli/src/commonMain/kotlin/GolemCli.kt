@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-package com.xemantic.ai.golem.service
-
-expect fun bashService(): BashService
-
-expect fun webBrowserService(): WebBrowserService
-
-//expect fun fileService(): FileService
-//
-//expect fun stringEditorService(): StringEditorService
+fun main() {
+    println("Initial golem CLI")
+}

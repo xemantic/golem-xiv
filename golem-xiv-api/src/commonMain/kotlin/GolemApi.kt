@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-package com.xemantic.ai.golem.service
+package com.xemantic.ai.golem
 
-expect fun bashService(): BashService
+// things which go over web socket
 
-expect fun webBrowserService(): WebBrowserService
-
-//expect fun fileService(): FileService
-//
-//expect fun stringEditorService(): StringEditorService
+data class ToolExecution(
+    val purpose: String
+)
