@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package com.xemantic.ai.golem
+package com.xemantic.ai.golem.server.script
 
+import kotlin.reflect.KClass
 import kotlin.script.experimental.api.KotlinType
 import kotlin.script.experimental.api.ResultValue
 import kotlin.script.experimental.api.ResultWithDiagnostics
@@ -27,17 +28,20 @@ import kotlin.script.experimental.jvm.dependenciesFromClassContext
 import kotlin.script.experimental.jvm.jvm
 import kotlin.script.experimental.jvmhost.BasicJvmScriptingHost
 
-actual fun golemScriptExecutor(
-    dependencies: List<GolemScriptExecutor.Dependency<*>>
-): GolemScriptExecutor = JvmGolemScriptExecutor(dependencies)
+class GolemScriptExecutor {
 
-class JvmGolemScriptExecutor(
-    private val dependencies: List<GolemScriptExecutor.Dependency<*>>
-) : GolemScriptExecutor {
+    class Dependency<T : Any>(
+        val name: String,
+        val type: KClass<T>,
+        val value: T
+    )
 
     private val scriptingHost = BasicJvmScriptingHost()
 
-    override fun execute(script: String): Any? {
+    fun execute(
+        dependencies: List<Dependency<*>>,
+        script: String
+    ): Any? {
         val imports = StringBuilder()
         val code = StringBuilder()
         val lineNumberingShift = 10
@@ -62,7 +66,7 @@ class JvmGolemScriptExecutor(
         val compilationConfiguration = ScriptCompilationConfiguration {
             //defaultImports(DependsOn::class, Repository::class)
             jvm {
-                dependenciesFromClassContext(contextClass = JvmGolemScriptExecutor::class, wholeClasspath = true)
+                dependenciesFromClassContext(contextClass = GolemScriptExecutor::class, wholeClasspath = true)
             }
             providedProperties(*(dependencies.map { it.name to KotlinType(it.type) }.toTypedArray()))
         }

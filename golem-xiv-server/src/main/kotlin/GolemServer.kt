@@ -14,12 +14,34 @@
  * limitations under the License.
  */
 
-package com.xemantic.ai.golem
+package com.xemantic.ai.golem.server
 
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.runBlocking
 
 fun main() {
-    val golem = Golem(input = standardInputFlow())
+    val golem = Golem()
+    println("[Golem]> Connecting human and human's machine to my cognition")
+    println("[me]> ")
+    val conversation = golem.startConversation()
+    while (true) {
+        val input = readln()
+        if (input == "exit") break
+        conversation.send()
+    }
+
+
+    fun output(): Flow<String> = flow {
+        val agentWorker = AgentWorker()
+        input.collect {
+            emit("[Golem] ...reasoning...\n")
+            agentWorker.prompt(it).collect { output ->
+                emit("[Golem]> $output\n")
+                emit("[me]> ")
+            }
+        }
+    }
     runBlocking {
         golem.output().collect {
             print(it)

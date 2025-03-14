@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-package com.xemantic.ai.golem.service
+package com.xemantic.ai.golem.server.service
 
-actual fun bashService(): BashService = JvmBashService()
+class DefaultBashService : BashService {
 
-class JvmBashService : BashService {
     override suspend fun executeShellCommand(
         command: String,
         workingDir: String,

@@ -14,13 +14,6 @@
  * limitations under the License.
  */
 
-package com.xemantic.ai.golem
-
-import com.xemantic.kotlin.test.be
-import com.xemantic.kotlin.test.have
-import com.xemantic.kotlin.test.should
-import kotlin.test.Test
-
 class KotlinScriptExecutorTest {
 
 //    @Test

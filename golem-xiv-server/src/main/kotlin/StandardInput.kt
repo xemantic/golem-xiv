@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.xemantic.ai.golem
+package com.xemantic.ai.golem.server
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow

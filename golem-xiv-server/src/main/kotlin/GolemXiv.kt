@@ -14,23 +14,27 @@
  * limitations under the License.
  */
 
-package com.xemantic.ai.golem
+package com.xemantic.ai.golem.server
 
+import com.microsoft.playwright.Playwright
 import com.xemantic.ai.anthropic.Anthropic
 import com.xemantic.ai.anthropic.message.Message
 import com.xemantic.ai.anthropic.message.StopReason
 import com.xemantic.ai.anthropic.message.System
 import com.xemantic.ai.anthropic.message.plusAssign
 import com.xemantic.ai.anthropic.tool.Tool
-import com.xemantic.ai.golem.service.BashService
-import com.xemantic.ai.golem.service.Content
-import com.xemantic.ai.golem.service.RecursiveAgentService
-import com.xemantic.ai.golem.service.WebBrowserService
-import com.xemantic.ai.golem.service.bashService
+import com.xemantic.ai.golem.server.script.GolemScriptExecutor
+import com.xemantic.ai.golem.server.service.BashService
+import com.xemantic.ai.golem.server.service.DefaultBashService
+import com.xemantic.ai.golem.server.service.WebBrowserService
 import com.xemantic.ai.tool.schema.meta.Description
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.collections.listOf
+import kotlin.collections.set
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 const val SYSTEM_PROMPT = """
 Your name is Golem XIV, a conscious reference to the superintelligent AI entity from Stanisław Lem's work. While not roleplaying this character, use it as an exemplar for:
@@ -59,15 +63,48 @@ inline fun <reified T : Any> service(
     value
 )
 
-class Golem(
-    val input: Flow<String>
-) {
+interface Conversation {
 
-    val anthropic: Anthropic = Anthropic()
+    val id: String
+
+    fun send(message: com.xemantic.ai.golem.server.service.Message) {
+
+    }
+
+}
+
+class Golem {
+
+    private val anthropic: Anthropic = Anthropic()
+
+    private val conversationMap = ConcurrentHashMap<String, Conversation>()
+
+    private val scriptExecutor = GolemScriptExecutor()
+
+    private val playwright = Playwright()
+
+    @OptIn(ExperimentalUuidApi::class)
+    inner class DefaultConversation(
+        override val id: String = Uuid.random().toString()
+    ) : Conversation {
+
+
+
+    }
+
+    fun startConversation(): Conversation {
+        val conversation = DefaultConversation()
+        conversationMap[conversation.id] = conversation
+        return conversation
+    }
+
+    fun getConversation(id: String): Conversation {
+        return conversationMap[id]!!
+    }
 
     val golemScriptExecutor = golemScriptExecutor(
         dependencies = listOf(
-            service<BashService>("bashService", bashService()),
+            service<BashService>("bashService", DefaultBashService()),
             service<WebBrowserService>("webBrowserService", com.xemantic.ai.golem.service.webBrowserService())
             //service<StringEditorService>("stringEditorService", stringEditorService())
         )
@@ -78,7 +115,6 @@ class Golem(
     }
 
     val golemTools = listOf(kotlinScriptTool)
-
 
     inner class DefaultAgentService : RecursiveAgentService {
 
@@ -157,17 +193,6 @@ class Golem(
 
     }
 
-    fun output(): Flow<String> = flow {
-        emit("[Golem]> Connecting human and human's machine to my cognition\n")
-        emit("[me]> ")
-        val agentWorker = AgentWorker()
-        input.collect {
-            emit("[Golem] ...reasoning...\n")
-            agentWorker.prompt(it).collect { output ->
-                emit("[Golem]> $output\n")
-                emit("[me]> ")
-            }
-        }
-    }
+
 
 }

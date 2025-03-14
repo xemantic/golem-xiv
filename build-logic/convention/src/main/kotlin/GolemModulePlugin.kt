@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package com.xemantic.ai.golem.service
+import org.gradle.api.Plugin
+import org.gradle.api.Project
 
-expect fun bashService(): BashService
+class GolemModulePlugin : Plugin<Project> {
 
-expect fun webBrowserService(): WebBrowserService
+    override fun apply(target: Project) {
+        TODO("Not yet implemented")
+    }
 
-//expect fun fileService(): FileService
-//
-//expect fun stringEditorService(): StringEditorService
+}

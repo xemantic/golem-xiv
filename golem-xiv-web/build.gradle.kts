@@ -1,12 +1,3 @@
-import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
-import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
-import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
-import org.jetbrains.kotlin.gradle.swiftexport.ExperimentalSwiftExportDsl
-import org.jetbrains.kotlin.gradle.targets.jvm.KotlinJvmTarget
-import org.jreleaser.model.Active
-
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlin.plugin.serialization)
@@ -15,7 +6,6 @@ plugins {
     alias(libs.plugins.versions)
     `maven-publish`
     signing
-    alias(libs.plugins.jreleaser)
 }
 
 kotlin {
@@ -39,12 +29,11 @@ kotlin {
 //        }
     }
 
-//    js {
-//        browser()
-//        nodejs()
-//        // TODO remove for a non-library project
-//        binaries.library()
-//    }
+    js {
+        browser()
+        // TODO remove for a non-library project
+        binaries.library()
+    }
 
 //    wasmJs {
 //        browser()

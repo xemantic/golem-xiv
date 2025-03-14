@@ -1,24 +1,13 @@
-import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
-import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
-import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
-import org.jetbrains.kotlin.gradle.swiftexport.ExperimentalSwiftExportDsl
-import org.jetbrains.kotlin.gradle.targets.jvm.KotlinJvmTarget
-import org.jreleaser.model.Active
-
 plugins {
-    alias(libs.plugins.kotlin.multiplatform)
-    alias(libs.plugins.kotlin.plugin.serialization)
-    alias(libs.plugins.kotlin.plugin.power.assert)
-    alias(libs.plugins.dokka)
-    alias(libs.plugins.versions)
-    `maven-publish`
-    signing
-    alias(libs.plugins.jreleaser)
+    alias(libs.plugins.kotlin.jvm)
+//    alias(libs.plugins.kotlin.plugin.serialization)
+//    alias(libs.plugins.kotlin.plugin.power.assert)
+//    alias(libs.plugins.dokka)
+//    alias(libs.plugins.versions)
+//    `maven-publish`
+//    signing
+//    alias(libs.plugins.jreleaser)
 }
-
-kotlin {
 
 //    compilerOptions {
 //        apiVersion = kotlinTarget
@@ -27,86 +16,32 @@ kotlin {
 //        extraWarnings = true
 //        progressiveMode = true
 //    }
-//
-    jvm {
-        // set up according to https://jakewharton.com/gradle-toolchains-are-rarely-a-good-idea/
-//        compilerOptions {
-//            apiVersion = kotlinTarget
-//            languageVersion = kotlinTarget
-//            jvmTarget = JvmTarget.fromTarget(javaTarget)
-//            freeCompilerArgs.add("-Xjdk-release=$javaTarget")
-//            progressiveMode = true
-//        }
-    }
 
-//    js {
-//        browser()
-//        nodejs()
-//        // TODO remove for a non-library project
-//        binaries.library()
+//    jvm {
+//        // set up according to https://jakewharton.com/gradle-toolchains-are-rarely-a-good-idea/
+////        compilerOptions {
+////            apiVersion = kotlinTarget
+////            languageVersion = kotlinTarget
+////            jvmTarget = JvmTarget.fromTarget(javaTarget)
+////            freeCompilerArgs.add("-Xjdk-release=$javaTarget")
+////            progressiveMode = true
+////        }
 //    }
 
-//    wasmJs {
-//        browser()
-//        nodejs()
-//        //d8()
-//        // TODO remove for a non-library project
-//        binaries.library()
-//    }
-//
-//    wasmWasi {
-//        nodejs()
-//        // TODO remove for a non-library project
-//        binaries.library()
-//    }
-//
-//    // native, see https://kotlinlang.org/docs/native-target-support.html
-//    // tier 1
-//    macosX64()
-//    macosArm64()
-//    iosSimulatorArm64()
-//    iosX64()
-//    iosArm64()
-//
-//    // tier 2
-//    linuxX64()
-//    linuxArm64()
-//    watchosSimulatorArm64()
-//    watchosX64()
-//    watchosArm32()
-//    watchosArm64()
-//    tvosSimulatorArm64()
-//    tvosX64()
-//    tvosArm64()
-//
-//    // tier 3
-//    androidNativeArm32()
-//    androidNativeArm64()
-//    androidNativeX86()
-//    androidNativeX64()
-//    mingwX64()
-//    watchosDeviceArm64()
-//
-//    @OptIn(ExperimentalSwiftExportDsl::class)
-//    swiftExport {}
+dependencies {
+    implementation(libs.playwright)
+    implementation(libs.anthropic.sdk.kotlin)
+    implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.kotlinx.serialization.core)
 
-    sourceSets {
+    implementation(libs.kotlin.scripting.common)
+    implementation(libs.kotlin.scripting.jvm)
+    implementation(libs.kotlin.scripting.jvm.host)
+    //implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.1.10")
+    implementation("com.microsoft.playwright:playwright:1.50.0")
 
-        commonMain {
-            dependencies {
-            }
-        }
-
-        commonTest {
-            dependencies {
-                implementation(libs.kotlin.test)
-                implementation(libs.xemantic.kotlin.test)
-            }
-        }
-
-
-    }
-
+    testImplementation(libs.kotlin.test)
+    testImplementation(libs.xemantic.kotlin.test)
 }
 
 //powerAssert {
@@ -115,3 +50,37 @@ kotlin {
 //        "com.xemantic.kotlin.test.have"
 //    )
 //}
+
+// Define the task to generate the Kotlin source
+tasks.register("generateToolsApi") {
+    val sourceFile = "src/commonMain/kotlin/service/GolemScriptServiceApi.kt"
+    val outputDir = "build/generated/source/golemScriptServiceApi"
+    val packageName = "com.xemantic.ai.golem"
+
+    inputs.file(sourceFile)
+    outputs.dir(outputDir)
+
+    doLast {
+        // Create output directory
+        val outputPath = "$outputDir/${packageName.replace('.', '/')}"
+        mkdir(outputPath)
+
+        // Read the source file
+        val sourceContent = file(sourceFile).readText()
+            .substringAfter("*/")
+            .replace("\"", "\\\"") // Escape quotes
+            .replace("\n", "\\n") // Handle newlines
+
+        // Generate Kotlin file with the source as a string constant
+        file("$outputPath/GeneratedGolemScriptServiceApi.kt").writeText("""
+            package $packageName
+
+            const val GOLEM_SCRIPT_SERVICE_API = "$sourceContent"
+        """.trimIndent())
+    }
+}
+
+// Make sure the source is generated before compilation
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+    dependsOn("generateToolsApi")
+}

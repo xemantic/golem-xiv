@@ -15,10 +15,10 @@
  */
 
 // TODO count how much comment, to preserve lines in case of errors here
-package com.xemantic.ai.golem.service
+package com.xemantic.ai.golem.server.service
 
-import com.xemantic.ai.golem.SYSTEM_PROMPT
-import com.xemantic.ai.golem.environmentContext
+import com.xemantic.ai.golem.server.SYSTEM_PROMPT
+import com.xemantic.ai.golem.server.environmentContext
 import kotlinx.serialization.Serializable
 
 /**
@@ -74,7 +74,7 @@ interface RecursiveAgentService {
     suspend fun start(
         system: String = SYSTEM_PROMPT,
         environmentContext: String = environmentContext(),
-        kotlinScriptServiceApi: String? = com.xemantic.ai.golem.GOLEM_SCRIPT_SERVICE_API,
+//        kotlinScriptServiceApi: String? = GOLEM_SCRIPT_SERVICE_API,
         additionalSystemPrompt: String? = null,
         initialConversation: List<Message>? = null,
         cacheAdditionalSystemPrompt: Boolean = false

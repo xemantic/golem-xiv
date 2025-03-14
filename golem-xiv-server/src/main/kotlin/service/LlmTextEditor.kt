@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-package com.xemantic.ai.golem.service.impl
+package com.xemantic.ai.golem.server.service
 
-import com.xemantic.ai.golem.service.LlmTextEditorService
-
-class DefaultLlmTestEditorService : LlmTextEditorService {
+class DefaultLLmTextEditorService : LlmTextEditorService {
 
     override suspend fun replaceText(
         resource: String,

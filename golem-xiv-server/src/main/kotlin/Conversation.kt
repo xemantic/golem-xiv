@@ -14,22 +14,8 @@
  * limitations under the License.
  */
 
-package com.xemantic.ai.golem
+package com.xemantic.ai.golem.server
 
-import kotlin.reflect.KClass
-
-interface GolemScriptExecutor {
-
-    class Dependency<T : Any>(
-        val name: String,
-        val type: KClass<T>,
-        val value: T
-    )
-
-    fun execute(script: String): Any?
-
-}
-
-expect fun golemScriptExecutor(
-    dependencies: List<GolemScriptExecutor.Dependency<*>>
-): GolemScriptExecutor
+class Conversation(
+    val id: String
+)
