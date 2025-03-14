@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+package com.xemantic.ai.golem.cli
+
 fun main() {
     println("Initial golem CLI")
 }

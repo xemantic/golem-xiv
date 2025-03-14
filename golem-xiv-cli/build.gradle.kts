@@ -1,19 +1,17 @@
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
-    alias(libs.plugins.kotlin.plugin.serialization)
-    alias(libs.plugins.kotlin.plugin.power.assert)
-    alias(libs.plugins.dokka)
-    alias(libs.plugins.versions)
-    `maven-publish`
-    signing
-    alias(libs.plugins.jreleaser)
+    //alias(libs.plugins.versions)
 }
 
 kotlin {
 
     jvm()
 
-    macosArm64()
+    macosArm64 {
+        binaries {
+
+        }
+    }
 
     sourceSets {
 
@@ -40,9 +38,6 @@ kotlin {
 
 }
 
-//powerAssert {
-//    functions = listOf(
-//        "com.xemantic.kotlin.test.assert",
-//        "com.xemantic.kotlin.test.have"
-//    )
-//}
+tasks.withType<JavaExec>().configureEach {
+    standardInput = System.`in`
+}
