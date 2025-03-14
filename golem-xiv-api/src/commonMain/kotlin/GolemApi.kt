@@ -14,10 +14,28 @@
  * limitations under the License.
  */
 
-package com.xemantic.ai.golem
+package com.xemantic.ai.golem.api
+
+import kotlinx.serialization.Serializable
 
 // things which go over web socket
 
-data class ToolExecution(
-    val purpose: String
-)
+@Serializable
+sealed class Content {
+
+    abstract val conversationId: String
+
+    @Serializable
+    data class ServiceExecution(
+        override val conversationId: String,
+        val service: String,
+        val purpose: String
+    ) : Content()
+
+    @Serializable
+    data class Text(
+        override val conversationId: String,
+        val service: String,
+    ) : Content()
+
+}
