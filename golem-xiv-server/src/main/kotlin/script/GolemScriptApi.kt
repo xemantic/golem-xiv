@@ -15,7 +15,7 @@
  */
 
 // TODO count how much comment, to preserve lines in case of errors here
-package com.xemantic.ai.golem.server.service
+package com.xemantic.ai.golem.server.script
 
 import com.xemantic.ai.golem.server.SYSTEM_PROMPT
 import com.xemantic.ai.golem.server.environmentContext
@@ -40,7 +40,11 @@ sealed class Content {
     @Serializable
     class Binary(val data: ByteArray) : Content()
 
-    class TextResource(
+    /**
+     * The
+     */
+    @Serializable
+    class TextFile(
         val path: String,
         val text: String,
         val range: IntRange? = null
@@ -63,7 +67,7 @@ class Message(
 /**
  * Starts a recursive version of yourself with a fresh token window. If there is any tool use involved,
  */
-interface RecursiveAgentService {
+interface RecursiveContext {
 
     /**
      * If binary content is returned, the media type detection will try to determine
@@ -85,7 +89,7 @@ interface RecursiveAgentService {
 /**
  * An interface designed for LLMs to efficiently edit text resources asynchronously.
  */
-interface LlmTextEditorService {
+interface LlmTextEditor {
 
     /**
      * Replaces text in the specified resource
@@ -235,9 +239,10 @@ interface LlmTextEditorService {
         val extension: String,
         val mimeType: String?
     )
+
 }
 
-interface WebBrowserService {
+interface WebBrowser {
 
     /**
      * Opens given URL.
@@ -246,7 +251,7 @@ interface WebBrowserService {
      * @param windowId the window ID to use.
      * @return 2 element list, where the first element is the URL content, either binary or text, and the second element represent unique id of the window being open to server this request.
      */
-    suspend fun openUrl(
+    suspend fun open(
         url: String,
         windowId: Int? = null
     ): Content
@@ -255,7 +260,7 @@ interface WebBrowserService {
 
 }
 
-interface BashService {
+interface Shell {
 
     /**
      * Executes given shell command.
@@ -264,7 +269,7 @@ interface BashService {
      * @param workingDir the working directory.
      * @param timeout the timeout in seconds.
      */
-    suspend fun executeShellCommand(
+    suspend fun execute(
         command: String,
         workingDir: String = ".",
         timeout: Int = 60

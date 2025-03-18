@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package com.xemantic.ai.golem.server.service
+package com.xemantic.ai.golem.server.script
 
-class DefaultLLmTextEditorService : LlmTextEditorService {
+class DefaultLlmTextEditor : LlmTextEditor {
 
     override suspend fun replaceText(
         resource: String,
@@ -94,7 +94,7 @@ class DefaultLLmTextEditorService : LlmTextEditorService {
         TODO("Not yet implemented")
     }
 
-    override suspend fun getResourceInfo(resource: String): LlmTextEditorService.ResourceInfo {
+    override suspend fun getResourceInfo(resource: String): LlmTextEditor.ResourceInfo {
         TODO("Not yet implemented")
     }
 }

@@ -28,6 +28,16 @@ plugins {
 ////        }
 //    }
 
+val generatedSourcesDir = layout.buildDirectory.dir("generated/source/main/kotlin")
+
+kotlin {
+    sourceSets {
+        main {
+            kotlin.srcDir(generatedSourcesDir)
+        }
+    }
+}
+
 dependencies {
     implementation(libs.playwright)
     implementation(libs.anthropic.sdk.kotlin)
@@ -37,11 +47,16 @@ dependencies {
     implementation(libs.kotlin.scripting.common)
     implementation(libs.kotlin.scripting.jvm)
     implementation(libs.kotlin.scripting.jvm.host)
+
+    implementation(libs.ktor.client.java)
     //implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.1.10")
-    implementation("com.microsoft.playwright:playwright:1.50.0")
+    implementation(libs.playwright)
 
     testImplementation(libs.kotlin.test)
     testImplementation(libs.xemantic.kotlin.test)
+
+    implementation("com.vladsch.flexmark:flexmark:0.64.8")
+    implementation("com.vladsch.flexmark:flexmark-html2md-converter:0.64.8")
 }
 
 //powerAssert {
@@ -52,18 +67,16 @@ dependencies {
 //}
 
 // Define the task to generate the Kotlin source
-tasks.register("generateToolsApi") {
-    val sourceFile = "src/commonMain/kotlin/service/GolemScriptServiceApi.kt"
-    val outputDir = "build/generated/source/golemScriptServiceApi"
-    val packageName = "com.xemantic.ai.golem"
+tasks.register("generateGolemScriptApi") {
+    val sourceFile = "src/main/kotlin/script/GolemScriptApi.kt"
+
+    val packageName = "com.xemantic.ai.golem.server.script"
 
     inputs.file(sourceFile)
-    outputs.dir(outputDir)
+    outputs.dir(generatedSourcesDir)
 
     doLast {
-        // Create output directory
-        val outputPath = "$outputDir/${packageName.replace('.', '/')}"
-        mkdir(outputPath)
+        generatedSourcesDir.get().asFile.mkdirs()
 
         // Read the source file
         val sourceContent = file(sourceFile).readText()
@@ -72,15 +85,15 @@ tasks.register("generateToolsApi") {
             .replace("\n", "\\n") // Handle newlines
 
         // Generate Kotlin file with the source as a string constant
-        file("$outputPath/GeneratedGolemScriptServiceApi.kt").writeText("""
+        file("${generatedSourcesDir.get()}/GeneratedGolemServiceApi.kt").writeText("""
             package $packageName
 
-            const val GOLEM_SCRIPT_SERVICE_API = "$sourceContent"
+            const val GOLEM_SCRIPT_API = "$sourceContent"
         """.trimIndent())
     }
 }
 
 // Make sure the source is generated before compilation
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-    dependsOn("generateToolsApi")
+    dependsOn("generateGolemScriptApi")
 }

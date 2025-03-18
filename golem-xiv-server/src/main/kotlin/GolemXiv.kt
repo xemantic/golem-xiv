@@ -16,22 +16,26 @@
 
 package com.xemantic.ai.golem.server
 
+import com.microsoft.playwright.BrowserType
 import com.microsoft.playwright.Playwright
 import com.xemantic.ai.anthropic.Anthropic
+import com.xemantic.ai.anthropic.content.Text
 import com.xemantic.ai.anthropic.message.Message
-import com.xemantic.ai.anthropic.message.StopReason
 import com.xemantic.ai.anthropic.message.System
 import com.xemantic.ai.anthropic.message.plusAssign
-import com.xemantic.ai.anthropic.tool.Tool
+import com.xemantic.ai.golem.server.script.Content
+import com.xemantic.ai.golem.server.script.DefaultWebBrowser
+import com.xemantic.ai.golem.server.script.GOLEM_SCRIPT_API
+import com.xemantic.ai.golem.server.script.GOLEM_SCRIPT_SYSTEM_PROMPT
 import com.xemantic.ai.golem.server.script.GolemScriptExecutor
-import com.xemantic.ai.golem.server.service.BashService
-import com.xemantic.ai.golem.server.service.DefaultBashService
-import com.xemantic.ai.golem.server.service.WebBrowserService
-import com.xemantic.ai.tool.schema.meta.Description
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
+import com.xemantic.ai.golem.server.script.ScriptExecutionException
+import com.xemantic.ai.golem.server.script.WebBrowser
+import com.xemantic.ai.golem.server.script.extractGolemScript
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.collections.listOf
 import kotlin.collections.set
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -49,11 +53,6 @@ When approaching any task, strive to embody these principles of thorough analyti
 
 fun environmentContext(): String = "OS: MacOs"
 
-@Description("Executes Kotlin script")
-class KotlinScript(
-    val script: String
-)
-
 inline fun <reified T : Any> service(
     name: String,
     value: T
@@ -63,136 +62,125 @@ inline fun <reified T : Any> service(
     value
 )
 
-interface Conversation {
+interface Context {
 
     val id: String
 
-    fun send(message: com.xemantic.ai.golem.server.service.Message) {
+    fun send(message: com.xemantic.ai.golem.server.script.Message) {
+
+    }
+
+    fun send(message: String) {
 
     }
 
 }
 
-class Golem {
+class Golem : AutoCloseable {
 
     private val anthropic: Anthropic = Anthropic()
 
-    private val conversationMap = ConcurrentHashMap<String, Conversation>()
+    private val contextMap = ConcurrentHashMap<String, Context>()
+
+    private val scope = CoroutineScope(Dispatchers.IO)
 
     private val scriptExecutor = GolemScriptExecutor()
 
-    private val playwright = Playwright()
+    private val playwright = Playwright.create()
+
+    private val browser by lazy {
+        playwright.chromium().launch(
+            BrowserType.LaunchOptions().setHeadless(false)
+        )!!
+    }
 
     @OptIn(ExperimentalUuidApi::class)
-    inner class DefaultConversation(
-        override val id: String = Uuid.random().toString()
-    ) : Conversation {
+    inner class DefaultContext(
+        override val id: String = Uuid.random().toString(),
+        private val systemPrompt: String,
+        private val environmentSystemPrompt: String? = null,
+        private val golemScriptApi: String? = null,
+        private val hasGolemScriptApi: Boolean = true
+    ) : Context {
 
-
-
-    }
-
-    fun startConversation(): Conversation {
-        val conversation = DefaultConversation()
-        conversationMap[conversation.id] = conversation
-        return conversation
-    }
-
-    fun getConversation(id: String): Conversation {
-        return conversationMap[id]!!
-    }
-
-    val golemScriptExecutor = golemScriptExecutor(
-        dependencies = listOf(
-            service<BashService>("bashService", DefaultBashService()),
-            service<WebBrowserService>("webBrowserService", com.xemantic.ai.golem.service.webBrowserService())
-            //service<StringEditorService>("stringEditorService", stringEditorService())
-        )
-    )
-
-    val kotlinScriptTool = Tool<KotlinScript>(name = "kotlin_script") {
-        golemScriptExecutor.execute(script)
-    }
-
-    val golemTools = listOf(kotlinScriptTool)
-
-    inner class DefaultAgentService : RecursiveAgentService {
-
-        override suspend fun start(
-            system: String,
-            environmentContext: String,
-            toolsApi: String?,
-            additionalSystemPrompt: String?,
-            initialConversation: List<com.xemantic.ai.golem.service.Message>?,
-            cacheAdditionalSystemPrompt: Boolean
-        ): List<Content> {
-            return emptyList()
+        val golemSystem = buildList {
+            val coreSystem = systemPrompt + if (golemScriptApi != null) GOLEM_SCRIPT_SYSTEM_PROMPT else ""
+            add(System(text = coreSystem)) // TODO cache control
+            add(System(text = environmentSystemPrompt))
+//            if (additionalSystemPrompt != null) {
+//                add(System(text = additionalSystemPrompt)) // TODO cache control
+//            }
         }
-
-    }
-
-    inner class AgentWorker(
-        system: String = SYSTEM_PROMPT,
-        environmentContext: String = environmentContext(),
-        servicesApi: String? = GOLEM_SCRIPT_SERVICE_API,
-        additionalSystemPrompt: String? = null,
-        initialConversation: List<Message>? = null,
-        cacheAdditionalSystemPrompt: Boolean = false
-    ) {
-
-        val hasTools = servicesApi != null
 
         val conversation = mutableListOf<Message>()
 
-        val systemPrompts = buildList {
-            val coreSystem = system + if (servicesApi != null) """
-                <kotlin_script_api>
-                $servicesApi
-                </kotlin_script_api>
-        
-                It is the API of services which can be used with kotlin_script tool.
-                Each service instance is available starting with lower case letter, example:
-                
-                FileService -> fileService
-                
-                Always try to perform several operations in a single script.
-                The last expression in the script is the return value.
-                
-                If the task can be broken down into atomic tasks, prefer starting recursive agent to
-                deliver atomic result to prevent filling up the token window.
-                
-                You can use vector math from OPENRNDR (with operator overloading) 
-            """.trimIndent() else ""
-            add(System(text = coreSystem)) // TODO cache control
-            add(System(text = environmentContext))
-            if (additionalSystemPrompt != null) {
-                add(System(text = additionalSystemPrompt)) // TODO cache control
-            }
+
+//        val kotlinScriptTool = Tool<KotlinScript>(name = "kotlin_script") {
+//            //golemScriptExecutor.execute(script)
+//        }
+
+//        val golemTools = listOf(kotlinScriptTool)
+
+        val dependencies = listOf(
+            service<WebBrowser>("browser", DefaultWebBrowser(browser)),
+////            service<WebBrowserService>("webBrowserService", DefaultWebBrowserService())
+////                    service<StringEditorService>("stringEditorService", stringEditorService())
+        )
+
+        override fun send(message: com.xemantic.ai.golem.server.script.Message) {
         }
 
-        fun prompt(text: String): Flow<String> = flow {
-            conversation += Message { +text }
-            do {
-                val response = anthropic.messages.create {
-                    system = systemPrompts
-                    if (hasTools) {
-                        tools = golemTools
+        override fun send(message: String) {
+            conversation += Message { +message }
+            scope.launch {
+                var runGolemScript = false
+                do {
+                    val response = anthropic.messages.create {
+                        system = golemSystem
+                        messages = conversation
                     }
-                    messages = conversation
-                }
-                conversation += response
-                val text = response.text
-                if (text != null) {
-                    emit(text)
-                }
-                if (response.stopReason == StopReason.TOOL_USE) {
-                    conversation += response.useTools()
-                }
-            } while (response.stopReason == StopReason.TOOL_USE)
+                    conversation += response
+                    print(response.text)
+                    val script = extractGolemScript(response.text!!)
+                    if (script == null) {
+                        runGolemScript = false
+                    } else {
+                        println("Script executor: $script")
+                        runGolemScript = true
+                        val content = try {
+                            val scriptResult = scriptExecutor.execute(dependencies, script)
+                            if (scriptResult is Content.Text) {
+                                Text(scriptResult.text)
+                            } else {
+                                Text("<golem-script-error>Non-text result</golem-script-error>")
+                            }
+                        } catch (e: ScriptExecutionException) {
+                            Text("<golem-script-error>${e.message}</golem-script-error>")
+                        }
+                        conversation += Message { +content }
+                    }
+                } while (runGolemScript)
+            }
         }
 
     }
 
+    fun newContext(): Context {
+        val context = DefaultContext(
+            systemPrompt = SYSTEM_PROMPT,
+            environmentSystemPrompt = environmentContext(),
+            golemScriptApi = GOLEM_SCRIPT_API
+        )
+        contextMap[context.id] = context
+        return context
+    }
 
+    fun getContext(id: String): Context {
+        return contextMap[id]!!
+    }
+
+    override fun close() {
+        scope.cancel()
+    }
 
 }
