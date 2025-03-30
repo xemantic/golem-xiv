@@ -43,7 +43,7 @@ kotlin {
         jsMain {
             dependencies {
                 implementation(libs.kotlinx.coroutines.core)
-                //implementation("org.jetbrains.kotlinx-html-js:0.8.0")
+                implementation(libs.kotlinx.html)
             }
         }
 

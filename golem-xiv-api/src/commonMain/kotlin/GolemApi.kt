@@ -33,7 +33,7 @@ data class Conversation(
 
 @Serializable
 data class Message(
-    val role: Role,
+    val role: Role = Role.USER,
     val content: List<Content>
 ) {
 
@@ -68,6 +68,28 @@ class ContentDelta(
     val conversationId: Uuid,
     val delta: Text
 )
+
+sealed class ReasoningEvent {
+
+    @Serializable
+    data class Welcome(
+        val message: String
+    ) : ReasoningEvent()
+
+    @Serializable
+    data class TextDelta(
+        val delta: String
+    ): ReasoningEvent()
+
+}
+
+sealed class UserEvent {
+
+    data class Prompt(
+        val message: Message
+    )
+
+}
 
 //@Serializable
 //sealed class Content {

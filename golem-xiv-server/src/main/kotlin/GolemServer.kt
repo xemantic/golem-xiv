@@ -16,16 +16,76 @@
 
 package com.xemantic.ai.golem.server
 
+import io.ktor.server.cio.CIO
+import io.ktor.server.engine.embeddedServer
+import io.ktor.server.http.content.staticFiles
+import io.ktor.server.routing.routing
+import kotlinx.coroutines.runBlocking
+import java.io.File
+
 fun main() {
 
     val golem = Golem()
     val context = golem.newContext()
 
-    print("[me]> ")
-    while (true) {
-        val input = readln()
-        if (input == "exit") break
-        context.send(input)
+//    print("[me]> ")
+//    while (true) {
+//        val input = readln()
+//        if (input == "exit") break
+//        context.send(input)
+//    }
+
+    runBlocking {
+        startServer(golem)
     }
 
 }
+
+
+suspend fun startServer(
+    golem: Golem
+) {
+    val server = embeddedServer(CIO, 8081) {
+//        install(WebSockets) {
+////            pingPeriod = 15.seconds
+////        timeout = 15.seconds      maxFrameSize = Long.MAX_VALUE
+////                masking = false    }
+
+        routing {
+            staticFiles(dir = File("src/web"), remotePath = "/")
+//            webSocket("/ws") {
+//
+//            }
+        }
+
+    }
+
+
+//    routing {      // Serve static files from the web directory
+//        staticFiles(        dir = File("src/web"),
+//            remotePath = "/"      )
+//        webSocket("/ws") {
+//            val clientIp = call.request.origin.remoteAddress
+//            logger.info { "web socket connected: $clientIp" }
+//            try {
+//                send(
+//                    AgentOutput.Welcome(              "You are connected to ClaudineServer, starting ClaudineSession"
+//                    )          )
+//                val claudineSession = ClaudineSession(anthropic)
+//
+//                while (true) {            val frame = incoming.receive()
+//                    if (frame !is Frame.Text) {              logger.error { "Received frame is not a text: ${frame.frameType}" }
+//                        send(AgentOutput.Error("Received frame is not a text: ${frame.frameType}"))              continue
+//                    }            val receivedText = frame.readText()
+//                    val message = try {
+//                        AgentInput.fromJson(receivedText)            } catch (e: SerializationException) {
+//                        logger.error { "Unrecognized JSON message: $receivedText" }              send(AgentOutput.Error("Unrecognized JSON message: ${frame.frameType}"))
+//                        continue            }
+//                    claudineSession.process(message) {              send(it)
+//                    }
+//                }        } catch (e: Exception) {
+//                logger.error {            "Unexpected error in WebSocket session: ${e.message}"
+//                }        }
+//        }    }
+}
+//    server.start(wait = true)}

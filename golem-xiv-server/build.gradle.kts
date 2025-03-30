@@ -52,6 +52,9 @@ dependencies {
     //implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.1.10")
     implementation(libs.playwright)
 
+    implementation(libs.ktor.server.core)
+    implementation(libs.ktor.server.cio)
+
     testImplementation(libs.kotlin.test)
     testImplementation(libs.xemantic.kotlin.test)
 
