@@ -140,12 +140,14 @@ class Golem : AutoCloseable {
                         messages = conversation
                     }
                     conversation += response
-                    print(response.text)
+                    println(response.text)
+                    println()
                     val script = extractGolemScript(response.text!!)
                     if (script == null) {
+                        print("[me]> ")
                         runGolemScript = false
                     } else {
-                        println("Script executor: $script")
+                        println("[machine]> Running Golem Script")
                         runGolemScript = true
                         val content = try {
                             val scriptResult = scriptExecutor.execute(dependencies, script)

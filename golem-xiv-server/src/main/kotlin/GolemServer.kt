@@ -21,6 +21,7 @@ fun main() {
     val golem = Golem()
     val context = golem.newContext()
 
+    print("[me]> ")
     while (true) {
         val input = readln()
         if (input == "exit") break

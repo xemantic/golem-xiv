@@ -2,7 +2,7 @@
 kotlinTarget = "2.1"
 javaTarget = "17"
 
-kotlin = "2.1.0"
+kotlin = "2.1.20"
 
 kotlinxCoroutines = "1.10.1"
 xemanticKotlinTest = "1.8.10"
@@ -12,15 +12,15 @@ kotlinxSerialization = "1.8.0"
 
 # TODO put your dependencies here
 
-anthropicSdkKotlin = "0.17.0"
+anthropicSdkKotlin = "0.19.0"
 
 versionsPlugin = "0.52.0"
 dokkaPlugin = "2.0.0"
 jreleaserPlugin = "1.16.0"
 binaryCompatibilityValidatorPlugin = "0.17.0"
 xemanticConventionsPlugin = "0.3.1"
-ktor = "3.1.1"
-playwright = "1.50.0"
+ktor = "3.1.2"
+playwright = "1.51.0"
 
 [libraries]
 kotlin-scripting-common = { module = "org.jetbrains.kotlin:kotlin-scripting-common", version.ref = "kotlin" }

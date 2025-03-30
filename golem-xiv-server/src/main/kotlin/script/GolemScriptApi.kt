@@ -76,13 +76,16 @@ interface RecursiveContext {
      * @param kotlinScriptServiceApi optional API which can be used by kotlin script, if omitted, this default API will be provided.
      */
     suspend fun start(
+        delay: Long = 0,// milliseconds
         system: String = SYSTEM_PROMPT,
         environmentContext: String = environmentContext(),
 //        kotlinScriptServiceApi: String? = GOLEM_SCRIPT_SERVICE_API,
         additionalSystemPrompt: String? = null,
         initialConversation: List<Message>? = null,
-        cacheAdditionalSystemPrompt: Boolean = false
+        cacheAdditionalSystemPrompt: Boolean = false,
     ): List<Content>
+
+    // TODO add scheduled recursive agent
 
 }
 
@@ -274,6 +277,12 @@ interface Shell {
         workingDir: String = ".",
         timeout: Int = 60
     ): String
+
+}
+
+interface Scheduler {
+
+    suspend fun wait(milliseconds: Long)
 
 }
 

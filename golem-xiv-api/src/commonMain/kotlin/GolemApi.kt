@@ -17,25 +17,74 @@
 package com.xemantic.ai.golem.api
 
 import kotlinx.serialization.Serializable
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 // things which go over web socket
 
+interface Content
+
 @Serializable
-sealed class Content {
+data class Conversation(
+    val id: String,
+    val messages: List<Message>,
+    val system: List<Content>
+) : Content
 
-    abstract val conversationId: String
+@Serializable
+data class Message(
+    val role: Role,
+    val content: List<Content>
+) {
 
-    @Serializable
-    data class ServiceExecution(
-        override val conversationId: String,
-        val service: String,
-        val purpose: String
-    ) : Content()
-
-    @Serializable
-    data class Text(
-        override val conversationId: String,
-        val service: String,
-    ) : Content()
+    enum class Role {
+        USER,
+        ASSISTANT
+    }
 
 }
+
+@Serializable
+data class Text(
+    val text: String
+) : Content
+
+@Serializable
+data class Image(
+    val path: String
+) : Content
+
+data class Document(
+    val path: String
+)
+
+data class Code(
+    val kotlinScript: String
+)
+
+@Serializable
+@OptIn(ExperimentalUuidApi::class)
+class ContentDelta(
+    val conversationId: Uuid,
+    val delta: Text
+)
+
+//@Serializable
+//sealed class Content {
+//
+//    abstract val conversationId: String
+//
+//    @Serializable
+//    data class ServiceExecution(
+//        override val conversationId: String,
+//        val service: String,
+//        val purpose: String
+//    ) : Content()
+//
+//    @Serializable
+//    data class Text(
+//        override val conversationId: String,
+//        val service: String,
+//    ) : Content()
+//
+//}
