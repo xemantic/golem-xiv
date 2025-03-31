@@ -39,21 +39,24 @@ kotlin {
 }
 
 dependencies {
-    implementation(libs.playwright)
-    implementation(libs.anthropic.sdk.kotlin)
-    implementation(libs.kotlinx.coroutines.core)
+    implementation(project(":golem-xiv-api"))
     implementation(libs.kotlinx.serialization.core)
 
     implementation(libs.kotlin.scripting.common)
     implementation(libs.kotlin.scripting.jvm)
     implementation(libs.kotlin.scripting.jvm.host)
 
-    implementation(libs.ktor.client.java)
-    //implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.1.10")
-    implementation(libs.playwright)
+    implementation(libs.kotlin.logging)
 
+    implementation(libs.anthropic.sdk.kotlin)
+    implementation(libs.kotlinx.coroutines.core)
+
+    implementation(libs.ktor.client.java)
     implementation(libs.ktor.server.core)
+    implementation(libs.ktor.server.websockets)
     implementation(libs.ktor.server.cio)
+
+    implementation(libs.playwright)
 
     testImplementation(libs.kotlin.test)
     testImplementation(libs.xemantic.kotlin.test)

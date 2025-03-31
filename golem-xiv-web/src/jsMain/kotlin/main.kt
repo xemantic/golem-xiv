@@ -16,9 +16,7 @@
 
 package com.xemantic.golem.web
 
-import com.xemantic.golem.web.js.handleWebSocket
 import com.xemantic.golem.web.reasoning.DefaultReasoningView
-import com.xemantic.golem.web.reasoning.ReasoningPresenter
 import kotlinx.browser.document
 import kotlinx.coroutines.MainScope
 import org.w3c.dom.WebSocket
@@ -38,16 +36,25 @@ fun main() {
     document.body!!.append(view.chatDiv)
 
     val ws = WebSocket("ws://localhost:8081/ws")
-
-    val agentOutput = scope.handleWebSocket(ws)
-
-    ReasoningPresenter(
-        scope,
-        view,
-        reasoning = emptyList(),
-        agentOutput,
-    ) { agentInput ->
-        //ws.send(agentInput.toJson())
+    ws.onmessage = {
+        println("Message: ${JSON.stringify(it)}")
     }
+    ws.onopen = {
+        println("Open: ${JSON.stringify(it)}")
+    }
+    ws.onclose = {
+        println("Close: $it")
+    }
+
+//    val agentOutput = scope.handleWebSocket(ws)
+
+//    ReasoningPresenter(
+//        scope,
+//        view,
+//        reasoning = emptyList(),
+//        agentOutput,
+//    ) { agentInput ->
+//        //ws.send(agentInput.toJson())
+//    }
 
 }

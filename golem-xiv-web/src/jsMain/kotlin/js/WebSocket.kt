@@ -16,11 +16,11 @@
 
 package com.xemantic.golem.web.js
 
-import com.xemantic.ai.golem.api.ReasoningEvent
+import com.xemantic.ai.golem.api.GolemOutput
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.transform
-import kotlinx.coroutines.launch
 import org.w3c.dom.MessageEvent
 import org.w3c.dom.WebSocket
 
@@ -38,27 +38,31 @@ fun Flow<MessageEvent>.toReasoningEvents() = transform { event ->
         //val agentOutput = AgentOutput.fromJson(event.data as String)
         val output = "foo"
         // TODO fix it
-        emit(ReasoningEvent.Welcome(output))
+        //emit(GolemOutput.Welcome(output))
+        emit("hi")
     } else {
         console.error("Unsupported event type: ${event.type}")
     }
 }
 
-fun CoroutineScope.handleWebSocket(ws: WebSocket): Flow<ReasoningEvent> {
-    launch {
-        ws.openEvents.collect {
-            console.log("Connected to WebSocket")
-        }
+fun CoroutineScope.handleWebSocket(ws: WebSocket): Flow<GolemOutput> {
+//    launch {
+//        ws.openEvents.collect {
+//            console.log("Connected to WebSocket")
+//        }
+//    }
+//    launch {
+//        ws.closEvents.collect {
+//            console.log("WebSocket closed")
+//        }
+//    }
+//    launch {
+//        ws.errorEvents.collect {
+//            console.log("WebSocket error: $it")
+//        }
+//    }
+    //return ws.messageEvents.toReasoningEvents()
+    return flow {
+        GolemOutput.Welcome("foo")
     }
-    launch {
-        ws.closEvents.collect {
-            console.log("WebSocket closed")
-        }
-    }
-    launch {
-        ws.errorEvents.collect {
-            console.log("WebSocket error: $it")
-        }
-    }
-    return ws.messageEvents.toReasoningEvents()
 }

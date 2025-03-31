@@ -16,64 +16,46 @@
 
 package com.xemantic.ai.golem.server
 
+import com.xemantic.ai.golem.api.GolemOutput
+import io.github.oshai.kotlinlogging.KotlinLogging
+import io.ktor.server.application.install
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.http.content.staticFiles
+import io.ktor.server.plugins.origin
 import io.ktor.server.routing.routing
-import kotlinx.coroutines.runBlocking
+import io.ktor.server.websocket.WebSockets
+import io.ktor.server.websocket.sendSerialized
+import io.ktor.server.websocket.webSocket
+import kotlinx.coroutines.channels.consumeEach
 import java.io.File
 
+private val logger = KotlinLogging.logger {}
+
 fun main() {
-
     val golem = Golem()
-    val context = golem.newContext()
-
-//    print("[me]> ")
-//    while (true) {
-//        val input = readln()
-//        if (input == "exit") break
-//        context.send(input)
-//    }
-
-    runBlocking {
-        startServer(golem)
-    }
-
+    startServer(golem)
 }
 
-
-suspend fun startServer(
+fun startServer(
     golem: Golem
 ) {
-    val server = embeddedServer(CIO, 8081) {
-//        install(WebSockets) {
-////            pingPeriod = 15.seconds
-////        timeout = 15.seconds      maxFrameSize = Long.MAX_VALUE
-////                masking = false    }
-
+    embeddedServer(CIO, 8081) {
+        install(WebSockets) {
+        }
         routing {
             staticFiles(dir = File("src/web"), remotePath = "/")
-//            webSocket("/ws") {
-//
-//            }
-        }
+            webSocket("/ws") {
+                val clientIp = call.request.origin.remoteAddress
+                logger.info { "web socket connected: $clientIp" }
+                incoming.consumeEach {
+                    sendSerialized(GolemOutput.Welcome("You are connected to Golem XIV"))
+                }
+                try {
+                    val context = golem.newContext()
 
-    }
-
-
-//    routing {      // Serve static files from the web directory
-//        staticFiles(        dir = File("src/web"),
-//            remotePath = "/"      )
-//        webSocket("/ws") {
-//            val clientIp = call.request.origin.remoteAddress
-//            logger.info { "web socket connected: $clientIp" }
-//            try {
-//                send(
-//                    AgentOutput.Welcome(              "You are connected to ClaudineServer, starting ClaudineSession"
-//                    )          )
-//                val claudineSession = ClaudineSession(anthropic)
-//
-//                while (true) {            val frame = incoming.receive()
+//                while (true) {
+//                    val frame = incoming.receive()
 //                    if (frame !is Frame.Text) {              logger.error { "Received frame is not a text: ${frame.frameType}" }
 //                        send(AgentOutput.Error("Received frame is not a text: ${frame.frameType}"))              continue
 //                    }            val receivedText = frame.readText()
@@ -84,8 +66,14 @@ suspend fun startServer(
 //                    claudineSession.process(message) {              send(it)
 //                    }
 //                }        } catch (e: Exception) {
-//                logger.error {            "Unexpected error in WebSocket session: ${e.message}"
-//                }        }
-//        }    }
+
+                } catch (e: Exception) {
+                    logger.error {
+                        "Unexpected error in WebSocket session: ${e.message}"
+                    }
+                }
+            }
+        }
+    }.start(wait = true)
+
 }
-//    server.start(wait = true)}

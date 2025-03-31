@@ -17,8 +17,8 @@
 package com.xemantic.golem.web.reasoning
 
 import com.xemantic.ai.golem.api.Message
-import com.xemantic.ai.golem.api.ReasoningEvent
-import com.xemantic.ai.golem.api.UserEvent
+import com.xemantic.ai.golem.api.GolemOutput
+import com.xemantic.ai.golem.api.GolemInput
 import com.xemantic.golem.web.ui.ReasoningView
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -28,8 +28,8 @@ class ReasoningPresenter(
     scope: CoroutineScope,
     view: ReasoningView,
     reasoning: List<Message>, // existing reasoning
-    reasoningEvents: Flow<ReasoningEvent>,
-    send: suspend (UserEvent) -> Unit
+    reasoningEvents: Flow<GolemOutput>,
+    send: suspend (GolemInput) -> Unit
 ) {
 
     private var currentPrompt = ""
@@ -55,7 +55,7 @@ class ReasoningPresenter(
         scope.launch {
             reasoningEvents.collect { output ->
                 when (output) {
-                    is ReasoningEvent.Welcome -> {
+                    is GolemOutput.Welcome -> {
                         view.addWelcomeMessage(output.message)
                         view.submitsDisabled(false)
                     }

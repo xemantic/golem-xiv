@@ -69,27 +69,9 @@ class ContentDelta(
     val delta: Text
 )
 
-sealed class ReasoningEvent {
 
-    @Serializable
-    data class Welcome(
-        val message: String
-    ) : ReasoningEvent()
 
-    @Serializable
-    data class TextDelta(
-        val delta: String
-    ): ReasoningEvent()
 
-}
-
-sealed class UserEvent {
-
-    data class Prompt(
-        val message: Message
-    )
-
-}
 
 //@Serializable
 //sealed class Content {
