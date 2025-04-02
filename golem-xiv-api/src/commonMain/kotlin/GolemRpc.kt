@@ -16,26 +16,3 @@
 
 package com.xemantic.ai.golem.api
 
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonClassDiscriminator
-
-@Serializable
-@OptIn(ExperimentalSerializationApi::class)
-@JsonClassDiscriminator("type")
-sealed class GolemOutput {
-
-    @Serializable
-    @SerialName("welcome")
-    data class Welcome(
-        val message: String
-    ) : GolemOutput()
-
-    @Serializable
-    @SerialName("textDelta")
-    data class TextDelta(
-        val delta: String
-    ): GolemOutput()
-
-}

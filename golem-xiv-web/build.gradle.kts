@@ -44,6 +44,9 @@ kotlin {
             dependencies {
                 implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.kotlinx.html)
+                implementation(libs.ktor.client.websockets)
+                implementation(libs.ktor.serialization.kotlinx.json)
+                implementation("org.jetbrains.kotlinx:kotlinx-rpc-krpc-client:0.5.1")
             }
         }
 

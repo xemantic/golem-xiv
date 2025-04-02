@@ -55,8 +55,15 @@ dependencies {
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.server.websockets)
     implementation(libs.ktor.server.cio)
+    implementation(libs.ktor.server.cors)
+    implementation(libs.ktor.server.call.logging)
+    implementation(libs.ktor.serialization.kotlinx.json)
 
     implementation(libs.playwright)
+
+    runtimeOnly(libs.log4j.slf4j2)
+    runtimeOnly(libs.jackson.databind)
+    runtimeOnly(libs.jackson.dataformat.yaml)
 
     testImplementation(libs.kotlin.test)
     testImplementation(libs.xemantic.kotlin.test)

@@ -18,17 +18,28 @@ package com.xemantic.ai.golem.server
 
 import com.xemantic.ai.golem.api.GolemOutput
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.github.oshai.kotlinlogging.Level
+import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpMethod
+import io.ktor.serialization.kotlinx.KotlinxWebsocketSerializationConverter
 import io.ktor.server.application.install
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.http.content.staticFiles
+import io.ktor.server.plugins.calllogging.CallLogging
+import io.ktor.server.plugins.cors.routing.CORS
 import io.ktor.server.plugins.origin
 import io.ktor.server.routing.routing
+import io.ktor.server.websocket.WebSocketServerSession
 import io.ktor.server.websocket.WebSockets
+import io.ktor.server.websocket.pingPeriod
 import io.ktor.server.websocket.sendSerialized
+import io.ktor.server.websocket.timeout
 import io.ktor.server.websocket.webSocket
 import kotlinx.coroutines.channels.consumeEach
+import kotlinx.serialization.json.Json
 import java.io.File
+import kotlin.time.Duration.Companion.seconds
 
 private val logger = KotlinLogging.logger {}
 
@@ -41,15 +52,59 @@ fun startServer(
     golem: Golem
 ) {
     embeddedServer(CIO, 8081) {
+        install(CallLogging) {
+            level = org.slf4j.event.Level.DEBUG
+
+        }
+        install(CORS) {
+            // Allow requests from any host
+            anyHost()
+
+            // Or specify allowed hosts
+            // allowHost("example.com")
+            // allowHost("localhost:3000")
+
+            // Configure allowed HTTP methods
+            allowMethod(HttpMethod.Get)
+            allowMethod(HttpMethod.Post)
+            allowMethod(HttpMethod.Put)
+            allowMethod(HttpMethod.Delete)
+            allowMethod(HttpMethod.Options)
+
+            // Allow headers
+            allowHeader(HttpHeaders.ContentType)
+            allowHeader(HttpHeaders.Authorization)
+
+            // Allow credentials (cookies, etc.)
+            allowCredentials = true
+
+            // Allow specific content types
+            allowHeadersPrefixed("X-Custom-")
+
+            // Configure max age for preflight requests cache
+            maxAgeInSeconds = 3600
+        }
         install(WebSockets) {
+            contentConverter = KotlinxWebsocketSerializationConverter(Json)
+            pingPeriod = 15.seconds
+            timeout = 15.seconds
+            maxFrameSize = Long.MAX_VALUE
+            masking = false
         }
         routing {
-            staticFiles(dir = File("src/web"), remotePath = "/")
+            staticFiles(
+                dir = File("src/web"),
+                remotePath = "/"
+            )
             webSocket("/ws") {
                 val clientIp = call.request.origin.remoteAddress
                 logger.info { "web socket connected: $clientIp" }
+                sendGolemOutput(
+                    GolemOutput.Welcome("You are connected to Golem XIV")
+                )
+                sendSerialized<GolemOutput>(GolemOutput.Welcome("You are connected to Golem XIV"))
                 incoming.consumeEach {
-                    sendSerialized(GolemOutput.Welcome("You are connected to Golem XIV"))
+                    sendSerialized<GolemOutput>(GolemOutput.Welcome("You are connected to Golem XIV"))
                 }
                 try {
                     val context = golem.newContext()
@@ -76,4 +131,10 @@ fun startServer(
         }
     }.start(wait = true)
 
+}
+
+suspend fun WebSocketServerSession.sendGolemOutput(
+    output: GolemOutput
+) {
+    sendSerialized<GolemOutput>(output)
 }
