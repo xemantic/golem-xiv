@@ -42,11 +42,12 @@ anthropic-sdk-kotlin = { module = "com.xemantic.ai:anthropic-sdk-kotlin", versio
 
 playwright = { module = "com.microsoft.playwright:playwright", version.ref= "playwright" }
 
+ktor-websockets = { module = "io.ktor:ktor-websockets", version.ref = "ktor" }
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
 ktor-client-java = { module = "io.ktor:ktor-client-java", version.ref = "ktor" }
 ktor-client-websockets = { module = "io.ktor:ktor-client-websockets", version.ref = "ktor" }
 ktor-server-core = { module = "io.ktor:ktor-server-core", version.ref = "ktor" }
-ktor-server-cio = { module = "io.ktor:ktor-server-cio", version.ref = "ktor" }
+ktor-server-netty = { module = "io.ktor:ktor-server-netty", version.ref = "ktor" }
 ktor-server-websockets = { module = "io.ktor:ktor-server-websockets", version.ref = "ktor" }
 ktor-server-cors = { module = "io.ktor:ktor-server-cors", version.ref = "ktor" }
 ktor-server-call-logging = { module = "io.ktor:ktor-server-call-logging", version.ref = "ktor" }
@@ -67,6 +68,7 @@ kotlinx-binary-compatibility-validator = { id = "org.jetbrains.kotlinx.binary-co
 jreleaser = { id = "org.jreleaser", version.ref = "jreleaserPlugin" }
 xemantic-conventions = { id = "com.xemantic.gradle.xemantic-conventions", version.ref = "xemanticConventionsPlugin" }
 kotlin-plugin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+ktor-plugin = { id = "io.ktor.plugin", version.ref = "ktor" }
 
 # Plugins defined by this project
 golem-jvm-library = { id = "golem.jvm.library" }
