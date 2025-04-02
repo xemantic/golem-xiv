@@ -37,7 +37,6 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.collections.set
-import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 const val SYSTEM_PROMPT = """
@@ -94,7 +93,6 @@ class Golem : AutoCloseable {
         )!!
     }
 
-    @OptIn(ExperimentalUuidApi::class)
     inner class DefaultContext(
         override val id: String = Uuid.random().toString(),
         private val systemPrompt: String,
