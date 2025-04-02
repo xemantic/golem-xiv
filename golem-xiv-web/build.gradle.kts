@@ -1,26 +1,28 @@
+@file:OptIn(ExperimentalKotlinGradlePluginApi::class)
+
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
+
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlin.plugin.serialization)
     alias(libs.plugins.kotlin.plugin.power.assert)
-    alias(libs.plugins.dokka)
-    alias(libs.plugins.versions)
-    `maven-publish`
-    signing
 }
 
 kotlin {
 
-//    compilerOptions {
-//        apiVersion = kotlinTarget
-//        languageVersion = kotlinTarget
-//        freeCompilerArgs.add("-Xmulti-dollar-interpolation")
-//        extraWarnings = true
-//        progressiveMode = true
-//    }
+    compilerOptions {
+        //apiVersion = KotlinVersion.fromVersion(libs.versions.kotlinTarget.get())
+        //languageVersion = kotlinTarget
+        freeCompilerArgs.addAll(
+            "-Xmulti-dollar-interpolation",
+            "-opt-in=kotlin.uuid.ExperimentalUuidApi"
+        )
+        extraWarnings = true
+        progressiveMode = true
+    }
 
     js {
         browser {
-
         }
         binaries.executable()
     }
@@ -46,7 +48,6 @@ kotlin {
                 implementation(libs.kotlinx.html)
                 implementation(libs.ktor.client.websockets)
                 implementation(libs.ktor.serialization.kotlinx.json)
-                implementation("org.jetbrains.kotlinx:kotlinx-rpc-krpc-client:0.5.1")
             }
         }
 
@@ -54,9 +55,9 @@ kotlin {
 
 }
 
-//powerAssert {
-//    functions = listOf(
-//        "com.xemantic.kotlin.test.assert",
-//        "com.xemantic.kotlin.test.have"
-//    )
-//}
+powerAssert {
+    functions = listOf(
+        "com.xemantic.kotlin.test.assert",
+        "com.xemantic.kotlin.test.have"
+    )
+}

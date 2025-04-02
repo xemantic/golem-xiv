@@ -5,6 +5,18 @@ plugins {
 
 kotlin {
 
+    compilerOptions {
+        //apiVersion = KotlinVersion.fromVersion(libs.versions.kotlinTarget.get())
+        //languageVersion = kotlinTarget
+        freeCompilerArgs.addAll(
+            "-Xmulti-dollar-interpolation",
+            "-opt-in=kotlin.uuid.ExperimentalUuidApi",
+            "-opt-in=kotlinx.serialization.ExperimentalSerializationApi"
+        )
+        extraWarnings = true
+        progressiveMode = true
+    }
+
     jvm {
     }
 
@@ -18,6 +30,8 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(libs.kotlinx.serialization.json)
+                implementation(libs.ktor.websockets)
+                implementation(libs.kotlin.logging)
             }
         }
 

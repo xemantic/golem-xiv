@@ -1,21 +1,13 @@
+@file:OptIn(ExperimentalKotlinGradlePluginApi::class)
+
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
+
 plugins {
     alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.ktor.plugin)
 //    alias(libs.plugins.kotlin.plugin.serialization)
-//    alias(libs.plugins.kotlin.plugin.power.assert)
-//    alias(libs.plugins.dokka)
-//    alias(libs.plugins.versions)
-//    `maven-publish`
-//    signing
-//    alias(libs.plugins.jreleaser)
+    alias(libs.plugins.kotlin.plugin.power.assert)
 }
-
-//    compilerOptions {
-//        apiVersion = kotlinTarget
-//        languageVersion = kotlinTarget
-//        freeCompilerArgs.add("-Xmulti-dollar-interpolation")
-//        extraWarnings = true
-//        progressiveMode = true
-//    }
 
 //    jvm {
 //        // set up according to https://jakewharton.com/gradle-toolchains-are-rarely-a-good-idea/
@@ -30,7 +22,24 @@ plugins {
 
 val generatedSourcesDir = layout.buildDirectory.dir("generated/source/main/kotlin")
 
+application {
+    mainClass = "com.xemantic.ai.golem.server.GolemServerKt"
+}
+
 kotlin {
+
+    compilerOptions {
+        //apiVersion = KotlinVersion.fromVersion(libs.versions.kotlinTarget.get())
+        //languageVersion = kotlinTarget
+        freeCompilerArgs.addAll(
+            "-Xmulti-dollar-interpolation",
+            "-opt-in=kotlin.uuid.ExperimentalUuidApi",
+            "-opt-in=kotlinx.serialization.ExperimentalSerializationApi"
+        )
+        extraWarnings = true
+        progressiveMode = true
+    }
+
     sourceSets {
         main {
             kotlin.srcDir(generatedSourcesDir)
@@ -54,7 +63,7 @@ dependencies {
     implementation(libs.ktor.client.java)
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.server.websockets)
-    implementation(libs.ktor.server.cio)
+    implementation(libs.ktor.server.netty)
     implementation(libs.ktor.server.cors)
     implementation(libs.ktor.server.call.logging)
     implementation(libs.ktor.serialization.kotlinx.json)
@@ -72,12 +81,12 @@ dependencies {
     implementation("com.vladsch.flexmark:flexmark-html2md-converter:0.64.8")
 }
 
-//powerAssert {
-//    functions = listOf(
-//        "com.xemantic.kotlin.test.assert",
-//        "com.xemantic.kotlin.test.have"
-//    )
-//}
+powerAssert {
+    functions = listOf(
+        "com.xemantic.kotlin.test.assert",
+        "com.xemantic.kotlin.test.have"
+    )
+}
 
 // Define the task to generate the Kotlin source
 tasks.register("generateGolemScriptApi") {
@@ -109,4 +118,41 @@ tasks.register("generateGolemScriptApi") {
 // Make sure the source is generated before compilation
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     dependsOn("generateGolemScriptApi")
+}
+
+tasks.register<Copy>("copyWebResources") {
+    dependsOn(":golem-xiv-web:jsBrowserDistribution")
+    from(
+        project(":golem-xiv-web")
+            .layout.buildDirectory
+            .dir("dist/js/productionExecutable")
+    ) {
+        exclude("index.html")
+    }
+    into(
+        layout.buildDirectory.dir("resources/main/web")
+    )
+}
+
+// Make sure the copy task runs before the server's resources are processed
+tasks.named("jar") {
+    dependsOn("copyWebResources")
+}
+
+tasks.named("shadowJar") {
+    dependsOn("copyWebResources")
+}
+
+listOf(
+    "distTar",
+    "distZip",
+    "startScripts",
+    "startShadowScripts",
+    "shadowDistTar",
+    "shadowDistZip",
+    "assemble"
+).forEach {
+    tasks.named(it) {
+        enabled = false
+    }
 }
