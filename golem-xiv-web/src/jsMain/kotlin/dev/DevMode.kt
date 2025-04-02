@@ -14,5 +14,6 @@
  * limitations under the License.
  */
 
-package com.xemantic.ai.golem.api
+package com.xemantic.golem.web.dev
 
+val devMode: Boolean get() = js("(typeof golemDevMode !== 'undefined') && golemDevMode")
