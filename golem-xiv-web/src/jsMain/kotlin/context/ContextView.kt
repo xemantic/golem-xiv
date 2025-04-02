@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-package com.xemantic.golem.web.reasoning
+package com.xemantic.golem.web.context
 
 import com.xemantic.golem.web.js.eventFlow
-import com.xemantic.golem.web.ui.Aciton
-import com.xemantic.golem.web.ui.ReasoningView
 import kotlinx.browser.document
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -30,7 +28,7 @@ import kotlinx.html.js.textArea
 import org.w3c.dom.events.InputEvent
 import org.w3c.dom.events.MouseEvent
 
-class DefaultReasoningView : ReasoningView {
+class DefaultContextView : ContextView {
 
     private val content = document.create.div("content")
 

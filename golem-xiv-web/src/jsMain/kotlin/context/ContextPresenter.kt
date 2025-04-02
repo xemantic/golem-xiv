@@ -14,19 +14,42 @@
  * limitations under the License.
  */
 
-package com.xemantic.golem.web.reasoning
+package com.xemantic.golem.web.context
 
 import com.xemantic.ai.golem.api.Message
 import com.xemantic.ai.golem.api.GolemOutput
 import com.xemantic.ai.golem.api.GolemInput
-import com.xemantic.golem.web.ui.ReasoningView
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 
-class ReasoningPresenter(
+object Aciton
+
+interface ContextView {
+
+    val promptChanges: Flow<String>
+
+    val promptSubmits: Flow<Aciton>
+
+    var promptInputDisabled: Boolean
+
+    var promptSubmitDisabled: Boolean
+
+    fun clearPromptInput()
+
+    fun addWelcomeMessage(test: String)
+
+    fun addTextResponse(text: String)
+
+//    fun addToolUseRequest(request: AgentOutput.ToolUseRequest)
+//
+//    fun addToolUseResponse(response: AgentOutput.ToolUseResponse)
+
+}
+
+class ContextPresenter(
     scope: CoroutineScope,
-    view: ReasoningView,
+    view: ContextView,
     reasoning: List<Message>, // existing reasoning
     reasoningEvents: Flow<GolemOutput>,
     send: suspend (GolemInput) -> Unit
@@ -86,7 +109,7 @@ class ReasoningPresenter(
 
 }
 
-private fun ReasoningView.submitsDisabled(disabled: Boolean) {
+private fun ContextView.submitsDisabled(disabled: Boolean) {
     promptInputDisabled = disabled
     promptSubmitDisabled = disabled
 }

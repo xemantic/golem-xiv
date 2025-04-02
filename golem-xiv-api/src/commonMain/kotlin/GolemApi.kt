@@ -17,7 +17,8 @@
 package com.xemantic.ai.golem.api
 
 import kotlinx.serialization.Serializable
-import kotlin.uuid.ExperimentalUuidApi
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
 // things which go over web socket
@@ -25,11 +26,22 @@ import kotlin.uuid.Uuid
 interface Content
 
 @Serializable
-data class Conversation(
-    val id: String,
-    val messages: List<Message>,
-    val system: List<Content>
-) : Content
+data class Context(
+    val id: Uuid,
+    val system: List<Content>,
+    val messages: List<Message>
+) : Content {
+
+    @Serializable
+    data class Info @OptIn(ExperimentalTime::class) constructor(
+        val id: Uuid,
+        val title: String,
+        // TODO move it to general file level
+        @Serializable(with = InstantIso8601Serializer::class)
+        val creationDate: Instant
+    )
+
+}
 
 @Serializable
 data class Message(
@@ -63,15 +75,10 @@ data class Code(
 )
 
 @Serializable
-@OptIn(ExperimentalUuidApi::class)
 class ContentDelta(
     val conversationId: Uuid,
     val delta: Text
 )
-
-
-
-
 
 //@Serializable
 //sealed class Content {

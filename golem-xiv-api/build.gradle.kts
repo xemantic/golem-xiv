@@ -11,7 +11,8 @@ kotlin {
         freeCompilerArgs.addAll(
             "-Xmulti-dollar-interpolation",
             "-opt-in=kotlin.uuid.ExperimentalUuidApi",
-            "-opt-in=kotlinx.serialization.ExperimentalSerializationApi"
+            "-opt-in=kotlinx.serialization.ExperimentalSerializationApi",
+            "-opt-in=kotlin.time.ExperimentalTime"
         )
         extraWarnings = true
         progressiveMode = true
@@ -31,6 +32,7 @@ kotlin {
             dependencies {
                 implementation(libs.kotlinx.serialization.json)
                 implementation(libs.ktor.websockets)
+                implementation(libs.ktor.client.core)
                 implementation(libs.kotlin.logging)
             }
         }
