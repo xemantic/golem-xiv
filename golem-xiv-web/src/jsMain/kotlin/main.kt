@@ -16,86 +16,12 @@
 
 package com.xemantic.golem.web
 
-import com.xemantic.ai.golem.api.GolemInput
-import com.xemantic.ai.golem.api.GolemOutput
-import com.xemantic.golem.web.reasoning.DefaultReasoningView
-import io.ktor.client.HttpClient
-import io.ktor.client.plugins.websocket.WebSockets
-import io.ktor.client.plugins.websocket.receiveDeserialized
-import io.ktor.client.plugins.websocket.webSocket
-import io.ktor.http.HttpMethod
-import io.ktor.serialization.kotlinx.KotlinxWebsocketSerializationConverter
-import io.ktor.websocket.Frame
-import io.ktor.websocket.readText
+import com.xemantic.golem.web.main.MainPresenter
+import com.xemantic.golem.web.main.MainView
 import kotlinx.browser.document
-import kotlinx.browser.window
-import kotlinx.coroutines.MainScope
-import kotlinx.rpc.internal.utils.InternalRpcApi
-import kotlinx.rpc.krpc.client.KrpcClient
-import kotlinx.rpc.krpc.internal.KrpcPlugin
-import kotlinx.serialization.json.Json
-import org.w3c.dom.WebSocket
 
-//fun main() {
-//    val scope = MainScope()
-//
-//    val container = document.createElement("p").appendChild(document.createTextNode("dupaaaaazzzzzaaaaaaaaa"))
-//    document.body!!.appendChild(container)
-//}
-
-@OptIn(InternalRpcApi::class)
-suspend fun main() {
-    val scope = MainScope()
-
-    val client = HttpClient {
-//        install(KrpcPlugin) {
-//
-//        }
-        install(WebSockets) {
-            contentConverter = KotlinxWebsocketSerializationConverter(Json)
-        }
-    }
-
-    client.webSocket(
-        port = 8081, // TODO this port should depend on the configuration
-        path = "/ws"
-    ) {
-        while(true) {
-//            val golemOutput = receiveDeserialized<GolemOutput>()
-            val othersMessage = incoming.receive() as? Frame.Text
-            console.log(othersMessage!! .readText())
-//            if(myMessage != null) {
-//                send(myMessage)
-//            }
-        }
-    }
-    val view = DefaultReasoningView()
-    document.body!!.append(view.chatDiv)
-
-    val protocol = if (window.location.protocol == "https:") "wss" else "ws"
-
-//    client.webSocket {  }
-//    val ws = WebSocket("$protocol://localhost:8081/ws")
-//    ws.onmessage = {
-//        val x: String = JSON.parse(it.data as String)
-//        println("Message x: $x")
-//    }
-//    ws.onopen = {
-//        println("Open: ${JSON.stringify(it)}")
-//    }
-//    ws.onclose = {
-//        println("Close: $it")
-//    }
-
-//    val agentOutput = scope.handleWebSocket(ws)
-
-//    ReasoningPresenter(
-//        scope,
-//        view,
-//        reasoning = emptyList(),
-//        agentOutput,
-//    ) { agentInput ->
-//        //ws.send(agentInput.toJson())
-//    }
-
+fun main() {
+    val presenter = MainPresenter()
+    val view = MainView(document.body!!)
+    presenter.bind(view)
 }
