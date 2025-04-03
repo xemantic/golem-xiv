@@ -14,30 +14,24 @@
  * limitations under the License.
  */
 
-package com.xemantic.golem.web.ui
+package com.xemantic.ai.golem.presenter.websocket
 
-import kotlinx.coroutines.flow.Flow
+import com.xemantic.ai.golem.api.GolemInput
+import com.xemantic.ai.golem.api.GolemOutput
+import com.xemantic.ai.golem.api.collectGolemData
+import com.xemantic.ai.golem.api.golemJson
+import io.ktor.websocket.WebSocketSession
+import io.ktor.websocket.send
 
-object Aciton
+suspend fun WebSocketSession.sendToGolem(
+    input: GolemInput
+) {
+    val json = golemJson.encodeToString<GolemInput>(input)
+    send(json)
+}
 
-interface ReasoningView {
-
-    val promptChanges: Flow<String>
-
-    val promptSubmits: Flow<Aciton>
-
-    var promptInputDisabled: Boolean
-
-    var promptSubmitDisabled: Boolean
-
-    fun clearPromptInput()
-
-    fun addWelcomeMessage(test: String)
-
-    fun addTextResponse(text: String)
-
-//    fun addToolUseRequest(request: AgentOutput.ToolUseRequest)
-//
-//    fun addToolUseResponse(response: AgentOutput.ToolUseResponse)
-
+suspend fun WebSocketSession.collectGolemOutput(
+    block: suspend (GolemOutput) -> Unit
+) {
+    collectGolemData<GolemOutput>(block)
 }

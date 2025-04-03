@@ -14,22 +14,22 @@
  * limitations under the License.
  */
 
-package com.xemantic.golem.web.context
+package com.xemantic.ai.golem.presenter.context
 
 import com.xemantic.ai.golem.api.Message
-import com.xemantic.ai.golem.api.GolemOutput
 import com.xemantic.ai.golem.api.GolemInput
+import com.xemantic.ai.golem.api.Text
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 
-object Aciton
+object Action
 
 interface ContextView {
 
     val promptChanges: Flow<String>
 
-    val promptSubmits: Flow<Aciton>
+    val promptSubmits: Flow<Action>
 
     var promptInputDisabled: Boolean
 
@@ -49,10 +49,10 @@ interface ContextView {
 
 class ContextPresenter(
     scope: CoroutineScope,
-    view: ContextView,
-    reasoning: List<Message>, // existing reasoning
-    reasoningEvents: Flow<GolemOutput>,
-    send: suspend (GolemInput) -> Unit
+    private val view: ContextView,
+//    reasoning: List<Message>, // existing reasoning
+//    reasoningEvents: Flow<GolemOutput>,
+    sender: suspend (GolemInput) -> Unit
 ) {
 
     private var currentPrompt = ""
@@ -71,40 +71,47 @@ class ContextPresenter(
                     view.submitsDisabled(true)
                     view.addTextResponse(currentPrompt)
                     view.clearPromptInput()
-                    //send(UserEvent.Prompt(Message(content = Text(currentPrompt))))
+                    sender(GolemInput.Prompt(message = Message(content = listOf(Text(currentPrompt)))))
                 }
             }
         }
-        scope.launch {
-            reasoningEvents.collect { output ->
-                when (output) {
-                    is GolemOutput.Welcome -> {
-                        view.addWelcomeMessage(output.message)
-                        view.submitsDisabled(false)
-                    }
-                    else -> throw IllegalStateException("unknown event")
-//                    is ReasoningEvent.ModelResponse -> {
-//                        view.submitsDisabled(
-//                            output.messageResponse.stopReason == StopReason.TOOL_USE
-//                        )
-//                        output.messageResponse.content.forEach {
-//                            if (it is Text) {
-//                                view.addTextResponse(it.text)
-//                            }
-//                        }
-//                    }
-//                    is AgentOutput.ToolUseRequest -> {
-//                        view.addToolUseRequest(output)
-//                    }
-//                    is AgentOutput.ToolUseResponse -> {
-//                        view.addToolUseResponse(output)
-//                    }
-//                    is AgentOutput.Error -> {
+
+
+
+//        scope.launch {
+//            reasoningEvents.collect { output ->
+//                when (output) {
+//                    is GolemOutput.Welcome -> {
+//                        view.addWelcomeMessage(output.message)
 //                        view.submitsDisabled(false)
 //                    }
-                }
-            }
-        }
+//                    else -> throw IllegalStateException("unknown event")
+////                    is ReasoningEvent.ModelResponse -> {
+////                        view.submitsDisabled(
+////                            output.messageResponse.stopReason == StopReason.TOOL_USE
+////                        )
+////                        output.messageResponse.content.forEach {
+////                            if (it is Text) {
+////                                view.addTextResponse(it.text)
+////                            }
+////                        }
+////                    }
+////                    is AgentOutput.ToolUseRequest -> {
+////                        view.addToolUseRequest(output)
+////                    }
+////                    is AgentOutput.ToolUseResponse -> {
+////                        view.addToolUseResponse(output)
+////                    }
+////                    is AgentOutput.Error -> {
+////                        view.submitsDisabled(false)
+////                    }
+//                }
+//            }
+//        }
+    }
+
+    fun start() {
+        view.submitsDisabled(false)
     }
 
 }

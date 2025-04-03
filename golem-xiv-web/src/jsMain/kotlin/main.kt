@@ -14,14 +14,31 @@
  * limitations under the License.
  */
 
-package com.xemantic.golem.web
+package com.xemantic.ai.golem.web
 
-import com.xemantic.golem.web.main.MainPresenter
-import com.xemantic.golem.web.main.MainView
+import com.xemantic.ai.golem.presenter.MainPresenter
+import com.xemantic.ai.golem.web.dev.devMode
+import com.xemantic.ai.golem.web.main.HtmlMainView
+import io.ktor.http.URLProtocol
 import kotlinx.browser.document
+import kotlinx.browser.window
 
 fun main() {
-    val presenter = MainPresenter()
-    val view = MainView(document.body!!)
+    val currentProtocol = window.location.protocol.substringBefore(":")
+    val protocol = URLProtocol.byName[currentProtocol]
+    requireNotNull(protocol) { "protocol cannot be null" }
+    val host = window.location.hostname
+    val port = if (window.location.port.isEmpty()) 80 else window.location.port.toInt()
+    val config = if (devMode) MainPresenter.Config(
+        apiHost = host,
+        apiPort = 8081,
+        apiProtocol = protocol
+    ) else MainPresenter.Config(
+        apiHost = host,
+        apiPort = port,
+        apiProtocol = protocol
+    )
+    val presenter = MainPresenter(config)
+    val view = HtmlMainView(document.body!!)
     presenter.bind(view)
 }

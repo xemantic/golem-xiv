@@ -14,6 +14,12 @@
  * limitations under the License.
  */
 
-package com.xemantic.ai.golem.web.dev
+package com.xemantic.ai.golem.web.view
 
-val devMode: Boolean get() = js("(typeof golemDevMode !== 'undefined') && golemDevMode")
+import org.w3c.dom.HTMLElement
+
+interface HtmlView {
+
+    val element: HTMLElement
+
+}

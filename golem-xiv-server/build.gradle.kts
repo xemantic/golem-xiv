@@ -34,7 +34,8 @@ kotlin {
         freeCompilerArgs.addAll(
             "-Xmulti-dollar-interpolation",
             "-opt-in=kotlin.uuid.ExperimentalUuidApi",
-            "-opt-in=kotlinx.serialization.ExperimentalSerializationApi"
+            "-opt-in=kotlinx.serialization.ExperimentalSerializationApi",
+            "-opt-in=kotlin.time.ExperimentalTime"
         )
         extraWarnings = true
         progressiveMode = true

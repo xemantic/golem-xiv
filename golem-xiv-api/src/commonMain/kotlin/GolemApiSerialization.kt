@@ -17,6 +17,10 @@
 package com.xemantic.ai.golem.api
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.ktor.client.HttpClient
+import io.ktor.client.call.body
+import io.ktor.client.request.get
+import io.ktor.http.isSuccess
 import io.ktor.websocket.Frame
 import io.ktor.websocket.WebSocketSession
 import io.ktor.websocket.readText
@@ -90,3 +94,21 @@ object InstantIso8601Serializer : KSerializer<Instant> {
     }
 
 }
+
+suspend inline fun <reified T> HttpClient.serviceGet(
+    uri: String
+): T = get(uri).run {
+    if (status.isSuccess()) {
+        body<T>()
+    } else {
+        throw GolemApiException(
+            uri,
+            "${status.value} (${status.description})"
+        )
+    }
+}
+
+class GolemApiException(
+    uri: String,
+    message: String
+) : RuntimeException("Golem API error: $uri - $message")

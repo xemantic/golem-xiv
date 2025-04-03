@@ -14,12 +14,9 @@
  * limitations under the License.
  */
 
-package com.xemantic.golem.web.js
+package com.xemantic.ai.golem.web.js
 
-import com.xemantic.ai.golem.api.GolemOutput
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.transform
 import org.w3c.dom.MessageEvent
 import org.w3c.dom.WebSocket
@@ -45,24 +42,24 @@ fun Flow<MessageEvent>.toReasoningEvents() = transform { event ->
     }
 }
 
-fun CoroutineScope.handleWebSocket(ws: WebSocket): Flow<GolemOutput> {
-//    launch {
-//        ws.openEvents.collect {
-//            console.log("Connected to WebSocket")
-//        }
+//fun CoroutineScope.handleWebSocket(ws: WebSocket): Flow<GolemOutput> {
+////    launch {
+////        ws.openEvents.collect {
+////            console.log("Connected to WebSocket")
+////        }
+////    }
+////    launch {
+////        ws.closEvents.collect {
+////            console.log("WebSocket closed")
+////        }
+////    }
+////    launch {
+////        ws.errorEvents.collect {
+////            console.log("WebSocket error: $it")
+////        }
+////    }
+//    //return ws.messageEvents.toReasoningEvents()
+//    return flow {
+//        GolemOutput.Welcome("foo")
 //    }
-//    launch {
-//        ws.closEvents.collect {
-//            console.log("WebSocket closed")
-//        }
-//    }
-//    launch {
-//        ws.errorEvents.collect {
-//            console.log("WebSocket error: $it")
-//        }
-//    }
-    //return ws.messageEvents.toReasoningEvents()
-    return flow {
-        GolemOutput.Welcome("foo")
-    }
-}
+//}

@@ -14,25 +14,22 @@
  * limitations under the License.
  */
 
-package com.xemantic.ai.golem.web.js
+package com.xemantic.ai.golem.server.server
 
-import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.callbackFlow
-import org.w3c.dom.events.Event
-import org.w3c.dom.events.EventListener
-import org.w3c.dom.events.EventTarget
+import com.xemantic.ai.golem.api.GolemInput
+import com.xemantic.ai.golem.api.GolemOutput
+import com.xemantic.ai.golem.api.collectGolemData
+import com.xemantic.ai.golem.api.sendGolemData
+import io.ktor.websocket.WebSocketSession
 
-inline fun <reified T : Event> EventTarget.eventFlow(
-    type: String
-): Flow<T> = callbackFlow {
-    val listener = object : EventListener {
-        override fun handleEvent(event: Event) {
-            trySend(event as T)
-        }
-    }
-    addEventListener(type, listener)
-    awaitClose {
-        removeEventListener(type, listener)
-    }
+suspend fun WebSocketSession.sendGolemOutput(
+    output: GolemOutput
+) {
+    sendGolemData<GolemOutput>(output)
+}
+
+suspend fun WebSocketSession.collectGolemInput(
+    block: suspend (GolemInput) -> Unit
+) {
+    collectGolemData<GolemInput>(block)
 }

@@ -16,16 +16,25 @@
 
 package com.xemantic.ai.golem.api
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlin.uuid.ExperimentalUuidApi
+import kotlinx.serialization.json.JsonClassDiscriminator
 import kotlin.uuid.Uuid
 
+@Serializable
+@JsonClassDiscriminator("type")
 sealed class GolemInput {
 
     @Serializable
-    @OptIn(ExperimentalUuidApi::class)
+    @SerialName("test")
+    data class Test(
+        val text: String
+    ) : GolemInput()
+
+    @Serializable
+    @SerialName("prompt")
     data class Prompt(
-        val contextId: Uuid,
+        val contextId: Uuid? = null,
         val message: Message
     ) : GolemInput()
 

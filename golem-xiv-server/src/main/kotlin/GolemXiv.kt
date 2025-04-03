@@ -37,6 +37,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.collections.set
+import kotlin.time.Clock
 import kotlin.uuid.Uuid
 
 const val SYSTEM_PROMPT = """
@@ -76,6 +77,9 @@ interface Context {
 }
 
 class Golem : AutoCloseable {
+
+    val contexts: List<com.xemantic.ai.golem.api.Context.Info> = listOf(com.xemantic.ai.golem.api.Context.Info(Uuid.random(), "foo",
+        Clock.System.now()))
 
     private val anthropic: Anthropic = Anthropic()
 

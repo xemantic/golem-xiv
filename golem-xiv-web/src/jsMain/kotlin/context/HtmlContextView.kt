@@ -14,9 +14,12 @@
  * limitations under the License.
  */
 
-package com.xemantic.golem.web.context
+package com.xemantic.ai.golem.web.context
 
-import com.xemantic.golem.web.js.eventFlow
+import com.xemantic.ai.golem.presenter.context.Action
+import com.xemantic.ai.golem.presenter.context.ContextView
+import com.xemantic.ai.golem.web.view.HtmlView
+import com.xemantic.ai.golem.web.js.eventFlow
 import kotlinx.browser.document
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -28,7 +31,7 @@ import kotlinx.html.js.textArea
 import org.w3c.dom.events.InputEvent
 import org.w3c.dom.events.MouseEvent
 
-class DefaultContextView : ContextView {
+class HtmlContextView : ContextView, HtmlView {
 
     private val content = document.create.div("content")
 
@@ -47,9 +50,9 @@ class DefaultContextView : ContextView {
             promptInput.value
         }
 
-    override val promptSubmits: Flow<Aciton> =
+    override val promptSubmits: Flow<Action> =
         submitButton.eventFlow<MouseEvent>("click").map {
-            Aciton
+            Action
         }
 
     override var promptInputDisabled: Boolean
@@ -117,5 +120,7 @@ class DefaultContextView : ContextView {
 //            }
 //        }
 //    }
+
+    override val element get() = chatDiv
 
 }

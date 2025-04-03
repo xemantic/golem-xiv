@@ -16,45 +16,14 @@
 
 package com.xemantic.ai.golem.api
 
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonClassDiscriminator
-import kotlin.uuid.Uuid
 
 @Serializable
 @JsonClassDiscriminator("type")
-sealed class GolemOutput {
+sealed class OsProcessEvent {
 
-    @Serializable
-    @SerialName("welcome")
-    data class Welcome(
-        val message: String
-    ) : GolemOutput()
-
-    @Serializable
-    @SerialName("textDelta")
-    data class TextDelta (
-        val contextId: Uuid,
-        val delta: String
-    ): GolemOutput()
-
-    @Serializable
-    @SerialName("osProcess")
-    data class OsProcess(
-        val contextId: Uuid,
-        val event: OsProcessEvent
-    ) : GolemOutput()
-
-    @Serializable
-    @SerialName("contextAdded")
-    data class ContextAdded(
-        val id: Uuid
-    ) : GolemOutput()
-
-    @Serializable
-    @SerialName("contextUpdated")
-    data class ContextUpdated(
-        val info: Context.Info
-    ) : GolemOutput()
+    data class Output(val line: String) : OsProcessEvent()
+    data class Exit(val code: Int) : OsProcessEvent()
 
 }

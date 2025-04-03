@@ -14,6 +14,22 @@
  * limitations under the License.
  */
 
-package com.xemantic.ai.golem.web.dev
+package com.xemantic.ai.golem.presenter.context
 
-val devMode: Boolean get() = js("(typeof golemDevMode !== 'undefined') && golemDevMode")
+interface MessageView {
+
+    fun append(text: String)
+
+    fun appendBlock()
+
+}
+
+class MessagePresenter(
+    private val view: MessageView
+) {
+
+    fun append(text: String) {
+        view.append(text)
+    }
+
+}

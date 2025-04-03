@@ -14,24 +14,23 @@
  * limitations under the License.
  */
 
-package com.xemantic.golem.web.websocket
+package com.xemantic.ai.golem.server.server
 
-import com.xemantic.ai.golem.api.GolemInput
-import com.xemantic.ai.golem.api.GolemOutput
-import com.xemantic.ai.golem.api.collectGolemData
-import com.xemantic.ai.golem.api.golemJson
-import io.ktor.websocket.WebSocketSession
-import io.ktor.websocket.send
+import com.xemantic.ai.golem.server.Golem
+import io.ktor.server.response.respondText
+import io.ktor.server.routing.Route
+import io.ktor.server.routing.get
 
-suspend fun WebSocketSession.sendToGolem(
-    input: GolemInput
+fun Route.golemServiceRoute(
+    golem: Golem
 ) {
-    val json = golemJson.encodeToString<GolemInput>(input)
-    send(json)
-}
 
-suspend fun WebSocketSession.collectGolemOutput(
-    block: suspend (GolemOutput) -> Unit
-) {
-    collectGolemData<GolemOutput>(block)
+    get("/ping") {
+        call.respondText("pong")
+    }
+
+    get("/api/contexts") {
+        golem.contexts
+    }
+
 }

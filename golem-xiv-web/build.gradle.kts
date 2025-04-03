@@ -29,12 +29,6 @@ kotlin {
 
     sourceSets {
 
-        commonMain {
-            dependencies {
-                implementation(project(":golem-xiv-api"))
-            }
-        }
-
         commonTest {
             dependencies {
                 implementation(libs.kotlin.test)
@@ -44,6 +38,7 @@ kotlin {
 
         jsMain {
             dependencies {
+                implementation(project(":golem-xiv-presenter"))
                 implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.kotlinx.html)
                 implementation(libs.ktor.client.websockets)

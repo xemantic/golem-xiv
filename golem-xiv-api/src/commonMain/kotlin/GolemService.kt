@@ -14,6 +14,16 @@
  * limitations under the License.
  */
 
-package com.xemantic.ai.golem.web.dev
+package com.xemantic.ai.golem.api
 
-val devMode: Boolean get() = js("(typeof golemDevMode !== 'undefined') && golemDevMode")
+import io.ktor.client.HttpClient
+
+class GolemService(
+    private val client: HttpClient
+) {
+
+    suspend fun ping() = client.serviceGet<String>("/ping")
+
+    suspend fun listContexts(): List<Context.Info> = client.serviceGet<List<Context.Info>>("/contexts")
+
+}
