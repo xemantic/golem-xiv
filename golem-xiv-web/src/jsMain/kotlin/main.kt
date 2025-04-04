@@ -29,13 +29,9 @@ fun main() {
     requireNotNull(protocol) { "protocol cannot be null" }
     val host = window.location.hostname
     val port = if (window.location.port.isEmpty()) 80 else window.location.port.toInt()
-    val config = if (devMode) MainPresenter.Config(
+    val config =  MainPresenter.Config(
         apiHost = host,
-        apiPort = 8081,
-        apiProtocol = protocol
-    ) else MainPresenter.Config(
-        apiHost = host,
-        apiPort = port,
+        apiPort = if (devMode) 8081 else port,
         apiProtocol = protocol
     )
     val presenter = MainPresenter(config)

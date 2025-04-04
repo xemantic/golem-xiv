@@ -17,11 +17,13 @@
 package com.xemantic.ai.golem.server.server
 
 import com.xemantic.ai.golem.server.Golem
+import io.ktor.server.response.respond
 import io.ktor.server.response.respondText
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
+import io.ktor.server.routing.post
 
-fun Route.golemServiceRoute(
+fun Route.golemApiRoute(
     golem: Golem
 ) {
 
@@ -29,8 +31,20 @@ fun Route.golemServiceRoute(
         call.respondText("pong")
     }
 
-    get("/api/contexts") {
-        golem.contexts
+    get("/contexts") {
+        call.respond(
+            golem.contexts
+        )
+    }
+
+    get("/contexts/{id}") {
+        call.respond(
+            golem.contexts
+        )
+    }
+
+    post("/contexts") {
+
     }
 
 }

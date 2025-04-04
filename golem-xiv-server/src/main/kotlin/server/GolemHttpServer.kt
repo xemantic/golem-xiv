@@ -28,6 +28,7 @@ import io.ktor.server.http.content.staticResources
 import io.ktor.server.plugins.calllogging.CallLogging
 import io.ktor.server.plugins.cors.routing.CORS
 import io.ktor.server.plugins.origin
+import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import io.ktor.server.websocket.WebSockets
 import io.ktor.server.websocket.webSocket
@@ -79,7 +80,9 @@ fun Application.installGolemHttp(golem: Golem) {
             preCompressed(CompressedFileType.BROTLI, CompressedFileType.GZIP)
         }
 
-        golemServiceRoute(golem)
+        route("/api") {
+            golemApiRoute(golem)
+        }
 
         webSocket("/ws") {
 
