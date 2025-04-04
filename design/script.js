@@ -14,6 +14,7 @@ const micStatus = document.getElementById('mic-status');
 const recordingTime = document.getElementById('recording-time');
 const chatContainer = document.getElementById('chat-container');
 const welcomeText = document.querySelector('.welcome-text');
+const mainContainer = document.querySelector('.main-container');
 
 // State
 let isDarkMode = false;
@@ -52,34 +53,64 @@ function init() {
     if (savedTheme === 'dark') {
         toggleTheme();
     }
-    
+
     // Explicitly ensure sidebar is closed by default
     sidebar.classList.remove('active');
     overlay.classList.remove('active');
     document.body.classList.remove('sidebar-active');
     isSidebarOpen = false;
-    
-    // Force sidebar to be positioned off-screen initially
-    sidebar.style.left = '-' + getComputedStyle(document.documentElement).getPropertyValue('--sidebar-width');
-    
+
+    // Force sidebar to be positioned properly initially
+    if (window.innerWidth <= 768) {
+        // Use transform for mobile
+        sidebar.style.left = '0';
+        sidebar.style.transform = 'translateX(-100%)';
+    } else {
+        // Use left position for desktop
+        sidebar.style.left = '-' + getComputedStyle(document.documentElement).getPropertyValue('--sidebar-width');
+        sidebar.style.transform = 'translateX(0)';
+    }
+
+    // Set overflow on body to enable single scrollbar
+    document.body.style.overflowY = 'auto';
+
     // Load conversations from local storage
     loadConversations();
-    
+
     // Focus on input field
     promptInput.focus();
-    
+
     // Resize textarea as content changes
     promptInput.addEventListener('input', () => {
         promptInput.style.height = 'auto';
         promptInput.style.height = Math.min(promptInput.scrollHeight, 150) + 'px';
     });
-    
+
     // Listen for window resize events
     window.addEventListener('resize', handleWindowResize);
 }
 
 // Handle window resize
 function handleWindowResize() {
+    // Update sidebar positioning based on screen size
+    if (window.innerWidth <= 768) {
+        // Mobile view
+        sidebar.style.left = '0';
+        if (!isSidebarOpen) {
+            sidebar.style.transform = 'translateX(-100%)';
+        } else {
+            sidebar.style.transform = 'translateX(0)';
+        }
+    } else {
+        // Desktop view
+        sidebar.style.transform = 'translateX(0)';
+        if (!isSidebarOpen) {
+            sidebar.style.left = '-' + getComputedStyle(document.documentElement).getPropertyValue('--sidebar-width');
+        } else {
+            sidebar.style.left = '0';
+        }
+    }
+
     // Close sidebar automatically when resizing to mobile view if it's open
     if (window.innerWidth <= 768 && isSidebarOpen) {
         toggleSidebar();
@@ -92,14 +123,18 @@ function toggleSidebar() {
     sidebar.classList.toggle('active', isSidebarOpen);
     overlay.classList.toggle('active', isSidebarOpen);
     document.body.classList.toggle('sidebar-active', isSidebarOpen);
-    
-    // Explicitly set the left property when toggling
-    if (isSidebarOpen) {
+
+    // Update sidebar position based on screen size
+    if (window.innerWidth <= 768) {
+        // Mobile approach: use transform
         sidebar.style.left = '0';
+        sidebar.style.transform = isSidebarOpen ? 'translateX(0)' : 'translateX(-100%)';
     } else {
-        sidebar.style.left = '-' + getComputedStyle(document.documentElement).getPropertyValue('--sidebar-width');
+        // Desktop approach: use left position
+        sidebar.style.transform = 'translateX(0)';
+        sidebar.style.left = isSidebarOpen ? '0' : '-' + getComputedStyle(document.documentElement).getPropertyValue('--sidebar-width');
     }
-    
+
     // Ensure focus returns to input when sidebar closes
     if (!isSidebarOpen) {
         promptInput.focus();
@@ -133,15 +168,15 @@ function saveConversations() {
 function renderConversationList() {
     // Clear the list first
     conversationList.innerHTML = '';
-    
+
     if (conversations.length === 0) {
         conversationList.innerHTML = '<li class="no-conversations">No conversations yet</li>';
         return;
     }
-    
+
     // Sort conversations by date (newest first)
     const sortedConversations = [...conversations].sort((a, b) => b.lastUpdated - a.lastUpdated);
-    
+
     // Add each conversation to the list
     sortedConversations.forEach(convo => {
         const li = document.createElement('li');
@@ -149,9 +184,9 @@ function renderConversationList() {
         if (convo.id === currentConversationId) {
             li.classList.add('active');
         }
-        
+
         const iconClass = convo.id === currentConversationId ? 'fa-comment-dots' : 'fa-comment';
-        
+
         li.innerHTML = `
             <i class="fas ${iconClass}"></i>
             <span class="conversation-title">${convo.title}</span>
@@ -159,21 +194,21 @@ function renderConversationList() {
                 <i class="fas fa-trash"></i>
             </button>
         `;
-        
+
         // Add click event to load this conversation
         li.addEventListener('click', (e) => {
             if (!e.target.closest('.delete-conversation')) {
                 loadConversation(convo.id);
             }
         });
-        
+
         // Add delete button event
         const deleteBtn = li.querySelector('.delete-conversation');
         deleteBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             deleteConversation(convo.id);
         });
-        
+
         conversationList.appendChild(li);
     });
 }
@@ -188,7 +223,7 @@ function createConversation(firstMessage) {
         created: Date.now(),
         lastUpdated: Date.now()
     };
-    
+
     conversations.push(newConversation);
     currentConversationId = id;
     saveConversations();
@@ -200,13 +235,13 @@ function createConversation(firstMessage) {
 function loadConversation(id) {
     const conversation = conversations.find(c => c.id === id);
     if (!conversation) return;
-    
+
     currentConversationId = id;
     switchToConversationMode();
-    
+
     // Clear current messages
     messagesContainer.innerHTML = '';
-    
+
     // Add all messages from this conversation
     conversation.messages.forEach(msg => {
         if (msg.role === 'user') {
@@ -217,13 +252,24 @@ function loadConversation(id) {
             container.style.animation = 'none';
         }
     });
-    
+
     renderConversationList();
-    
+
     // Close sidebar after selecting a conversation
     if (isSidebarOpen) {
         toggleSidebar();
     }
+
+    // Scroll to bottom of messages
+    scrollToBottom();
+}
+
+// Helper function to scroll to the bottom of messages
+function scrollToBottom() {
+    window.scrollTo({
+        top: document.body.scrollHeight,
+        behavior: 'smooth'
+    });
 }
 
 // Delete a conversation
@@ -232,7 +278,7 @@ function deleteConversation(id) {
     if (index !== -1) {
         conversations.splice(index, 1);
         saveConversations();
-        
+
         // If we deleted the current conversation, start a new one
         if (currentConversationId === id) {
             startNewChat();
@@ -248,15 +294,15 @@ function startNewChat() {
     promptInput.value = '';
     promptInput.style.height = 'auto';
     promptInput.focus();
-    
+
     // Return to centered mode
     isFirstMessage = true;
     currentConversationId = null;
     chatContainer.classList.add('centered-mode');
     welcomeText.classList.remove('hidden');
-    
+
     renderConversationList();
-    
+
     // Close sidebar after starting a new chat
     if (isSidebarOpen) {
         toggleSidebar();
@@ -276,19 +322,19 @@ function switchToConversationMode() {
 function handleSendMessage() {
     const message = promptInput.value.trim();
     if (!message) return;
-    
+
     // Switch to conversation mode if this is the first message
     switchToConversationMode();
-    
+
     // Create a new conversation if this is the first message of a new chat
     if (!currentConversationId) {
         const newConversation = createConversation(message);
         currentConversationId = newConversation.id;
     }
-    
+
     // Add user message to chat
     addMessage(message, 'user');
-    
+
     // Save message to current conversation
     const conversation = conversations.find(c => c.id === currentConversationId);
     if (conversation) {
@@ -301,12 +347,12 @@ function handleSendMessage() {
         saveConversations();
         renderConversationList();
     }
-    
+
     // Clear input field
     promptInput.value = '';
     promptInput.style.height = 'auto';
     promptInput.focus();
-    
+
     // Request AI response
     requestAIResponse(message);
 }
@@ -315,27 +361,27 @@ function handleSendMessage() {
 function addMessage(content, sender, save = true) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${sender}-message`;
-    
+
     const header = document.createElement('div');
     header.className = 'message-header';
-    
+
     if (sender === 'user') {
         header.innerHTML = '<i class="fas fa-user"></i> You';
     } else {
         header.innerHTML = '<i class="fas fa-robot"></i> Golem XIV';
     }
-    
+
     const contentDiv = document.createElement('div');
     contentDiv.className = 'message-content';
     contentDiv.textContent = content;
-    
+
     messageDiv.appendChild(header);
     messageDiv.appendChild(contentDiv);
     messagesContainer.appendChild(messageDiv);
-    
-    // Scroll to the new message
-    messageDiv.scrollIntoView({ behavior: 'smooth' });
-    
+
+    // Scroll to the new message using body scrolling
+    scrollToBottom();
+
     return contentDiv; // Return for streaming purposes
 }
 
@@ -343,14 +389,14 @@ function addMessage(content, sender, save = true) {
 async function requestAIResponse(prompt) {
     // Placeholder for the future API connection
     const responseContainer = addMessage('', 'ai', false);
-    
+
     // Simulate streaming response for demo purposes
     const demoResponse = "I am Golem XIV, your AI assistant. I'm here to help you with information, creative content, problem-solving, and thoughtful conversations. How can I assist you today?";
-    
+
     // Simulate streaming by adding characters one by one
     let i = 0;
     const fullResponse = []; // To build the complete response
-    
+
     const streamInterval = setInterval(() => {
         if (i < demoResponse.length) {
             const char = document.createElement('span');
@@ -359,10 +405,17 @@ async function requestAIResponse(prompt) {
             responseContainer.appendChild(char);
             fullResponse.push(demoResponse[i]);
             i++;
-            char.scrollIntoView({ behavior: 'smooth' });
+
+            // Scroll to bottom as new content appears
+            if (i % 5 === 0) { // Only scroll every few characters for performance
+                scrollToBottom();
+            }
         } else {
             clearInterval(streamInterval);
-            
+
+            // Final scroll to ensure we're at the bottom
+            scrollToBottom();
+
             // Save the AI response to the conversation
             const conversation = conversations.find(c => c.id === currentConversationId);
             if (conversation) {
@@ -376,8 +429,8 @@ async function requestAIResponse(prompt) {
             }
         }
     }, 30);
-    
-    /* 
+
+    /*
     // This will be the actual implementation in the future
     try {
         const response = await fetch('YOUR_API_ENDPOINT', {
@@ -387,23 +440,23 @@ async function requestAIResponse(prompt) {
             },
             body: JSON.stringify({ prompt })
         });
-        
+
         if (!response.ok) throw new Error('API request failed');
-        
+
         // Handle streaming response
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         const fullResponse = [];
-        
+
         while (true) {
             const { done, value } = await reader.read();
             if (done) break;
-            
+
             const text = decoder.decode(value, { stream: true });
             fullResponse.push(text);
             // Append text to the message
             responseContainer.textContent += text;
-            responseContainer.scrollIntoView({ behavior: 'smooth' });
+            scrollToBottom();
         }
         
         // Save the AI response to the conversation

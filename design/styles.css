@@ -44,7 +44,8 @@ body {
     height: 100vh;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow-x: hidden; /* Changed from hidden to auto to allow vertical scroll */
+    position: relative; /* Ensure body is a positioning context */
 }
 
 /* Sidebar styles */
@@ -57,14 +58,16 @@ body {
     top: 0;
     left: calc(-1 * var(--sidebar-width)); /* Ensure it's off-screen by default */
     z-index: 1000;
-    transition: left 0.3s ease;
+    transition: left 0.3s ease, transform 0.3s ease; /* Added transform for mobile handling */
     overflow-y: auto;
     display: flex;
     flex-direction: column;
+    transform: translateX(0); /* Ensure no horizontal offset by default */
 }
 
 .sidebar.active {
     left: 0;
+    transform: translateX(0);
 }
 
 .sidebar-header {
@@ -214,6 +217,7 @@ body {
     position: relative;
     transition: margin-left 0.3s ease;
     margin-left: 0; /* Ensure no margin by default */
+    overflow-x: hidden; /* Prevent horizontal overflow */
 }
 
 /* Active state for main container when sidebar is open */
@@ -225,6 +229,17 @@ body.sidebar-active .main-container {
     body.sidebar-active .main-container {
         margin-left: 0; /* Don't push content on mobile */
     }
+
+    /* Fix for horizontal bar issue - ensure sidebar is fully hidden */
+    .sidebar {
+        width: 85%;
+        max-width: 300px;
+        transform: translateX(-100%); /* Ensure complete hiding */
+    }
+
+    .sidebar.active {
+        transform: translateX(0);
+    }
 }
 
 /* Navigation bar - Updated for centered title */
@@ -233,6 +248,9 @@ header {
     border-bottom: 1px solid var(--border-color);
     padding: 1rem 2rem;
     box-shadow: 0 2px 5px var(--shadow-color);
+    position: sticky; /* Make header sticky */
+    top: 0; /* Stick to the top */
+    z-index: 10; /* Ensure it's above other content */
 }
 
 nav {
@@ -316,7 +334,8 @@ main {
     width: 100%;
     margin: 0 auto;
     padding: 2rem;
-    overflow-y: auto;
+    /* Changed from overflow-y: auto to overflow-y: visible to use body's scroll */
+    overflow-y: visible;
     position: relative;
 }
 
@@ -325,6 +344,8 @@ main {
     flex-direction: column;
     flex: 1;
     justify-content: space-between;
+    /* Removed overflow settings to use body scrollbar */
+    min-height: calc(100vh - 200px); /* Min height for chat container */
 }
 
 /* Centered mode (initial state) */
@@ -363,7 +384,8 @@ main {
     flex-direction: column;
     gap: 1.5rem;
     margin-bottom: 2rem;
-    overflow-y: auto;
+    /* Remove overflow-y to prevent separate scrollbars */
+    overflow-y: visible;
 }
 
 .message {
@@ -513,15 +535,6 @@ main {
 
 /* Responsive design */
 @media (max-width: 768px) {
-    .sidebar {
-        width: 85%;
-        max-width: 300px;
-    }
-    
-    nav {
-        padding: 0.5rem 0;
-    }
-    
     main {
         padding: 1rem;
     }
