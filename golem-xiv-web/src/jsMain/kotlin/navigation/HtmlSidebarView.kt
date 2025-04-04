@@ -16,13 +16,22 @@
 
 package com.xemantic.ai.golem.web.navigation
 
+import com.xemantic.ai.golem.presenter.Theme
+import com.xemantic.ai.golem.presenter.navigation.SidebarView
 import com.xemantic.ai.golem.web.js.ariaLabel
+import com.xemantic.ai.golem.web.js.eventFlow
 import com.xemantic.ai.golem.web.view.HtmlView
 import kotlinx.browser.document
+import kotlinx.browser.window
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.html.*
 import kotlinx.html.dom.create
+import org.w3c.dom.events.MouseEvent
 
-class HtmlSidebarView() : HtmlView {
+class HtmlSidebarView() : SidebarView, HtmlView {
+
+    private var theme: Theme = Theme.LIGHT
 
     private val conversationList = document.create.ul("conversation-list") {
         li("no-conversations") {
@@ -30,12 +39,19 @@ class HtmlSidebarView() : HtmlView {
         }
     }
 
+    private val themeIcon = document.create.i("fas fa-moon")
+
+    private val themeLabel = document.create.span {
+        +"Toggle Theme"
+    }
+
     private val toggleThemeButton = document.create.button {
         ariaLabel = "Toggle dark/light theme"
-        i("fas fa-moon")
-        span {
-            +"Toggle Theme"
-        }
+    }.apply {
+        append(
+            themeIcon,
+            themeLabel
+        )
     }
 
     override val element = document.create.aside("sidebar") {
@@ -50,6 +66,64 @@ class HtmlSidebarView() : HtmlView {
     }.apply {
         querySelector(".sidebar-content")!!.append(conversationList)
         querySelector(".sidebar-footer")!!.append(toggleThemeButton)
+    }
+
+    override var opened: Boolean = false
+        get() = field
+        set(value) {
+            field = value
+        }
+
+    override fun theme(theme: Theme) {
+        when (theme) {
+            Theme.LIGHT -> {
+                themeIcon.className = "fas fa-sun"
+                themeLabel.textContent = "Light Mode"
+            }
+            Theme.DARK -> {
+                themeIcon.className = "fas fa-moon"
+                themeLabel.textContent = "Dark Mode"
+            }
+        }
+        this.theme = theme
+    }
+
+    override val themeChanges: Flow<Theme> = toggleThemeButton.eventFlow<MouseEvent>(
+        "click"
+    ).map {
+        when (theme) {
+            Theme.LIGHT -> Theme.DARK
+            Theme.DARK -> Theme.LIGHT
+        }
+    }
+
+    // TODO attach this
+    private fun handleWindowResize() {
+        // Update sidebar positioning based on screen size
+        if (window.innerWidth <= 768) {
+            // Mobile view
+            element.classList.remove("sidebar-hidden-desktop", "sidebar-visible")
+
+            if (!opened) {
+                element.classList.add("sidebar-hidden-mobile")
+            } else {
+                element.classList.add("sidebar-visible")
+            }
+        } else {
+            // Desktop view
+            element.classList.remove("sidebar-hidden-mobile", "sidebar-visible")
+
+            if (!opened) {
+                element.classList.add("sidebar-hidden-desktop")
+            } else {
+                element.classList.add("sidebar-visible")
+            }
+        }
+
+        // Close sidebar automatically when resizing to mobile view if it's open
+        if (window.innerWidth <= 768 && opened) {
+            //toggleSidebar()
+        }
     }
 
 }

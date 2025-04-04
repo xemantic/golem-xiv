@@ -20,6 +20,8 @@ import com.xemantic.ai.golem.api.GolemInput
 import com.xemantic.ai.golem.api.GolemOutput
 import com.xemantic.ai.golem.presenter.context.ContextPresenter
 import com.xemantic.ai.golem.presenter.context.ContextView
+import com.xemantic.ai.golem.presenter.navigation.SidebarPresenter
+import com.xemantic.ai.golem.presenter.navigation.SidebarView
 import com.xemantic.ai.golem.presenter.websocket.sendToGolem
 import com.xemantic.ai.golem.presenter.websocket.collectGolemOutput
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -37,6 +39,8 @@ import kotlin.uuid.Uuid
 
 interface MainView {
 
+    fun theme(theme: Theme)
+
     fun contextView(): ContextView
 
     fun displayContext(view: ContextView)
@@ -44,7 +48,8 @@ interface MainView {
 }
 
 class MainPresenter(
-    private val config: Config
+    private val config: Config,
+    private val sidebarView: SidebarView
 ) {
 
     data class Config(
@@ -69,6 +74,11 @@ class MainPresenter(
         }
     }
 
+    val sidebarPresenter = SidebarPresenter(
+        scope,
+        sidebarView
+    )
+
     var contextPresenter: ContextPresenter? = null
 
 //    val golemService: GolemService
@@ -83,7 +93,13 @@ class MainPresenter(
     ) {
 
         scope.launch {
-            val x = apiClient.get("/ping").bodyAsText()
+            sidebarView.themeChanges.collect {
+                view.theme(it)
+            }
+        }
+
+        scope.launch {
+            val x = apiClient.get("/api/ping").bodyAsText()
             logger.error { "$ ---- ${x}" }
         }
         val contextView = view.contextView()

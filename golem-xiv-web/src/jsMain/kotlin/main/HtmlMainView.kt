@@ -17,19 +17,22 @@
 package com.xemantic.ai.golem.web.main
 
 import com.xemantic.ai.golem.presenter.MainView
+import com.xemantic.ai.golem.presenter.Theme
 import com.xemantic.ai.golem.presenter.context.ContextView
 import com.xemantic.ai.golem.web.chat.HtmlChatView
-import com.xemantic.ai.golem.web.view.HtmlView
 import com.xemantic.ai.golem.web.context.HtmlContextView
 import com.xemantic.ai.golem.web.navigation.HtmlHeaderView
 import com.xemantic.ai.golem.web.navigation.HtmlSidebarView
+import com.xemantic.ai.golem.web.view.HtmlView
 import kotlinx.browser.document
+import kotlinx.browser.localStorage
 import kotlinx.html.*
 import kotlinx.html.dom.create
 import org.w3c.dom.HTMLElement
 
 class HtmlMainView(
-    body: HTMLElement
+    private val body: HTMLElement,
+    sidebarView: HtmlSidebarView
 ): MainView {
 
     private val sidebarView = HtmlSidebarView()
@@ -56,6 +59,24 @@ class HtmlMainView(
             mainContainer,
             overlayElement
         )
+        val savedTheme = localStorage.getItem("theme")?.let {
+            Theme.valueOf(it)
+        } ?: Theme.LIGHT
+        theme(savedTheme)
+    }
+
+    override fun theme(theme: Theme) {
+        when (theme) {
+            Theme.LIGHT -> {
+                body.classList.toggle("dark-theme", false)
+                localStorage.setItem("theme", theme.name)
+            }
+            Theme.DARK -> {
+                body.classList.toggle("dark-theme", true)
+                localStorage.setItem("theme", theme.name)
+            }
+        }
+        sidebarView.theme(theme)
     }
 
     override fun contextView(): ContextView = HtmlContextView()
