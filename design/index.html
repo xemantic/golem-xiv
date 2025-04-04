@@ -5,71 +5,71 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Golem XIV</title>
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
 </head>
 <body>
-    <!-- Sidebar for conversation history -->
-    <aside id="sidebar" class="sidebar">
-        <div class="sidebar-header">
-            <h2>Conversations</h2>
-            <button id="new-chat-sidebar" class="new-chat-btn">
-                <i class="fas fa-plus"></i> New Chat
-            </button>
-        </div>
-        <div class="sidebar-content">
-            <ul id="conversation-list">
-                <!-- Conversations will be added here dynamically -->
-                <li class="no-conversations">No conversations yet</li>
-            </ul>
-        </div>
-        <div class="sidebar-footer">
-            <button id="theme-toggle" aria-label="Toggle dark/light theme">
-                <i class="fas fa-moon"></i>
-                <span>Toggle Theme</span>
-            </button>
-        </div>
-    </aside>
-    
-    <!-- Main content -->
-    <div class="main-container">
-        <header>
-            <nav>
-                <div class="nav-left">
-                    <button id="menu-toggle" class="menu-toggle" aria-label="Toggle sidebar menu">
-                        <i class="fas fa-bars"></i>
-                    </button>
-                </div>
-                <div class="nav-center">
-                    <div class="logo">Golem XIV</div>
-                </div>
-                <div class="nav-right">
-                    <!-- Empty div to keep the centered title balanced -->
-                </div>
-            </nav>
-        </header>
-
-        <main>
-            <div id="chat-container" class="centered-mode">
-                <div id="messages"></div>
-                
-                <div id="input-container">
-                    <div id="prompt-box">
-                        <textarea id="prompt-input" placeholder="Ask Golem XIV anything..."></textarea>
-                        <div class="input-buttons">
-                            <button id="mic-button" aria-label="Start voice input"><i class="fas fa-microphone"></i></button>
-                            <button id="send-button" aria-label="Send message"><i class="fas fa-paper-plane"></i></button>
-                        </div>
-                    </div>
-                    <div id="mic-status" class="hidden">Listening... <span id="recording-time">0:00</span><button id="stop-recording"><i class="fas fa-stop"></i></button></div>
-                </div>
-            </div>
-            <div class="welcome-text">How can I assist you today?</div>
-        </main>
+<!-- Sidebar for conversation history -->
+<aside id="sidebar" class="sidebar">
+    <div class="sidebar-header">
+        <h2>Conversations</h2>
+        <button id="new-chat-sidebar" class="new-chat-btn">
+            <i class="fas fa-plus"></i> New Chat
+        </button>
     </div>
+    <div class="sidebar-content">
+        <ul id="conversation-list">
+            <!-- Conversations will be added here dynamically -->
+            <li class="no-conversations">No conversations yet</li>
+        </ul>
+    </div>
+    <div class="sidebar-footer">
+        <button id="theme-toggle" aria-label="Toggle dark/light theme">
+            <i class="fas fa-moon"></i>
+            <span>Toggle Theme</span>
+        </button>
+    </div>
+</aside>
 
-    <!-- Overlay for mobile sidebar -->
-    <div id="overlay" class="overlay"></div>
+<!-- Main content -->
+<div class="main-container">
+    <header>
+        <nav>
+            <div class="nav-left">
+                <button id="menu-toggle" class="menu-toggle" aria-label="Toggle sidebar menu">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+            <div class="nav-center">
+                <div class="logo">Golem XIV</div>
+            </div>
+            <div class="nav-right">
+                <!-- Empty div to keep the centered title balanced -->
+            </div>
+        </nav>
+    </header>
 
-    <script src="script.js"></script>
+    <main>
+        <div id="chat-container" class="chat-centered-mode">
+            <div id="messages"></div>
+
+            <div id="input-container">
+                <div id="prompt-box">
+                    <textarea id="prompt-input" placeholder="Ask Golem XIV anything..."></textarea>
+                    <div class="input-buttons">
+                        <button id="mic-button" aria-label="Start voice input"><i class="fas fa-microphone"></i></button>
+                        <button id="send-button" aria-label="Send message"><i class="fas fa-paper-plane"></i></button>
+                    </div>
+                </div>
+                <div id="mic-status" class="hidden">Listening... <span id="recording-time">0:00</span><button id="stop-recording"><i class="fas fa-stop"></i></button></div>
+            </div>
+        </div>
+        <div class="welcome-text">How can I assist you today?</div>
+    </main>
+</div>
+
+<!-- Overlay for mobile sidebar -->
+<div id="overlay" class="overlay"></div>
+
+<script src="script.js"></script>
 </body>
 </html>

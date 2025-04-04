@@ -54,22 +54,8 @@ function init() {
         toggleTheme();
     }
 
-    // Explicitly ensure sidebar is closed by default
-    sidebar.classList.remove('active');
-    overlay.classList.remove('active');
-    document.body.classList.remove('sidebar-active');
-    isSidebarOpen = false;
-
-    // Force sidebar to be positioned properly initially
-    if (window.innerWidth <= 768) {
-        // Use transform for mobile
-        sidebar.style.left = '0';
-        sidebar.style.transform = 'translateX(-100%)';
-    } else {
-        // Use left position for desktop
-        sidebar.style.left = '-' + getComputedStyle(document.documentElement).getPropertyValue('--sidebar-width');
-        sidebar.style.transform = 'translateX(0)';
-    }
+    // Ensure sidebar is closed by default
+    applyDefaultSidebarState();
 
     // Set overflow on body to enable single scrollbar
     document.body.style.overflowY = 'auto';
@@ -90,24 +76,43 @@ function init() {
     window.addEventListener('resize', handleWindowResize);
 }
 
+// Apply default sidebar state based on window size
+function applyDefaultSidebarState() {
+    isSidebarOpen = false;
+
+    // Remove any existing classes first
+    sidebar.classList.remove('sidebar-visible', 'sidebar-hidden-desktop', 'sidebar-hidden-mobile');
+    overlay.classList.remove('overlay-visible');
+    mainContainer.classList.remove('main-container-sidebar-open');
+
+    // Apply the correct hidden class based on screen size
+    if (window.innerWidth <= 768) {
+        sidebar.classList.add('sidebar-hidden-mobile');
+    } else {
+        sidebar.classList.add('sidebar-hidden-desktop');
+    }
+}
+
 // Handle window resize
 function handleWindowResize() {
     // Update sidebar positioning based on screen size
     if (window.innerWidth <= 768) {
         // Mobile view
-        sidebar.style.left = '0';
+        sidebar.classList.remove('sidebar-hidden-desktop', 'sidebar-visible');
+
         if (!isSidebarOpen) {
-            sidebar.style.transform = 'translateX(-100%)';
+            sidebar.classList.add('sidebar-hidden-mobile');
         } else {
-            sidebar.style.transform = 'translateX(0)';
+            sidebar.classList.add('sidebar-visible');
         }
     } else {
         // Desktop view
-        sidebar.style.transform = 'translateX(0)';
+        sidebar.classList.remove('sidebar-hidden-mobile', 'sidebar-visible');
+
         if (!isSidebarOpen) {
-            sidebar.style.left = '-' + getComputedStyle(document.documentElement).getPropertyValue('--sidebar-width');
+            sidebar.classList.add('sidebar-hidden-desktop');
         } else {
-            sidebar.style.left = '0';
+            sidebar.classList.add('sidebar-visible');
         }
     }
 
@@ -120,19 +125,29 @@ function handleWindowResize() {
 // Toggle sidebar
 function toggleSidebar() {
     isSidebarOpen = !isSidebarOpen;
-    sidebar.classList.toggle('active', isSidebarOpen);
-    overlay.classList.toggle('active', isSidebarOpen);
-    document.body.classList.toggle('sidebar-active', isSidebarOpen);
 
-    // Update sidebar position based on screen size
-    if (window.innerWidth <= 768) {
-        // Mobile approach: use transform
-        sidebar.style.left = '0';
-        sidebar.style.transform = isSidebarOpen ? 'translateX(0)' : 'translateX(-100%)';
+    // First remove all positioning classes
+    sidebar.classList.remove('sidebar-hidden-desktop', 'sidebar-hidden-mobile', 'sidebar-visible');
+
+    // Add the appropriate class based on sidebar state and screen size
+    if (isSidebarOpen) {
+        sidebar.classList.add('sidebar-visible');
+        overlay.classList.add('overlay-visible');
+
+        // On desktop, also shift the main container
+        if (window.innerWidth > 768) {
+            mainContainer.classList.add('main-container-sidebar-open');
+        }
     } else {
-        // Desktop approach: use left position
-        sidebar.style.transform = 'translateX(0)';
-        sidebar.style.left = isSidebarOpen ? '0' : '-' + getComputedStyle(document.documentElement).getPropertyValue('--sidebar-width');
+        // Apply the correct hidden class based on screen size
+        if (window.innerWidth <= 768) {
+            sidebar.classList.add('sidebar-hidden-mobile');
+        } else {
+            sidebar.classList.add('sidebar-hidden-desktop');
+        }
+
+        overlay.classList.remove('overlay-visible');
+        mainContainer.classList.remove('main-container-sidebar-open');
     }
 
     // Ensure focus returns to input when sidebar closes
@@ -145,8 +160,11 @@ function toggleSidebar() {
 function toggleTheme() {
     isDarkMode = !isDarkMode;
     document.body.classList.toggle('dark-theme', isDarkMode);
+
+    // Update the theme toggle button contents
     themeToggle.querySelector('i').className = isDarkMode ? 'fas fa-sun' : 'fas fa-moon';
     themeToggle.querySelector('span').textContent = isDarkMode ? 'Light Mode' : 'Dark Mode';
+
     localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
 }
 
@@ -298,8 +316,13 @@ function startNewChat() {
     // Return to centered mode
     isFirstMessage = true;
     currentConversationId = null;
-    chatContainer.classList.add('centered-mode');
-    welcomeText.classList.remove('hidden');
+
+    // Switch to centered mode using class
+    chatContainer.classList.remove('chat-conversation-mode');
+    chatContainer.classList.add('chat-centered-mode');
+
+    // Show welcome text
+    welcomeText.classList.remove('welcome-text-hidden');
 
     renderConversationList();
 
@@ -313,8 +336,13 @@ function startNewChat() {
 function switchToConversationMode() {
     if (isFirstMessage) {
         isFirstMessage = false;
-        chatContainer.classList.remove('centered-mode');
-        welcomeText.classList.add('hidden');
+
+        // Switch to conversation mode using classes
+        chatContainer.classList.remove('chat-centered-mode');
+        chatContainer.classList.add('chat-conversation-mode');
+
+        // Hide welcome text
+        welcomeText.classList.add('welcome-text-hidden');
     }
 }
 
@@ -458,7 +486,7 @@ async function requestAIResponse(prompt) {
             responseContainer.textContent += text;
             scrollToBottom();
         }
-        
+
         // Save the AI response to the conversation
         const conversation = conversations.find(c => c.id === currentConversationId);
         if (conversation) {
@@ -473,7 +501,7 @@ async function requestAIResponse(prompt) {
     } catch (error) {
         console.error('Error:', error);
         responseContainer.textContent = 'Sorry, there was an error processing your request.';
-        
+
         // Save the error message too
         const conversation = conversations.find(c => c.id === currentConversationId);
         if (conversation) {
@@ -503,26 +531,28 @@ function toggleSpeechRecording() {
 async function startRecording() {
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        
+
         mediaRecorder = new MediaRecorder(stream);
         audioChunks = [];
-        
+
         mediaRecorder.addEventListener('dataavailable', event => {
             audioChunks.push(event.data);
         });
-        
+
         mediaRecorder.addEventListener('stop', processRecording);
-        
+
         mediaRecorder.start();
         isRecording = true;
-        micButton.classList.add('active');
+
+        // Use class for mic button active state
+        micButton.classList.add('mic-button-active');
         micStatus.classList.remove('hidden');
-        
+
         // Start timer
         recordingSeconds = 0;
         updateRecordingTime();
         recordingInterval = setInterval(updateRecordingTime, 1000);
-        
+
     } catch (error) {
         console.error('Error accessing microphone:', error);
         alert('Could not access the microphone. Please check your permissions.');
@@ -532,11 +562,13 @@ async function startRecording() {
 // Stop recording audio
 function stopRecording() {
     if (!mediaRecorder) return;
-    
+
     mediaRecorder.stop();
     mediaRecorder.stream.getTracks().forEach(track => track.stop());
     isRecording = false;
-    micButton.classList.remove('active');
+
+    // Remove active class from mic button
+    micButton.classList.remove('mic-button-active');
     micStatus.classList.add('hidden');
     
     clearInterval(recordingInterval);

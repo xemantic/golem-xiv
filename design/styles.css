@@ -46,6 +46,7 @@ body {
     flex-direction: column;
     overflow-x: hidden; /* Changed from hidden to auto to allow vertical scroll */
     position: relative; /* Ensure body is a positioning context */
+    overflow-y: auto; /* Enabling vertical scroll */
 }
 
 /* Sidebar styles */
@@ -56,16 +57,28 @@ body {
     border-right: 1px solid var(--border-color);
     position: fixed;
     top: 0;
-    left: calc(-1 * var(--sidebar-width)); /* Ensure it's off-screen by default */
+    left: 0;
     z-index: 1000;
-    transition: left 0.3s ease, transform 0.3s ease; /* Added transform for mobile handling */
+    transition: left 0.3s ease, transform 0.3s ease;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    transform: translateX(0); /* Ensure no horizontal offset by default */
 }
 
-.sidebar.active {
+/* Sidebar hidden state - desktop */
+.sidebar-hidden-desktop {
+    left: calc(-1 * var(--sidebar-width));
+    transform: translateX(0);
+}
+
+/* Sidebar hidden state - mobile */
+.sidebar-hidden-mobile {
+    left: 0;
+    transform: translateX(-100%);
+}
+
+/* Sidebar visible state */
+.sidebar-visible {
     left: 0;
     transform: translateX(0);
 }
@@ -204,7 +217,7 @@ body {
     display: none;
 }
 
-.overlay.active {
+.overlay-visible {
     display: block;
 }
 
@@ -216,30 +229,13 @@ body {
     height: 100vh;
     position: relative;
     transition: margin-left 0.3s ease;
-    margin-left: 0; /* Ensure no margin by default */
+    margin-left: 0; /* Default state */
     overflow-x: hidden; /* Prevent horizontal overflow */
 }
 
-/* Active state for main container when sidebar is open */
-body.sidebar-active .main-container {
+/* Main container with sidebar open (desktop) */
+.main-container-sidebar-open {
     margin-left: var(--sidebar-width);
-}
-
-@media (max-width: 768px) {
-    body.sidebar-active .main-container {
-        margin-left: 0; /* Don't push content on mobile */
-    }
-
-    /* Fix for horizontal bar issue - ensure sidebar is fully hidden */
-    .sidebar {
-        width: 85%;
-        max-width: 300px;
-        transform: translateX(-100%); /* Ensure complete hiding */
-    }
-
-    .sidebar.active {
-        transform: translateX(0);
-    }
 }
 
 /* Navigation bar - Updated for centered title */
@@ -348,35 +344,50 @@ main {
     min-height: calc(100vh - 200px); /* Min height for chat container */
 }
 
+/* Chat container in regular conversation mode */
+.chat-conversation-mode {
+    justify-content: space-between;
+    height: 100%;
+}
+
 /* Centered mode (initial state) */
-#chat-container.centered-mode {
+.chat-centered-mode {
     justify-content: center;
     height: 100%;
 }
 
-#chat-container.centered-mode #messages {
+/* Message display in centered mode */
+.chat-centered-mode #messages {
     display: none;
 }
 
-#chat-container.centered-mode #input-container {
+/* Input container in centered mode */
+.chat-centered-mode #input-container {
     margin-top: 0;
     transform: scale(1.05);
     transition: transform 0.3s ease-in-out;
 }
 
-#chat-container.centered-mode #prompt-box {
+/* Prompt box in centered mode */
+.chat-centered-mode #prompt-box {
     max-width: 700px;
     margin: 0 auto;
     box-shadow: 0 5px 15px var(--shadow-color);
 }
 
-#chat-container.centered-mode + .welcome-text {
+/* Welcome text styling */
+.welcome-text {
     text-align: center;
     color: var(--text-color);
     opacity: 0.7;
     margin-bottom: 1.5rem;
     font-size: 1.6rem;
     font-weight: 300;
+    animation: fadeIn 1s ease-in-out;
+}
+
+.welcome-text-hidden {
+    display: none;
 }
 
 #messages {
@@ -488,8 +499,9 @@ main {
     background-color: var(--hover-color);
 }
 
-#mic-button.active {
-    color: #e74c3c;
+/* Microphone button styles */
+.mic-button-active {
+    color: #e74c3c !important;
     animation: pulse 1.5s infinite;
 }
 
@@ -528,22 +540,17 @@ main {
     display: none !important;
 }
 
-/* Welcome text animation */
-.welcome-text {
-    animation: fadeIn 1s ease-in-out;
-}
-
 /* Responsive design */
 @media (max-width: 768px) {
     main {
         padding: 1rem;
     }
-    
+
     .message {
         max-width: 100%;
     }
-    
-    #chat-container.centered-mode + .welcome-text {
+
+    .chat-centered-mode + .welcome-text {
         font-size: 1.3rem;
         padding: 0 1rem;
     }
