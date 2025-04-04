@@ -18,10 +18,12 @@ package com.xemantic.ai.golem.web.main
 
 import com.xemantic.ai.golem.presenter.MainView
 import com.xemantic.ai.golem.presenter.context.ContextView
+import com.xemantic.ai.golem.web.chat.HtmlChatView
 import com.xemantic.ai.golem.web.view.HtmlView
 import com.xemantic.ai.golem.web.context.HtmlContextView
+import com.xemantic.ai.golem.web.navigation.HtmlHeaderView
+import com.xemantic.ai.golem.web.navigation.HtmlSidebarView
 import kotlinx.browser.document
-import kotlinx.html.dom.append
 import kotlinx.html.*
 import kotlinx.html.dom.create
 import org.w3c.dom.HTMLElement
@@ -30,10 +32,30 @@ class HtmlMainView(
     body: HTMLElement
 ): MainView {
 
+    private val sidebarView = HtmlSidebarView()
+
+    private val headerView = HtmlHeaderView()
+
+    private val chatView = HtmlChatView()
+
     private val mainElement = document.create.main()
 
+    private val overlayElement = document.create.div("overlay")
+
     init {
-        body.buildMainUi(mainElement)
+        val mainContainer = document.create.div("main-container")
+        val mainElement = document.create.main()
+        mainElement.append(chatView.element)
+//        // TODO remove welcome-text
+        mainContainer.append(
+            headerView.element,
+            mainElement
+        )
+        body.append(
+            sidebarView.element,
+            mainContainer,
+            overlayElement
+        )
     }
 
     override fun contextView(): ContextView = HtmlContextView()
@@ -46,38 +68,38 @@ class HtmlMainView(
 
 }
 
-private fun HTMLElement.buildMainUi(
-    mainElement: HTMLElement
-) = append {
+//private fun HTMLElement.buildMainUi(
+//    mainElement: HTMLElement
+//) = append {
+//
+//    header {
+//        h1("Golem XIV")
+//
+//        div(classes = "user-controls") {
+//            button(classes = "settings-button") {
+//                attributes["aria-label"] = "Settings"
+//                attributes["type"] = "button"
+//                span(classes = "icon") { +"⚙️" }
+//                //onClickFunction = { openSettingsDialog() }
+//            }
+//
+//            div(classes = "user-menu") {
+//                button {
+//                    attributes["aria-haspopup"] = "menu"
+//                    attributes["aria-expanded"] = "false"
+//                    img(classes = "avatar") {
+//                        src = "/api/placeholder/32/32"
+//                        alt = "User profile"
+//                    }
+//                }
+//            }
+//        }
+//    }
+//
+//    append(mainElement)
+//
+//    footer {
+//        +"© 2025 Xemantic"
+//    }
 
-    header {
-        h1("Golem XIV")
-
-        div(classes = "user-controls") {
-            button(classes = "settings-button") {
-                attributes["aria-label"] = "Settings"
-                attributes["type"] = "button"
-                span(classes = "icon") { +"⚙️" }
-                //onClickFunction = { openSettingsDialog() }
-            }
-
-            div(classes = "user-menu") {
-                button {
-                    attributes["aria-haspopup"] = "menu"
-                    attributes["aria-expanded"] = "false"
-                    img(classes = "avatar") {
-                        src = "/api/placeholder/32/32"
-                        alt = "User profile"
-                    }
-                }
-            }
-        }
-    }
-
-    append(mainElement)
-
-    footer {
-        +"© 2025 Xemantic"
-    }
-
-}
+//}

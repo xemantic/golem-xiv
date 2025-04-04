@@ -1,54 +1,557 @@
-/* Reset and base styles */
+/* Base styles and variables - Updated with Obsidian-inspired purple accents */
+:root {
+    --primary-color: #9b8aff; /* Obsidian purple accent */
+    --primary-hover: #b5a5ff; /* Lighter purple for hover states */
+    --text-color: #333;
+    --bg-color: #ffffff;
+    --secondary-bg: #f5f5f5;
+    --border-color: #e0e0e0;
+    --shadow-color: rgba(0, 0, 0, 0.1);
+    --user-msg-bg: #e8e8fd;
+    --ai-msg-bg: #f9f9f9;
+    --hover-color: #f0f0f0;
+    --input-bg: #fff;
+    --sidebar-width: 280px;
+}
+
+/* Dark theme - Obsidian inspired */
+.dark-theme {
+    --primary-color: #a88bfa; /* Obsidian purple in dark mode */
+    --primary-hover: #c4adff; /* Lighter shade for hover */
+    --text-color: #dcddde;
+    --bg-color: #191919; /* Obsidian dark background */
+    --secondary-bg: #252525; /* Obsidian secondary background */
+    --border-color: #333;
+    --shadow-color: rgba(0, 0, 0, 0.3);
+    --user-msg-bg: #3b3654; /* Darker purple tint for user messages */
+    --ai-msg-bg: #2a2a2a;
+    --hover-color: #303030;
+    --input-bg: #252525;
+}
+
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    transition: background-color 0.3s, color 0.3s;
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
     line-height: 1.6;
-    color: #333;
+    height: 100vh;
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
+    overflow-x: hidden; /* Changed from hidden to auto to allow vertical scroll */
+    position: relative; /* Ensure body is a positioning context */
+    overflow-y: auto; /* Enabling vertical scroll */
 }
 
-/* Header styles */
-header {
-    background-color: #2c3e50;
+/* Sidebar styles */
+.sidebar {
+    width: var(--sidebar-width);
+    height: 100vh;
+    background-color: var(--secondary-bg);
+    border-right: 1px solid var(--border-color);
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    transition: left 0.3s ease, transform 0.3s ease;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Sidebar hidden state - desktop */
+.sidebar-hidden-desktop {
+    left: calc(-1 * var(--sidebar-width));
+    transform: translateX(0);
+}
+
+/* Sidebar hidden state - mobile */
+.sidebar-hidden-mobile {
+    left: 0;
+    transform: translateX(-100%);
+}
+
+/* Sidebar visible state */
+.sidebar-visible {
+    left: 0;
+    transform: translateX(0);
+}
+
+.sidebar-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.sidebar-header h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.new-chat-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    background-color: var(--primary-color);
     color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 0.75rem;
+    cursor: pointer;
+    width: 100%;
+    font-size: 0.9rem;
+}
+
+.new-chat-btn:hover {
+    background-color: var(--primary-hover);
+    opacity: 0.9;
+}
+
+/* Added sidebar footer for theme toggle */
+.sidebar-footer {
+    margin-top: auto;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border-color);
+}
+
+/* Updated theme toggle button for sidebar */
+#theme-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: none;
+    border: none;
+    color: var(--text-color);
+    cursor: pointer;
+    width: 100%;
+    padding: 0.75rem;
+    border-radius: 4px;
+    font-size: 0.95rem;
+}
+
+#theme-toggle:hover {
+    background-color: var(--hover-color);
+}
+
+#theme-toggle i {
+    color: var(--primary-color);
+    font-size: 1.1rem;
+}
+
+.sidebar-content {
+    flex: 1;
+    padding: 1rem 0;
+    overflow-y: auto;
+}
+
+#conversation-list {
+    list-style: none;
+}
+
+#conversation-list li {
+    padding: 0.75rem 1.5rem;
+    cursor: pointer;
+    border-left: 3px solid transparent;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.9rem;
+}
+
+#conversation-list li:hover {
+    background-color: var(--hover-color);
+}
+
+#conversation-list li.active {
+    border-left-color: var(--primary-color);
+    background-color: var(--hover-color);
+    font-weight: 500;
+}
+
+#conversation-list li .conversation-title {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#conversation-list li .delete-conversation {
+    color: var(--text-color);
+    opacity: 0.5;
+    display: none;
+}
+
+#conversation-list li:hover .delete-conversation {
+    display: block;
+}
+
+#conversation-list li .delete-conversation:hover {
+    opacity: 1;
+}
+
+.no-conversations {
+    color: var(--text-color);
+    opacity: 0.6;
+    font-style: italic;
+    text-align: center;
+}
+
+/* Overlay for when sidebar is open on mobile */
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    display: none;
+}
+
+.overlay-visible {
+    display: block;
+}
+
+/* Main container */
+.main-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100vh;
+    position: relative;
+    transition: margin-left 0.3s ease;
+    margin-left: 0; /* Default state */
+    overflow-x: hidden; /* Prevent horizontal overflow */
+}
+
+/* Main container with sidebar open (desktop) */
+.main-container-sidebar-open {
+    margin-left: var(--sidebar-width);
+}
+
+/* Navigation bar - Updated for centered title */
+header {
+    background-color: var(--bg-color);
+    border-bottom: 1px solid var(--border-color);
     padding: 1rem 2rem;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 5px var(--shadow-color);
+    position: sticky; /* Make header sticky */
+    top: 0; /* Stick to the top */
+    z-index: 10; /* Ensure it's above other content */
 }
 
-header h1 {
-    font-size: 1.8rem;
+nav {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
 }
 
-/* Main content styles */
+.nav-left {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.nav-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nav-right {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.menu-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-color);
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem;
+    border-radius: 4px;
+}
+
+.menu-toggle:hover {
+    background-color: var(--hover-color);
+}
+
+.logo {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.nav-items {
+    display: flex;
+    gap: 1rem;
+}
+
+.nav-items button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-color);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.nav-items button:hover {
+    background-color: var(--hover-color);
+}
+
+/* Main chat area */
 main {
     flex: 1;
-    padding: 2rem;
-    max-width: 1200px;
+    display: flex;
+    flex-direction: column;
+    max-width: 1000px;
     width: 100%;
     margin: 0 auto;
+    padding: 2rem;
+    /* Changed from overflow-y: auto to overflow-y: visible to use body's scroll */
+    overflow-y: visible;
+    position: relative;
 }
 
-section {
-    margin-bottom: 2rem;
+#chat-container {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    justify-content: space-between;
+    /* Removed overflow settings to use body scrollbar */
+    min-height: calc(100vh - 200px); /* Min height for chat container */
 }
 
-h2 {
-    margin-bottom: 1rem;
-    color: #2c3e50;
+/* Chat container in regular conversation mode */
+.chat-conversation-mode {
+    justify-content: space-between;
+    height: 100%;
 }
 
-/* Footer styles */
-footer {
-    background-color: #2c3e50;
-    color: white;
+/* Centered mode (initial state) */
+.chat-centered-mode {
+    justify-content: center;
+    height: 100%;
+}
+
+/* Message display in centered mode */
+.chat-centered-mode #messages {
+    display: none;
+}
+
+/* Input container in centered mode */
+.chat-centered-mode #input-container {
+    margin-top: 0;
+    transform: scale(1.05);
+    transition: transform 0.3s ease-in-out;
+}
+
+/* Prompt box in centered mode */
+.chat-centered-mode #prompt-box {
+    max-width: 700px;
+    margin: 0 auto;
+    box-shadow: 0 5px 15px var(--shadow-color);
+}
+
+/* Welcome text styling */
+.welcome-text {
     text-align: center;
+    color: var(--text-color);
+    opacity: 0.7;
+    margin-bottom: 1.5rem;
+    font-size: 1.6rem;
+    font-weight: 300;
+    animation: fadeIn 1s ease-in-out;
+}
+
+.welcome-text-hidden {
+    display: none;
+}
+
+#messages {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    /* Remove overflow-y to prevent separate scrollbars */
+    overflow-y: visible;
+}
+
+.message {
+    display: flex;
+    flex-direction: column;
+    max-width: 90%;
     padding: 1rem;
+    border-radius: 8px;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.user-message {
+    align-self: flex-end;
+    background-color: var(--user-msg-bg);
+    border-bottom-right-radius: 0;
+}
+
+.ai-message {
+    align-self: flex-start;
+    background-color: var(--ai-msg-bg);
+    border-bottom-left-radius: 0;
+}
+
+.message-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.message-header i {
+    margin-right: 0.5rem;
+}
+
+.message-content {
+    line-height: 1.5;
+    white-space: pre-wrap;
+}
+
+.character {
+    display: inline-block;
+}
+
+/* Input area */
+#input-container {
+    position: relative;
     margin-top: auto;
+}
+
+#prompt-box {
+    display: flex;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: var(--input-bg);
+    padding: 0.75rem;
+    box-shadow: 0 2px 10px var(--shadow-color);
+}
+
+#prompt-input {
+    flex: 1;
+    border: none;
+    background: none;
+    resize: none;
+    font-size: 1rem;
+    font-family: inherit;
+    color: var(--text-color);
+    min-height: 50px;
+    max-height: 150px;
+    overflow-y: auto;
+    padding: 0.5rem;
+    outline: none;
+}
+
+.input-buttons {
+    display: flex;
+    align-items: flex-end;
+    padding-bottom: 0.5rem;
+}
+
+.input-buttons button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+    margin-left: 0.5rem;
+    border-radius: 50%;
+    color: var(--primary-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.input-buttons button:hover {
+    background-color: var(--hover-color);
+}
+
+/* Microphone button styles */
+.mic-button-active {
+    color: #e74c3c !important;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+#mic-status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem;
+    margin-top: 1rem;
+    background-color: var(--primary-color);
+    color: white;
+    border-radius: 8px;
+    gap: 1rem;
+}
+
+#stop-recording {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    main {
+        padding: 1rem;
+    }
+
+    .message {
+        max-width: 100%;
+    }
+
+    .chat-centered-mode + .welcome-text {
+        font-size: 1.3rem;
+        padding: 0 1rem;
+    }
 }
