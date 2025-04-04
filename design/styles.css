@@ -1,6 +1,7 @@
-/* Base styles and variables */
+/* Base styles and variables - Updated with Obsidian-inspired purple accents */
 :root {
-    --primary-color: #7661e7;
+    --primary-color: #9b8aff; /* Obsidian purple accent */
+    --primary-hover: #b5a5ff; /* Lighter purple for hover states */
     --text-color: #333;
     --bg-color: #ffffff;
     --secondary-bg: #f5f5f5;
@@ -13,17 +14,18 @@
     --sidebar-width: 280px;
 }
 
-/* Dark theme */
+/* Dark theme - Obsidian inspired */
 .dark-theme {
-    --primary-color: #9c8eff;
-    --text-color: #f0f0f0;
-    --bg-color: #1a1a1a;
-    --secondary-bg: #2a2a2a;
-    --border-color: #3a3a3a;
+    --primary-color: #a88bfa; /* Obsidian purple in dark mode */
+    --primary-hover: #c4adff; /* Lighter shade for hover */
+    --text-color: #dcddde;
+    --bg-color: #191919; /* Obsidian dark background */
+    --secondary-bg: #252525; /* Obsidian secondary background */
+    --border-color: #333;
     --shadow-color: rgba(0, 0, 0, 0.3);
-    --user-msg-bg: #3b3654;
+    --user-msg-bg: #3b3654; /* Darker purple tint for user messages */
     --ai-msg-bg: #2a2a2a;
-    --hover-color: #333;
+    --hover-color: #303030;
     --input-bg: #252525;
 }
 
@@ -94,7 +96,39 @@ body {
 }
 
 .new-chat-btn:hover {
+    background-color: var(--primary-hover);
     opacity: 0.9;
+}
+
+/* Added sidebar footer for theme toggle */
+.sidebar-footer {
+    margin-top: auto;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border-color);
+}
+
+/* Updated theme toggle button for sidebar */
+#theme-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: none;
+    border: none;
+    color: var(--text-color);
+    cursor: pointer;
+    width: 100%;
+    padding: 0.75rem;
+    border-radius: 4px;
+    font-size: 0.95rem;
+}
+
+#theme-toggle:hover {
+    background-color: var(--hover-color);
+}
+
+#theme-toggle i {
+    color: var(--primary-color);
+    font-size: 1.1rem;
 }
 
 .sidebar-content {
@@ -193,7 +227,7 @@ body.sidebar-active .main-container {
     }
 }
 
-/* Navigation bar */
+/* Navigation bar - Updated for centered title */
 header {
     background-color: var(--bg-color);
     border-bottom: 1px solid var(--border-color);
@@ -202,8 +236,8 @@ header {
 }
 
 nav {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
     max-width: 1200px;
     margin: 0 auto;
@@ -213,7 +247,19 @@ nav {
 .nav-left {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    justify-content: flex-start;
+}
+
+.nav-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nav-right {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
 }
 
 .menu-toggle {

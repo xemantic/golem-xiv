@@ -110,7 +110,8 @@ function toggleSidebar() {
 function toggleTheme() {
     isDarkMode = !isDarkMode;
     document.body.classList.toggle('dark-theme', isDarkMode);
-    themeToggle.innerHTML = isDarkMode ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+    themeToggle.querySelector('i').className = isDarkMode ? 'fas fa-sun' : 'fas fa-moon';
+    themeToggle.querySelector('span').textContent = isDarkMode ? 'Light Mode' : 'Dark Mode';
     localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
 }
 
