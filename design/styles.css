@@ -53,7 +53,7 @@ body {
     border-right: 1px solid var(--border-color);
     position: fixed;
     top: 0;
-    left: -var(--sidebar-width); /* Start offscreen */
+    left: calc(-1 * var(--sidebar-width)); /* Ensure it's off-screen by default */
     z-index: 1000;
     transition: left 0.3s ease;
     overflow-y: auto;
@@ -179,6 +179,7 @@ body {
     height: 100vh;
     position: relative;
     transition: margin-left 0.3s ease;
+    margin-left: 0; /* Ensure no margin by default */
 }
 
 /* Active state for main container when sidebar is open */

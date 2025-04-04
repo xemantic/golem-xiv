@@ -53,11 +53,14 @@ function init() {
         toggleTheme();
     }
     
-    // Make sure sidebar is closed by default
+    // Explicitly ensure sidebar is closed by default
     sidebar.classList.remove('active');
     overlay.classList.remove('active');
     document.body.classList.remove('sidebar-active');
     isSidebarOpen = false;
+    
+    // Force sidebar to be positioned off-screen initially
+    sidebar.style.left = '-' + getComputedStyle(document.documentElement).getPropertyValue('--sidebar-width');
     
     // Load conversations from local storage
     loadConversations();
@@ -89,6 +92,13 @@ function toggleSidebar() {
     sidebar.classList.toggle('active', isSidebarOpen);
     overlay.classList.toggle('active', isSidebarOpen);
     document.body.classList.toggle('sidebar-active', isSidebarOpen);
+    
+    // Explicitly set the left property when toggling
+    if (isSidebarOpen) {
+        sidebar.style.left = '0';
+    } else {
+        sidebar.style.left = '-' + getComputedStyle(document.documentElement).getPropertyValue('--sidebar-width');
+    }
     
     // Ensure focus returns to input when sidebar closes
     if (!isSidebarOpen) {
