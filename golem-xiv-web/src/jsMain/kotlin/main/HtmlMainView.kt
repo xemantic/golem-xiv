@@ -32,12 +32,11 @@ import org.w3c.dom.HTMLElement
 
 class HtmlMainView(
     private val body: HTMLElement,
-    sidebarView: HtmlSidebarView
+    headerView: HtmlHeaderView,
+    sidebarView: HtmlSidebarView,
 ): MainView {
 
     private val sidebarView = HtmlSidebarView()
-
-    private val headerView = HtmlHeaderView()
 
     private val chatView = HtmlChatView()
 

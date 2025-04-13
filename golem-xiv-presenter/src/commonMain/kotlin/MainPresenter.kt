@@ -20,8 +20,11 @@ import com.xemantic.ai.golem.api.GolemInput
 import com.xemantic.ai.golem.api.GolemOutput
 import com.xemantic.ai.golem.presenter.context.ContextPresenter
 import com.xemantic.ai.golem.presenter.context.ContextView
+import com.xemantic.ai.golem.presenter.navigation.HeaderPresenter
+import com.xemantic.ai.golem.presenter.navigation.HeaderView
 import com.xemantic.ai.golem.presenter.navigation.SidebarPresenter
 import com.xemantic.ai.golem.presenter.navigation.SidebarView
+import com.xemantic.ai.golem.presenter.util.Action
 import com.xemantic.ai.golem.presenter.websocket.sendToGolem
 import com.xemantic.ai.golem.presenter.websocket.collectGolemOutput
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -34,6 +37,7 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.URLProtocol
 import io.ktor.websocket.WebSocketSession
 import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import kotlin.uuid.Uuid
 
@@ -49,7 +53,8 @@ interface MainView {
 
 class MainPresenter(
     private val config: Config,
-    private val sidebarView: SidebarView
+    headerView: HeaderView,
+    private val sidebarView: SidebarView,
 ) {
 
     data class Config(
@@ -74,9 +79,18 @@ class MainPresenter(
         }
     }
 
+    private val toggleFlow = MutableSharedFlow<Action>()
+
+    val headerPresenter = HeaderPresenter(
+        scope,
+        headerView,
+        menuToggleHandler = { toggleFlow.emit(Action) }
+    )
+
     val sidebarPresenter = SidebarPresenter(
         scope,
-        sidebarView
+        sidebarView,
+        toggles = toggleFlow
     )
 
     var contextPresenter: ContextPresenter? = null

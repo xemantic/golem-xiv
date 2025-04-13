@@ -16,49 +16,27 @@
 
 package com.xemantic.ai.golem.presenter.navigation
 
-import com.xemantic.ai.golem.presenter.Theme
 import com.xemantic.ai.golem.presenter.util.Action
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 
-interface SidebarView {
+interface HeaderView {
 
-    val themeChanges: Flow<Theme>
-
-    val resizes: Flow<Action>
-
-    fun theme(theme: Theme)
-
-    var opened: Boolean
+    val toggleMenuClicks: Flow<Action>
 
 }
 
-class SidebarPresenter(
+class HeaderPresenter(
     scope: CoroutineScope,
-    view: SidebarView,
-    toggles: Flow<Action>
+    view: HeaderView,
+    menuToggleHandler: suspend () -> Unit
 ) {
-
-    var opened: Boolean = false
 
     init {
         scope.launch {
-            toggles.collect {
-                println("toggle collected1")
-                opened = !opened
-                view.opened = opened
-            }
-        }
-        scope.launch {
-            view.resizes.collect {
-                opened = false
-                view.opened = opened
-            }
-        }
-        scope.launch {
-            view.themeChanges.collect {
-                view.theme(it)
+            view.toggleMenuClicks.collect {
+                menuToggleHandler()
             }
         }
     }

@@ -66,15 +66,9 @@ body {
 }
 
 /* Sidebar hidden state - desktop */
-.sidebar-hidden-desktop {
+.sidebar-hidden {
     left: calc(-1 * var(--sidebar-width));
     transform: translateX(0);
-}
-
-/* Sidebar hidden state - mobile */
-.sidebar-hidden-mobile {
-    left: 0;
-    transform: translateX(-100%);
 }
 
 /* Sidebar visible state */
@@ -124,7 +118,7 @@ body {
 }
 
 /* Updated theme toggle button for sidebar */
-#theme-toggle {
+.theme-toggle {
     display: flex;
     align-items: center;
     gap: 0.75rem;
@@ -138,11 +132,11 @@ body {
     font-size: 0.95rem;
 }
 
-#theme-toggle:hover {
+.theme-toggle:hover {
     background-color: var(--hover-color);
 }
 
-#theme-toggle i {
+.theme-toggle i {
     color: var(--primary-color);
     font-size: 1.1rem;
 }
@@ -554,4 +548,11 @@ main {
         font-size: 1.3rem;
         padding: 0 1rem;
     }
+
+    /* Sidebar hidden state - mobile */
+    .sidebar-hidden {
+        left: 0;
+        transform: translateX(-100%);
+    }
+
 }

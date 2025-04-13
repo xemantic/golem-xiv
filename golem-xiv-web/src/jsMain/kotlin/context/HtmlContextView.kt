@@ -16,8 +16,9 @@
 
 package com.xemantic.ai.golem.web.context
 
-import com.xemantic.ai.golem.presenter.context.Action
 import com.xemantic.ai.golem.presenter.context.ContextView
+import com.xemantic.ai.golem.presenter.util.Action
+import com.xemantic.ai.golem.web.js.actions
 import com.xemantic.ai.golem.web.view.HtmlView
 import com.xemantic.ai.golem.web.js.eventFlow
 import kotlinx.browser.document
@@ -29,7 +30,6 @@ import kotlinx.html.js.button
 import kotlinx.html.js.div
 import kotlinx.html.js.textArea
 import org.w3c.dom.events.InputEvent
-import org.w3c.dom.events.MouseEvent
 
 class HtmlContextView : ContextView, HtmlView {
 
@@ -50,10 +50,7 @@ class HtmlContextView : ContextView, HtmlView {
             promptInput.value
         }
 
-    override val promptSubmits: Flow<Action> =
-        submitButton.eventFlow<MouseEvent>("click").map {
-            Action
-        }
+    override val promptSubmits: Flow<Action> = submitButton.actions()
 
     override var promptInputDisabled: Boolean
         get() = promptInput.disabled

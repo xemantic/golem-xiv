@@ -16,12 +16,16 @@
 
 package com.xemantic.ai.golem.web.js
 
+import com.xemantic.ai.golem.presenter.util.Action
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.map
+import org.w3c.dom.Window
 import org.w3c.dom.events.Event
 import org.w3c.dom.events.EventListener
 import org.w3c.dom.events.EventTarget
+import org.w3c.dom.events.MouseEvent
 
 inline fun <reified T : Event> EventTarget.eventFlow(
     type: String
@@ -36,3 +40,9 @@ inline fun <reified T : Event> EventTarget.eventFlow(
         removeEventListener(type, listener)
     }
 }
+
+fun EventTarget.actions(): Flow<Action> = clicks().map { Action }
+
+fun EventTarget.clicks(): Flow<MouseEvent> = eventFlow("click")
+
+fun Window.resizes(): Flow<Event> = eventFlow("resize")

@@ -19,11 +19,10 @@ package com.xemantic.ai.golem.presenter.context
 import com.xemantic.ai.golem.api.Message
 import com.xemantic.ai.golem.api.GolemInput
 import com.xemantic.ai.golem.api.Text
+import com.xemantic.ai.golem.presenter.util.Action
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
-
-object Action
 
 interface ContextView {
 

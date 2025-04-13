@@ -19,6 +19,7 @@ package com.xemantic.ai.golem.web
 import com.xemantic.ai.golem.presenter.MainPresenter
 import com.xemantic.ai.golem.web.dev.devMode
 import com.xemantic.ai.golem.web.main.HtmlMainView
+import com.xemantic.ai.golem.web.navigation.HtmlHeaderView
 import com.xemantic.ai.golem.web.navigation.HtmlSidebarView
 import io.ktor.http.URLProtocol
 import kotlinx.browser.document
@@ -36,10 +37,16 @@ fun main() {
         apiProtocol = protocol
     )
     val sidebarView = HtmlSidebarView()
+    val headerView = HtmlHeaderView()
     val presenter = MainPresenter(
         config,
+        headerView,
         sidebarView
     )
-    val view = HtmlMainView(document.body!!, sidebarView)
+    val view = HtmlMainView(
+        document.body!!,
+        headerView,
+        sidebarView
+    )
     presenter.bind(view)
 }

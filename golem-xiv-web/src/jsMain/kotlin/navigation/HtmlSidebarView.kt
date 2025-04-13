@@ -18,8 +18,11 @@ package com.xemantic.ai.golem.web.navigation
 
 import com.xemantic.ai.golem.presenter.Theme
 import com.xemantic.ai.golem.presenter.navigation.SidebarView
+import com.xemantic.ai.golem.presenter.util.Action
+import com.xemantic.ai.golem.web.injector.inject
 import com.xemantic.ai.golem.web.js.ariaLabel
-import com.xemantic.ai.golem.web.js.eventFlow
+import com.xemantic.ai.golem.web.js.clicks
+import com.xemantic.ai.golem.web.js.resizes
 import com.xemantic.ai.golem.web.view.HtmlView
 import kotlinx.browser.document
 import kotlinx.browser.window
@@ -27,7 +30,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.html.*
 import kotlinx.html.dom.create
-import org.w3c.dom.events.MouseEvent
 
 class HtmlSidebarView() : SidebarView, HtmlView {
 
@@ -45,7 +47,9 @@ class HtmlSidebarView() : SidebarView, HtmlView {
         +"Toggle Theme"
     }
 
-    private val toggleThemeButton = document.create.button {
+    private val toggleThemeButton = document.create.button(
+        classes = "theme-toggle"
+    ) {
         ariaLabel = "Toggle dark/light theme"
     }.apply {
         append(
@@ -54,7 +58,10 @@ class HtmlSidebarView() : SidebarView, HtmlView {
         )
     }
 
-    override val element = document.create.aside("sidebar") {
+    override val element = document.create.inject(
+        conversationList to ".sidebar-content",
+        toggleThemeButton to ".sidebar-footer"
+    ).aside("sidebar") {
         div("sidebar-header") {
             h2("Conversation")
             button(classes = "new-chat-btn") {
@@ -63,15 +70,13 @@ class HtmlSidebarView() : SidebarView, HtmlView {
         }
         div("sidebar-content")
         div("sidebar-footer")
-    }.apply {
-        querySelector(".sidebar-content")!!.append(conversationList)
-        querySelector(".sidebar-footer")!!.append(toggleThemeButton)
     }
 
     override var opened: Boolean = false
         get() = field
         set(value) {
             field = value
+            updateVisibility()
         }
 
     override fun theme(theme: Theme) {
@@ -88,42 +93,23 @@ class HtmlSidebarView() : SidebarView, HtmlView {
         this.theme = theme
     }
 
-    override val themeChanges: Flow<Theme> = toggleThemeButton.eventFlow<MouseEvent>(
-        "click"
-    ).map {
+    private fun updateVisibility() {
+        element.classList.remove(
+            "sidebar-hidden",
+            "sidebar-visible"
+        )
+        element.classList.add(
+            if (!opened) "sidebar-hidden" else "sidebar-visible"
+        )
+    }
+
+    override val themeChanges: Flow<Theme> = toggleThemeButton.clicks().map {
         when (theme) {
             Theme.LIGHT -> Theme.DARK
             Theme.DARK -> Theme.LIGHT
         }
     }
 
-    // TODO attach this
-    private fun handleWindowResize() {
-        // Update sidebar positioning based on screen size
-        if (window.innerWidth <= 768) {
-            // Mobile view
-            element.classList.remove("sidebar-hidden-desktop", "sidebar-visible")
-
-            if (!opened) {
-                element.classList.add("sidebar-hidden-mobile")
-            } else {
-                element.classList.add("sidebar-visible")
-            }
-        } else {
-            // Desktop view
-            element.classList.remove("sidebar-hidden-mobile", "sidebar-visible")
-
-            if (!opened) {
-                element.classList.add("sidebar-hidden-desktop")
-            } else {
-                element.classList.add("sidebar-visible")
-            }
-        }
-
-        // Close sidebar automatically when resizing to mobile view if it's open
-        if (window.innerWidth <= 768 && opened) {
-            //toggleSidebar()
-        }
-    }
+    override val resizes: Flow<Action> = window.resizes().map { Action }
 
 }
