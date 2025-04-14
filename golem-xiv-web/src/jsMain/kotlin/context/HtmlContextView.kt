@@ -18,31 +18,82 @@ package com.xemantic.ai.golem.web.context
 
 import com.xemantic.ai.golem.presenter.context.ContextView
 import com.xemantic.ai.golem.presenter.util.Action
+import com.xemantic.ai.golem.web.injector.inject
 import com.xemantic.ai.golem.web.js.actions
+import com.xemantic.ai.golem.web.js.ariaLabel
 import com.xemantic.ai.golem.web.view.HtmlView
 import com.xemantic.ai.golem.web.js.eventFlow
+import com.xemantic.ai.golem.web.js.icon
 import kotlinx.browser.document
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.html.button
+import kotlinx.html.div
 import kotlinx.html.dom.append
 import kotlinx.html.dom.create
+import kotlinx.html.h2
+import kotlinx.html.id
 import kotlinx.html.js.button
 import kotlinx.html.js.div
 import kotlinx.html.js.textArea
+import kotlinx.html.span
 import org.w3c.dom.events.InputEvent
 
 class HtmlContextView : ContextView, HtmlView {
 
     private val content = document.create.div("content")
 
-    private val promptInput = document.create.textArea {}
+    private val promptInput = document.create.textArea {
+        id = "prompt-input"
+        placeholder = "Ask me anything..."
+    }
+
+    private val micButton = document.create.button {
+        id = "mic-button"
+        ariaLabel = "Start voice input"
+        icon("microphone")
+    }
+
+    private val sendButton = document.create.button {
+        id = "send-button"
+        ariaLabel = "Send message"
+        icon("paper-plane")
+    }
+
+    private val micStatus = document.create.div(
+        "hidden"
+    ) {
+        id = "mic-status"
+        +"Listening... "
+        span {
+            id = "recording-time"
+            +"0:00"
+        }
+        button {
+            id = "stop-recording"
+            icon("stop")
+        }
+    }
 
     private val submitButton = document.create.button { +"Send" }
 
-    val chatDiv = document.create.div("chat").apply {
-        appendChild(content)
-        appendChild(promptInput)
-        appendChild(submitButton)
+    override val element = document.create.inject(
+        promptInput to "#prompt-box",
+        //toggleThemeButton to ".sidebar-footer"
+    ).div("chat-centered-mode") {
+        id = "chat-container"
+        div {
+            id = "messages"
+            div { id = "input-container"
+                div { id = "prompt-box" }
+            }
+            h2("Conversation")
+            button(classes = "new-chat-btn") {
+                icon("plus"); +" New Chat"
+            }
+        }
+        div("sidebar-content")
+        div("sidebar-footer")
     }
 
     override val promptChanges: Flow<String> =
@@ -118,6 +169,7 @@ class HtmlContextView : ContextView, HtmlView {
 //        }
 //    }
 
-    override val element get() = chatDiv
-
 }
+
+
+

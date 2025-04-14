@@ -21,6 +21,7 @@ import com.xemantic.ai.golem.presenter.util.Action
 import com.xemantic.ai.golem.web.injector.inject
 import com.xemantic.ai.golem.web.js.actions
 import com.xemantic.ai.golem.web.js.ariaLabel
+import com.xemantic.ai.golem.web.js.icon
 import com.xemantic.ai.golem.web.view.HtmlView
 import kotlinx.browser.document
 import kotlinx.coroutines.flow.Flow
@@ -32,7 +33,7 @@ class HtmlHeaderView() : HeaderView, HtmlView {
 
     private val themeIcon = document.create.button(classes = "menu-toggle") {
         ariaLabel = "Toggle sidebar menu"
-        i("fas fa-bars")
+        icon("bars")
     }
 
     override val element = document.create.inject(

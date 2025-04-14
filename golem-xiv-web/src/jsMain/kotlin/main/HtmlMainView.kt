@@ -19,7 +19,6 @@ package com.xemantic.ai.golem.web.main
 import com.xemantic.ai.golem.presenter.MainView
 import com.xemantic.ai.golem.presenter.Theme
 import com.xemantic.ai.golem.presenter.context.ContextView
-import com.xemantic.ai.golem.web.chat.HtmlChatView
 import com.xemantic.ai.golem.web.context.HtmlContextView
 import com.xemantic.ai.golem.web.navigation.HtmlHeaderView
 import com.xemantic.ai.golem.web.navigation.HtmlSidebarView
@@ -38,7 +37,7 @@ class HtmlMainView(
 
     private val sidebarView = HtmlSidebarView()
 
-    private val chatView = HtmlChatView()
+    private val contextView = HtmlContextView()
 
     private val mainElement = document.create.main()
 
@@ -47,7 +46,7 @@ class HtmlMainView(
     init {
         val mainContainer = document.create.div("main-container")
         val mainElement = document.create.main()
-        mainElement.append(chatView.element)
+        mainElement.append(contextView.element)
 //        // TODO remove welcome-text
         mainContainer.append(
             headerView.element,

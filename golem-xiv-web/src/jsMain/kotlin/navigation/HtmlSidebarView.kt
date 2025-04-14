@@ -22,6 +22,7 @@ import com.xemantic.ai.golem.presenter.util.Action
 import com.xemantic.ai.golem.web.injector.inject
 import com.xemantic.ai.golem.web.js.ariaLabel
 import com.xemantic.ai.golem.web.js.clicks
+import com.xemantic.ai.golem.web.js.icon
 import com.xemantic.ai.golem.web.js.resizes
 import com.xemantic.ai.golem.web.view.HtmlView
 import kotlinx.browser.document
@@ -65,7 +66,7 @@ class HtmlSidebarView() : SidebarView, HtmlView {
         div("sidebar-header") {
             h2("Conversation")
             button(classes = "new-chat-btn") {
-                i("fas fa-plus"); +" New Chat"
+                icon("plus"); +" New Chat"
             }
         }
         div("sidebar-content")
