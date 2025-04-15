@@ -19,15 +19,22 @@ package com.xemantic.ai.golem.web.main
 import com.xemantic.ai.golem.presenter.MainView
 import com.xemantic.ai.golem.presenter.Theme
 import com.xemantic.ai.golem.presenter.context.ContextView
+import com.xemantic.ai.golem.presenter.util.Action
 import com.xemantic.ai.golem.web.context.HtmlContextView
+import com.xemantic.ai.golem.web.js.eventFlow
 import com.xemantic.ai.golem.web.navigation.HtmlHeaderView
 import com.xemantic.ai.golem.web.navigation.HtmlSidebarView
 import com.xemantic.ai.golem.web.view.HtmlView
 import kotlinx.browser.document
 import kotlinx.browser.localStorage
+import kotlinx.browser.window
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.html.*
 import kotlinx.html.dom.create
 import org.w3c.dom.HTMLElement
+import org.w3c.dom.events.Event
+import kotlin.uuid.Uuid
 
 class HtmlMainView(
     private val body: HTMLElement,
@@ -84,6 +91,15 @@ class HtmlMainView(
         mainElement.append()
         mainElement.append((view as HtmlView).element)
     }
+
+    override val contextSelection: Flow<Uuid> = window.eventFlow<Event>(
+        "hashchange"
+    ).map {
+        Uuid.parse(window.location.hash)
+    }
+
+    override val resizes: Flow<Action>
+        get() = window.eventFlow<Event>("resize").map { Action }
 
 }
 

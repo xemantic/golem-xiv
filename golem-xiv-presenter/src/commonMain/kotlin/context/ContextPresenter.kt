@@ -19,12 +19,21 @@ package com.xemantic.ai.golem.presenter.context
 import com.xemantic.ai.golem.api.Message
 import com.xemantic.ai.golem.api.GolemInput
 import com.xemantic.ai.golem.api.Text
+import com.xemantic.ai.golem.api.service.ContextService
 import com.xemantic.ai.golem.presenter.util.Action
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.launch
+import kotlin.uuid.Uuid
 
 interface ContextView {
+
+    fun addMessage(message: Message)
 
     val promptChanges: Flow<String>
 
@@ -36,8 +45,6 @@ interface ContextView {
 
     fun clearPromptInput()
 
-    fun addWelcomeMessage(test: String)
-
     fun addTextResponse(text: String)
 
 //    fun addToolUseRequest(request: AgentOutput.ToolUseRequest)
@@ -47,14 +54,18 @@ interface ContextView {
 }
 
 class ContextPresenter(
-    scope: CoroutineScope,
+    mainScope: CoroutineScope,
+    private val ioDispatcher: CoroutineDispatcher,
+    private val contextService: ContextService,
     private val view: ContextView,
-//    reasoning: List<Message>, // existing reasoning
-//    reasoningEvents: Flow<GolemOutput>,
-    sender: suspend (GolemInput) -> Unit
+    //golemOutputs: Flow<GolemOutput>,
+    golemInputCollector: FlowCollector<GolemInput>
 ) {
 
-    private var currentPrompt = ""
+    // TODO it should be a proper child scope
+    private val scope: CoroutineScope = MainScope()
+
+    private var currentPrompt: String = ""
 
     init {
         view.promptSubmitDisabled = true
@@ -70,12 +81,12 @@ class ContextPresenter(
                     view.submitsDisabled(true)
                     view.addTextResponse(currentPrompt)
                     view.clearPromptInput()
-                    sender(GolemInput.Prompt(message = Message(content = listOf(Text(currentPrompt)))))
+                    golemInputCollector.emit(
+                        GolemInput.Prompt(message = Message(content = listOf(Text(currentPrompt))))
+                    )
                 }
             }
         }
-
-
 
 //        scope.launch {
 //            reasoningEvents.collect { output ->
@@ -109,8 +120,23 @@ class ContextPresenter(
 //        }
     }
 
+    suspend fun loadContext(id: Uuid): Boolean {
+        val context = scope.async(ioDispatcher) {
+            contextService.get(id)
+        }.await()
+        if (context == null) return false
+        context.messages.forEach {
+            view.addMessage(it)
+        }
+        return true
+    }
+
     fun start() {
         view.submitsDisabled(false)
+    }
+
+    fun dispose() {
+        scope.cancel()
     }
 
 }

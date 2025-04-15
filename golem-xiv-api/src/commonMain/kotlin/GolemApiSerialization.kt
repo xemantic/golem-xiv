@@ -16,6 +16,7 @@
 
 package com.xemantic.ai.golem.api
 
+import com.xemantic.ai.golem.api.service.GolemServiceException
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -101,14 +102,9 @@ suspend inline fun <reified T> HttpClient.serviceGet(
     if (status.isSuccess()) {
         body<T>()
     } else {
-        throw GolemApiException(
+        throw GolemServiceException(
             uri,
             "${status.value} (${status.description})"
         )
     }
 }
-
-class GolemApiException(
-    uri: String,
-    message: String
-) : RuntimeException("Golem API error: $uri - $message")

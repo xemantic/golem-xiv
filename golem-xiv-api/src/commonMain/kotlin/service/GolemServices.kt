@@ -14,16 +14,32 @@
  * limitations under the License.
  */
 
-package com.xemantic.ai.golem.api
+package com.xemantic.ai.golem.api.service
 
-import io.ktor.client.HttpClient
+import com.xemantic.ai.golem.api.Content
+import com.xemantic.ai.golem.api.Context
+import kotlinx.coroutines.flow.Flow
+import kotlin.uuid.Uuid
 
-class GolemService(
-    private val client: HttpClient
-) {
+interface PingService {
 
-    suspend fun ping() = client.serviceGet<String>("/ping")
-
-    suspend fun listContexts(): List<Context.Info> = client.serviceGet<List<Context.Info>>("/contexts")
+    suspend fun ping(): String
 
 }
+
+interface ContextService {
+
+    suspend fun start(
+        content: List<Content>
+    ): Context
+
+    suspend fun get(id: Uuid): Context?
+
+    fun list(): Flow<Context.Info>
+
+}
+
+class GolemServiceException(
+    uri: String,
+    message: String
+) : RuntimeException("Golem API error: $uri - $message")

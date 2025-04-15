@@ -16,6 +16,7 @@
 
 package com.xemantic.ai.golem.web.context
 
+import com.xemantic.ai.golem.api.Message
 import com.xemantic.ai.golem.presenter.context.ContextView
 import com.xemantic.ai.golem.presenter.util.Action
 import com.xemantic.ai.golem.web.injector.inject
@@ -42,6 +43,8 @@ import org.w3c.dom.events.InputEvent
 class HtmlContextView : ContextView, HtmlView {
 
     private val content = document.create.div("content")
+
+    private val messagesDiv = document.create.div("messages")
 
     private val promptInput = document.create.textArea {
         id = "prompt-input"
@@ -92,8 +95,22 @@ class HtmlContextView : ContextView, HtmlView {
                 icon("plus"); +" New Chat"
             }
         }
-        div("sidebar-content")
-        div("sidebar-footer")
+//        div("sidebar-content") // TODO
+//        div("sidebar-footer")
+    }
+
+    override fun addMessage(message: Message) {
+        messagesDiv.append {
+            div("message") {
+
+            }
+
+            message.content.forEach {
+
+            }
+        }
+
+        TODO("Not yet implemented")
     }
 
     override val promptChanges: Flow<String> =
@@ -119,13 +136,6 @@ class HtmlContextView : ContextView, HtmlView {
             submitButton.disabled = value
         }
 
-    override fun addWelcomeMessage(text: String) {
-        content.append {
-            div("welcome") {
-                +text
-            }
-        }
-    }
 
     override fun addTextResponse(text: String) {
         content.append {

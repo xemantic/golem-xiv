@@ -81,6 +81,10 @@ data class Code(
     val kotlinScript: String
 ) : Content
 
+data class ChildContext(
+    val info: Context.Info
+) : Content
+
 @Serializable
 class ContentDelta(
     val conversationId: Uuid,

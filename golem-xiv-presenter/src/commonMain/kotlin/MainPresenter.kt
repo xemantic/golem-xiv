@@ -18,6 +18,8 @@ package com.xemantic.ai.golem.presenter
 
 import com.xemantic.ai.golem.api.GolemInput
 import com.xemantic.ai.golem.api.GolemOutput
+import com.xemantic.ai.golem.api.service.ClientContextService
+import com.xemantic.ai.golem.api.service.ClientPingService
 import com.xemantic.ai.golem.presenter.context.ContextPresenter
 import com.xemantic.ai.golem.presenter.context.ContextView
 import com.xemantic.ai.golem.presenter.navigation.HeaderPresenter
@@ -32,11 +34,11 @@ import io.ktor.client.HttpClient
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.client.plugins.websocket.webSocket
-import io.ktor.client.request.get
-import io.ktor.client.statement.bodyAsText
 import io.ktor.http.URLProtocol
 import io.ktor.websocket.WebSocketSession
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import kotlin.uuid.Uuid
@@ -49,13 +51,20 @@ interface MainView {
 
     fun displayContext(view: ContextView)
 
+    val resizes: Flow<Action>
+
+    val contextSelection: Flow<Uuid>
+
 }
 
 class MainPresenter(
     private val config: Config,
+    private val view: MainView,
     headerView: HeaderView,
     private val sidebarView: SidebarView,
 ) {
+
+    private val logger = KotlinLogging.logger {}
 
     data class Config(
         val apiProtocol: URLProtocol,
@@ -63,8 +72,6 @@ class MainPresenter(
         val apiPort: Int,
         val wsProtocol: URLProtocol = if (apiProtocol == URLProtocol.HTTPS) URLProtocol.WSS else URLProtocol.WS
     )
-
-    private val logger = KotlinLogging.logger {}
 
     private val scope = MainScope()
 
@@ -93,18 +100,15 @@ class MainPresenter(
         toggles = toggleFlow
     )
 
-    var contextPresenter: ContextPresenter? = null
+    private val golemInput = MutableSharedFlow<GolemInput>()
 
-//    val golemService: GolemService
+    private val pingService = ClientPingService(apiClient)
+    private val contextService = ClientContextService(apiClient)
+
+    private lateinit var contextPresenter: ContextPresenter
+    private lateinit var contextView: ContextView
+
     init {
-
-
-
-    }
-
-    fun bind(
-        view: MainView
-    ) {
 
         scope.launch {
             sidebarView.themeChanges.collect {
@@ -113,10 +117,18 @@ class MainPresenter(
         }
 
         scope.launch {
-            val x = apiClient.get("/api/ping").bodyAsText()
-            logger.error { "$ ---- ${x}" }
+            val pong = pingService.ping()
+            logger.info { "Server ping: $pong" }
         }
-        val contextView = view.contextView()
+
+        scope.launch {
+            view.contextSelection.collect {
+                initContex()
+                contextPresenter.loadContext(it)
+                contextPresenter.dispose()
+                //contextView
+            }
+        }
 
         view.displayContext(contextView)
 
@@ -130,24 +142,29 @@ class MainPresenter(
                 },
                 path = "/ws"
             ) {
-                val sender = ::sendToGolem
-                contextPresenter = ContextPresenter(
-                    scope,
-                    contextView,
-                    sender
-                )
+                launch {
+                    golemInput.collect { sendToGolem(it) }
+                }
                 collectGolemOutput { handle(it) }
             }
         }
 
-        scope.launch {
-//            val contexts = golemService.listContexts()
-        }
-
+        initContex()
     }
 
-    fun showContext(uuid: Uuid) {
-
+    fun initContex() {
+        if (::contextPresenter.isInitialized) {
+            contextPresenter.dispose()
+        }
+        contextView = view.contextView()
+        contextPresenter = ContextPresenter(
+            scope,
+            Dispatchers.Default,
+            contextService,
+            contextView,
+            golemInput
+        )
+        view.displayContext(contextView)
     }
 
     fun onContextSelected() {

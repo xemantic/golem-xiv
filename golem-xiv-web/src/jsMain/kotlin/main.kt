@@ -38,15 +38,15 @@ fun main() {
     )
     val sidebarView = HtmlSidebarView()
     val headerView = HtmlHeaderView()
-    val presenter = MainPresenter(
-        config,
-        headerView,
-        sidebarView
-    )
     val view = HtmlMainView(
         document.body!!,
         headerView,
         sidebarView
     )
-    presenter.bind(view)
+    MainPresenter(
+        config,
+        view,
+        headerView,
+        sidebarView
+    )
 }

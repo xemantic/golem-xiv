@@ -38,6 +38,7 @@ kotlin {
 
         jsMain {
             dependencies {
+                implementation(project(":golem-xiv-api"))
                 implementation(project(":golem-xiv-presenter"))
                 implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.kotlinx.html)
