@@ -1,0 +1,180 @@
+.context {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    justify-content: space-between;
+    /* Removed overflow settings to use body scrollbar */
+    min-height: calc(100vh - 200px); /* Min height for chat container */
+}
+
+/* Chat container in regular conversation mode */
+.chat-conversation-mode {
+    justify-content: space-between;
+    height: 100%;
+}
+
+/* Centered mode (initial state) */
+.chat-centered-mode {
+    justify-content: center;
+    height: 100%;
+}
+
+/* Input container in centered mode */
+.chat-centered-mode #input-container {
+    margin-top: 0;
+    transform: scale(1.05);
+    transition: transform 0.3s ease-in-out;
+}
+
+/* Prompt box in centered mode */
+.chat-centered-mode #prompt-box {
+    max-width: 700px;
+    margin: 0 auto;
+    box-shadow: 0 5px 15px var(--shadow-color);
+}
+
+/* Welcome text styling */
+.welcome-text {
+    text-align: center;
+    color: var(--text-color);
+    opacity: 0.7;
+    margin-bottom: 1.5rem;
+    font-size: 1.6rem;
+    font-weight: 300;
+    animation: fadeIn 1s ease-in-out;
+}
+
+.welcome-text-hidden {
+    display: none;
+}
+
+#messages {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    /* Remove overflow-y to prevent separate scrollbars */
+    overflow-y: visible;
+}
+
+.message {
+    display: flex;
+    flex-direction: column;
+    max-width: 90%;
+    padding: 1rem;
+    border-radius: 8px;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.user-message {
+    align-self: flex-end;
+    background-color: var(--user-msg-bg);
+    border-bottom-right-radius: 0;
+}
+
+.ai-message {
+    align-self: flex-start;
+    background-color: var(--ai-msg-bg);
+    border-bottom-left-radius: 0;
+}
+
+.message-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.message-header i {
+    margin-right: 0.5rem;
+}
+
+.message-content {
+    line-height: 1.5;
+    white-space: pre-wrap;
+}
+
+.character {
+    display: inline-block;
+}
+
+/* Input area */
+#input-container {
+    position: relative;
+    margin-top: auto;
+}
+
+.prompt {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: var(--input-bg);
+    padding: 0.75rem;
+    box-shadow: 0 2px 10px var(--shadow-color);
+}
+
+.prompt textarea {
+    flex: 1;
+    width: 100%;
+    border: none;
+    background: none;
+    resize: none;
+    font-size: 1rem;
+    font-family: inherit;
+    color: var(--text-color);
+    min-height: 1rem;
+    max-height: 150px;
+    overflow-y: scroll;
+    padding: 0.5rem;
+    outline: none;
+}
+
+.prompt .prompt-controls {
+    display: flex;
+    padding-bottom: 0.5rem;
+    justify-content: space-between;
+}
+
+.prompt .prompt-options {
+    display: flex;
+}
+
+.prompt .prompt-actions {
+    display: flex;
+}
+
+.prompt .prompt-actions button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+    margin-left: 0.5rem;
+    border-radius: 50%;
+    color: var(--primary-color);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    font-size: 1.25rem;
+}
+
+.prompt .input-buttons button:hover {
+    background-color: var(--hover-color);
+}
+
+/* Microphone button styles */
+.prompt .input-buttons .mic-button-active {
+    color: #e74c3c !important;
+    animation: pulse 1.5s infinite;
+}
+
+@media (max-width: 768px) {
+
+    .message {
+        max-width: 100%;
+    }
+
+    .chat-centered-mode + .welcome-text {
+        font-size: 1.3rem;
+        padding: 0 1rem;
+    }
+
+}

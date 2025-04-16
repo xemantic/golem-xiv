@@ -14,28 +14,39 @@
  * limitations under the License.
  */
 
-package com.xemantic.ai.golem.web.injector
+package com.xemantic.ai.golem.web.util
 
-import kotlinx.html.TagConsumer
 import org.w3c.dom.HTMLElement
 
-private class InjectorConsumer(
-    val downstream: TagConsumer<HTMLElement>,
-    val injections: List<Pair<HTMLElement, String>>
-) : TagConsumer<HTMLElement> by downstream {
-
-    override fun finalize(): HTMLElement {
-        val node = downstream.finalize()
-        injections.forEach { (element, selector) ->
-            node.querySelector(selector)?.append(element) ?: throw IllegalArgumentException(
-                "InjectorConsumer: Selector '$selector' did not match any element."
-            )
-        }
-        return node
+fun <T : HTMLElement> T.inject(
+    vararg injections: Pair<HTMLElement, String>,
+): T {
+    injections.forEach { (element, selector) ->
+        querySelector(selector)?.append(element) ?: throw IllegalArgumentException(
+            "Selector '$selector' did not match any element."
+        )
     }
-
+    return this
 }
 
-fun TagConsumer<HTMLElement>.inject(
-    vararg injections: Pair<HTMLElement, String>,
-): TagConsumer<HTMLElement> = InjectorConsumer(this, injections.toList())
+fun <T : HTMLElement> T.children(
+    vararg elements: HTMLElement
+): HTMLElement = also {
+    elements.forEach {
+        append(it)
+    }
+}
+
+
+fun <T : HTMLElement> T.appendTo(
+    selector: String,
+    vararg elements: HTMLElement
+): HTMLElement = also {
+    querySelector(selector)?.run {
+        elements.forEach {
+            this@run.append(it)
+        }
+    } ?: throw IllegalArgumentException(
+        "Selector '$selector' did not match any element."
+    )
+}

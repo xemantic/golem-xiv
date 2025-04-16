@@ -17,18 +17,14 @@
 package com.xemantic.ai.golem.web.js
 
 import kotlinx.html.FlowContent
-import kotlinx.html.HtmlTagMarker
 import kotlinx.html.I
 import kotlinx.html.TagConsumer
 import kotlinx.html.i
-import kotlin.contracts.ExperimentalContracts
 
-@HtmlTagMarker
-@OptIn(ExperimentalContracts::class)
-inline fun FlowContent.icon(name: String) {
+fun FlowContent.icon(name: String) {
     i("fas fa-$name")
 }
 
-inline fun TagConsumer<*>.icon(
+fun TagConsumer<*>.icon(
     name: String
 ): I = i("fas fa-$name") as I

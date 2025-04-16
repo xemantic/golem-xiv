@@ -44,17 +44,12 @@ class HtmlMainView(
 
     private val sidebarView = HtmlSidebarView()
 
-    private val contextView = HtmlContextView()
-
     private val mainElement = document.create.main()
 
     private val overlayElement = document.create.div("overlay")
 
     init {
         val mainContainer = document.create.div("main-container")
-        val mainElement = document.create.main()
-        mainElement.append(contextView.element)
-//        // TODO remove welcome-text
         mainContainer.append(
             headerView.element,
             mainElement
@@ -88,7 +83,6 @@ class HtmlMainView(
 
     override fun displayContext(view: ContextView) {
         mainElement.innerHTML = ""
-        mainElement.append()
         mainElement.append((view as HtmlView).element)
     }
 

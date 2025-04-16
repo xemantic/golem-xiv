@@ -17,108 +17,99 @@
 package com.xemantic.ai.golem.web.context
 
 import com.xemantic.ai.golem.api.Message
+import com.xemantic.ai.golem.api.Text
 import com.xemantic.ai.golem.presenter.context.ContextView
-import com.xemantic.ai.golem.presenter.util.Action
-import com.xemantic.ai.golem.web.injector.inject
 import com.xemantic.ai.golem.web.js.actions
 import com.xemantic.ai.golem.web.js.ariaLabel
 import com.xemantic.ai.golem.web.view.HtmlView
 import com.xemantic.ai.golem.web.js.eventFlow
 import com.xemantic.ai.golem.web.js.icon
-import kotlinx.browser.document
-import kotlinx.coroutines.flow.Flow
+import com.xemantic.ai.golem.web.util.appendTo
+import com.xemantic.ai.golem.web.util.children
+import com.xemantic.ai.golem.web.util.inject
 import kotlinx.coroutines.flow.map
-import kotlinx.html.button
+import kotlinx.coroutines.flow.merge
 import kotlinx.html.div
 import kotlinx.html.dom.append
-import kotlinx.html.dom.create
-import kotlinx.html.h2
 import kotlinx.html.id
 import kotlinx.html.js.button
 import kotlinx.html.js.div
 import kotlinx.html.js.textArea
-import kotlinx.html.span
+import org.w3c.dom.HTMLTextAreaElement
 import org.w3c.dom.events.InputEvent
+import org.w3c.dom.events.KeyboardEvent
 
 class HtmlContextView : ContextView, HtmlView {
 
-    private val content = document.create.div("content")
+    private val messagesDiv = html.div("messages")
 
-    private val messagesDiv = document.create.div("messages")
-
-    private val promptInput = document.create.textArea {
-        id = "prompt-input"
-        placeholder = "Ask me anything..."
-    }
-
-    private val micButton = document.create.button {
+    private val micButton = html.button {
         id = "mic-button"
         ariaLabel = "Start voice input"
         icon("microphone")
     }
 
-    private val sendButton = document.create.button {
+    private val sendButton = html.button {
         id = "send-button"
         ariaLabel = "Send message"
         icon("paper-plane")
     }
 
-    private val micStatus = document.create.div(
-        "hidden"
-    ) {
-        id = "mic-status"
-        +"Listening... "
-        span {
-            id = "recording-time"
-            +"0:00"
-        }
-        button {
-            id = "stop-recording"
-            icon("stop")
-        }
+    private val promptInput = html.textArea {
+        placeholder = "Ask me anything..."
     }
 
-    private val submitButton = document.create.button { +"Send" }
+    private val promptDiv = html.div("prompt").children(
+        promptInput,
+        html.div("prompt-controls") {
+            div("prompt-options")
+            div("prompt-actions")
+        }.appendTo(
+            ".prompt-actions",
+            micButton,
+            sendButton
+        )
 
-    override val element = document.create.inject(
-        promptInput to "#prompt-box",
-        //toggleThemeButton to ".sidebar-footer"
-    ).div("chat-centered-mode") {
-        id = "chat-container"
-        div {
-            id = "messages"
-            div { id = "input-container"
-                div { id = "prompt-box" }
-            }
-            h2("Conversation")
-            button(classes = "new-chat-btn") {
-                icon("plus"); +" New Chat"
-            }
-        }
-//        div("sidebar-content") // TODO
-//        div("sidebar-footer")
-    }
+//                children(
+//            micButton,
+//            sendButton
+//        )
+    )
+
+    override val element = html.div("context").children(
+        messagesDiv,
+        promptDiv
+    )
 
     override fun addMessage(message: Message) {
         messagesDiv.append {
-            div("message") {
-
-            }
-
-            message.content.forEach {
-
+            div("message ${message.role.name.lowercase()}") {
+                message.content.forEach {
+                    div("content") {
+                        when (it) {
+                            is Text -> { +it.text }
+                            else -> { +it.toString() }
+                        }
+                    }
+                }
             }
         }
-
-        TODO("Not yet implemented")
     }
 
-    override val promptChanges: Flow<String> =
-        promptInput.eventFlow<InputEvent>("input").map {
-            promptInput.value
-        }
+    override val promptChanges = promptInput.eventFlow<InputEvent>("input").map {
+        promptInput.value
+    }
 
-    override val promptSubmits: Flow<Action> = submitButton.actions()
+    override val promptInputShiftKeys = merge(
+        promptInput.eventFlow<KeyboardEvent>("keydown").map { it.shiftKey },
+        promptInput.eventFlow<KeyboardEvent>("keyup").map { false }
+    )
+
+    override fun updatePromptInputHeight() {
+        promptInput.adjustHeight()
+    }
+
+    override val sendActions = sendButton.actions()
 
     override var promptInputDisabled: Boolean
         get() = promptInput.disabled
@@ -130,19 +121,18 @@ class HtmlContextView : ContextView, HtmlView {
         promptInput.value = ""
     }
 
-    override var promptSubmitDisabled: Boolean
-        get() = submitButton.disabled
+    override var sendDisabled: Boolean
+        get() = sendButton.disabled
         set(value) {
-            submitButton.disabled = value
+            sendButton.disabled = value
         }
-
 
     override fun addTextResponse(text: String) {
-        content.append {
-            div("text") {
-                +text
-            }
-        }
+//        content.append {
+//            div("text") {
+//                +text
+//            }
+//        }
     }
 
 //    override fun addToolUseRequest(request: AgentOutput.ToolUseRequest) {
@@ -179,7 +169,9 @@ class HtmlContextView : ContextView, HtmlView {
 //        }
 //    }
 
+    private fun HTMLTextAreaElement.adjustHeight() {
+        style.height = "auto"
+        style.height = "${scrollHeight}px"
+    }
+
 }
-
-
-

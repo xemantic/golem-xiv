@@ -21,6 +21,7 @@ import com.xemantic.ai.golem.api.GolemInput
 import com.xemantic.ai.golem.api.Text
 import com.xemantic.ai.golem.api.service.ContextService
 import com.xemantic.ai.golem.presenter.util.Action
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
@@ -37,11 +38,15 @@ interface ContextView {
 
     val promptChanges: Flow<String>
 
-    val promptSubmits: Flow<Action>
+    val promptInputShiftKeys: Flow<Boolean>
+
+    fun updatePromptInputHeight()
+
+    val sendActions: Flow<Action>
 
     var promptInputDisabled: Boolean
 
-    var promptSubmitDisabled: Boolean
+    var sendDisabled: Boolean
 
     fun clearPromptInput()
 
@@ -58,35 +63,49 @@ class ContextPresenter(
     private val ioDispatcher: CoroutineDispatcher,
     private val contextService: ContextService,
     private val view: ContextView,
-    //golemOutputs: Flow<GolemOutput>,
     golemInputCollector: FlowCollector<GolemInput>
 ) {
+
+    private val logger = KotlinLogging.logger {}
 
     // TODO it should be a proper child scope
     private val scope: CoroutineScope = MainScope()
 
+    private var isShift: Boolean = false
+
     private var currentPrompt: String = ""
 
     init {
-        view.promptSubmitDisabled = true
+        view.sendDisabled = true
+        scope.launch {
+            view.promptInputShiftKeys.collect {
+                isShift = it
+            }
+        }
         scope.launch {
             view.promptChanges.collect { prompt ->
                 currentPrompt = prompt
-                view.promptSubmitDisabled = currentPrompt.isBlank()
-            }
-        }
-        scope.launch {
-            view.promptSubmits.collect {
-                if (currentPrompt.isNotBlank()) {
-                    view.submitsDisabled(true)
-                    view.addTextResponse(currentPrompt)
-                    view.clearPromptInput()
+                view.sendDisabled = prompt.isBlank()
+                if (prompt.isNotEmpty() && (prompt.last() == '\n' != isShift)) {
                     golemInputCollector.emit(
-                        GolemInput.Prompt(message = Message(content = listOf(Text(currentPrompt))))
+                        GolemInput.Prompt(message = Message(content = listOf(Text(prompt))))
                     )
                 }
+                view.updatePromptInputHeight()
             }
         }
+//        mainScope.launch {
+//            view.promptSubmits.collect {
+//                if (currentPrompt.isNotBlank()) {
+//                    view.submitsDisabled(true)
+//                    view.addTextResponse(currentPrompt)
+//                    view.clearPromptInput()
+//                    golemInputCollector.emit(
+//                        GolemInput.Prompt(message = Message(content = listOf(Text(currentPrompt))))
+//                    )
+//                }
+//            }
+//        }
 
 //        scope.launch {
 //            reasoningEvents.collect { output ->
@@ -121,6 +140,7 @@ class ContextPresenter(
     }
 
     suspend fun loadContext(id: Uuid): Boolean {
+        logger.info { "Loading context: $id" }
         val context = scope.async(ioDispatcher) {
             contextService.get(id)
         }.await()
@@ -131,17 +151,8 @@ class ContextPresenter(
         return true
     }
 
-    fun start() {
-        view.submitsDisabled(false)
-    }
-
     fun dispose() {
         scope.cancel()
     }
 
-}
-
-private fun ContextView.submitsDisabled(disabled: Boolean) {
-    promptInputDisabled = disabled
-    promptSubmitDisabled = disabled
 }

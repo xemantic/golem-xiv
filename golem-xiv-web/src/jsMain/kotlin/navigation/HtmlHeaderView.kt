@@ -18,27 +18,23 @@ package com.xemantic.ai.golem.web.navigation
 
 import com.xemantic.ai.golem.presenter.navigation.HeaderView
 import com.xemantic.ai.golem.presenter.util.Action
-import com.xemantic.ai.golem.web.injector.inject
 import com.xemantic.ai.golem.web.js.actions
 import com.xemantic.ai.golem.web.js.ariaLabel
 import com.xemantic.ai.golem.web.js.icon
+import com.xemantic.ai.golem.web.util.inject
 import com.xemantic.ai.golem.web.view.HtmlView
-import kotlinx.browser.document
 import kotlinx.coroutines.flow.Flow
 import kotlinx.html.*
-import kotlinx.html.dom.create
 import kotlinx.html.js.header
 
 class HtmlHeaderView() : HeaderView, HtmlView {
 
-    private val themeIcon = document.create.button(classes = "menu-toggle") {
+    private val themeIcon = html.button(classes = "menu-toggle") {
         ariaLabel = "Toggle sidebar menu"
         icon("bars")
     }
 
-    override val element = document.create.inject(
-        themeIcon to ".nav-left"
-    ).header {
+    override val element = html.header {
         nav {
             div("nav-left")
             div("nav-center") {
@@ -50,7 +46,9 @@ class HtmlHeaderView() : HeaderView, HtmlView {
                 // Empty div to keep the centered title balanced
             }
         }
-    }
+    }.inject(
+        themeIcon to ".nav-left"
+    )
 
     override val toggleMenuClicks: Flow<Action> = themeIcon.actions()
 

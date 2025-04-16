@@ -130,8 +130,6 @@ class MainPresenter(
             }
         }
 
-        view.displayContext(contextView)
-
         scope.launch {
             logger.error { "wsPort ${config.apiPort}" }
             apiClient.webSocket(
@@ -177,9 +175,6 @@ class MainPresenter(
         logger.info { this }
         when (output) {
             is GolemOutput.Welcome -> {
-                if (contextPresenter != null) {
-                    contextPresenter!!.start()
-                }
                 sendToGolem(GolemInput.Test("foo"))
             }
             is GolemOutput.OsProcess -> {

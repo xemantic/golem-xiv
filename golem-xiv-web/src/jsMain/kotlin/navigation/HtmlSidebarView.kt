@@ -19,36 +19,34 @@ package com.xemantic.ai.golem.web.navigation
 import com.xemantic.ai.golem.presenter.Theme
 import com.xemantic.ai.golem.presenter.navigation.SidebarView
 import com.xemantic.ai.golem.presenter.util.Action
-import com.xemantic.ai.golem.web.injector.inject
 import com.xemantic.ai.golem.web.js.ariaLabel
 import com.xemantic.ai.golem.web.js.clicks
 import com.xemantic.ai.golem.web.js.icon
 import com.xemantic.ai.golem.web.js.resizes
+import com.xemantic.ai.golem.web.util.inject
 import com.xemantic.ai.golem.web.view.HtmlView
-import kotlinx.browser.document
 import kotlinx.browser.window
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.html.*
-import kotlinx.html.dom.create
 
 class HtmlSidebarView() : SidebarView, HtmlView {
 
     private var theme: Theme = Theme.LIGHT
 
-    private val conversationList = document.create.ul("conversation-list") {
+    private val conversationList = html.ul("conversation-list") {
         li("no-conversations") {
             +"No conversations yet"
         }
     }
 
-    private val themeIcon = document.create.i("fas fa-moon")
+    private val themeIcon = html.i("fas fa-moon")
 
-    private val themeLabel = document.create.span {
+    private val themeLabel = html.span {
         +"Toggle Theme"
     }
 
-    private val toggleThemeButton = document.create.button(
+    private val toggleThemeButton = html.button(
         classes = "theme-toggle"
     ) {
         ariaLabel = "Toggle dark/light theme"
@@ -59,10 +57,7 @@ class HtmlSidebarView() : SidebarView, HtmlView {
         )
     }
 
-    override val element = document.create.inject(
-        conversationList to ".sidebar-content",
-        toggleThemeButton to ".sidebar-footer"
-    ).aside("sidebar") {
+    override val element = html.aside("sidebar") {
         div("sidebar-header") {
             h2("Conversation")
             button(classes = "new-chat-btn") {
@@ -71,7 +66,10 @@ class HtmlSidebarView() : SidebarView, HtmlView {
         }
         div("sidebar-content")
         div("sidebar-footer")
-    }
+    }.inject(
+        conversationList to ".sidebar-content",
+        toggleThemeButton to ".sidebar-footer"
+    )
 
     override var opened: Boolean = false
         get() = field

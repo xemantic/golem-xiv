@@ -1,0 +1,158 @@
+/* Sidebar styles */
+.sidebar {
+    width: var(--sidebar-width);
+    height: 100vh;
+    background-color: var(--secondary-bg);
+    border-right: 1px solid var(--border-color);
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    transition: left 0.3s ease, transform 0.3s ease;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Sidebar hidden state - desktop */
+.sidebar-hidden {
+    left: calc(-1 * var(--sidebar-width));
+    transform: translateX(0);
+}
+
+/* Sidebar visible state */
+.sidebar-visible {
+    left: 0;
+    transform: translateX(0);
+}
+
+.sidebar-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.sidebar-header h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.new-chat-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 0.75rem;
+    cursor: pointer;
+    width: 100%;
+    font-size: 0.9rem;
+}
+
+.new-chat-btn:hover {
+    background-color: var(--primary-hover);
+    opacity: 0.9;
+}
+
+/* Added sidebar footer for theme toggle */
+.sidebar-footer {
+    margin-top: auto;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border-color);
+}
+
+/* Updated theme toggle button for sidebar */
+.theme-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: none;
+    border: none;
+    color: var(--text-color);
+    cursor: pointer;
+    width: 100%;
+    padding: 0.75rem;
+    border-radius: 4px;
+    font-size: 0.95rem;
+}
+
+.theme-toggle:hover {
+    background-color: var(--hover-color);
+}
+
+.theme-toggle i {
+    color: var(--primary-color);
+    font-size: 1.1rem;
+}
+
+.sidebar-content {
+    flex: 1;
+    padding: 1rem 0;
+    overflow-y: auto;
+}
+
+#conversation-list {
+    list-style: none;
+}
+
+#conversation-list li {
+    padding: 0.75rem 1.5rem;
+    cursor: pointer;
+    border-left: 3px solid transparent;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.9rem;
+}
+
+#conversation-list li:hover {
+    background-color: var(--hover-color);
+}
+
+#conversation-list li.active {
+    border-left-color: var(--primary-color);
+    background-color: var(--hover-color);
+    font-weight: 500;
+}
+
+#conversation-list li .conversation-title {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#conversation-list li .delete-conversation {
+    color: var(--text-color);
+    opacity: 0.5;
+    display: none;
+}
+
+#conversation-list li:hover .delete-conversation {
+    display: block;
+}
+
+#conversation-list li .delete-conversation:hover {
+    opacity: 1;
+}
+
+.no-conversations {
+    color: var(--text-color);
+    opacity: 0.6;
+    font-style: italic;
+    text-align: center;
+}
+
+@media (max-width: 768px) {
+
+    .sidebar-hidden {
+        left: 0;
+        transform: translateX(-100%);
+    }
+
+}
