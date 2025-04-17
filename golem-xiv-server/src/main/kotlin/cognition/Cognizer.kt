@@ -14,37 +14,26 @@
  * limitations under the License.
  */
 
-package com.xemantic.ai.golem.api.service
+package com.xemantic.ai.golem.server.cognition
 
-import com.xemantic.ai.golem.api.Content
-import com.xemantic.ai.golem.api.ContextInfo
+import com.xemantic.ai.anthropic.Anthropic
+import com.xemantic.ai.golem.api.Message
+import com.xemantic.ai.golem.api.ReasoningEvent
+import com.xemantic.ai.golem.server.cognition.anthropic.AnthropicCognizer
 import kotlinx.coroutines.flow.Flow
-import kotlin.uuid.Uuid
 
-interface PingService {
+interface Cognizer {
 
-    suspend fun ping(): String
-
-}
-
-interface ContextService {
-
-    suspend fun start(
-        content: List<Content>
-    ): ContextInfo
-
-    suspend fun append(
-        contextId: Uuid,
-        content: List<Content>
-    )
-
-    suspend fun get(id: Uuid): ContextInfo?
-
-    fun list(): Flow<ContextInfo>
+    fun reason(
+        system: List<String>,
+        conversation: List<Message>,
+        hints: Map<String, String>
+    ): Flow<ReasoningEvent>
 
 }
 
-class GolemServiceException(
-    uri: String,
-    message: String
-) : RuntimeException("Golem API error: $uri - $message")
+private val defaultCognizer = AnthropicCognizer(
+    Anthropic()
+)
+
+fun cognizer(): Cognizer = defaultCognizer

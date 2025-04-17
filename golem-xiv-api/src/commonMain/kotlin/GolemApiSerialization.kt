@@ -21,6 +21,10 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
+import io.ktor.client.request.put
+import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.websocket.Frame
 import io.ktor.websocket.WebSocketSession
@@ -101,6 +105,23 @@ suspend inline fun <reified T> HttpClient.serviceGet(
 ): T = get(uri).run {
     if (status.isSuccess()) {
         body<T>()
+    } else {
+        throw GolemServiceException(
+            uri,
+            "${status.value} (${status.description})"
+        )
+    }
+}
+
+suspend inline fun <reified I, reified O> HttpClient.servicePut(
+    uri: String,
+    value: I
+): O = put(uri) {
+    setBody<I>(value)
+    contentType(ContentType.Application.Json)
+}.run {
+    if (status.isSuccess()) {
+        body<O>()
     } else {
         throw GolemServiceException(
             uri,

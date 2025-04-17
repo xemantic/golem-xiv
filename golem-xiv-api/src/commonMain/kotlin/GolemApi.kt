@@ -27,22 +27,13 @@ import kotlin.uuid.Uuid
 sealed interface Content
 
 @Serializable
-data class Context(
+data class ContextInfo(
     val id: Uuid,
-    val system: List<Content>,
-    val messages: List<Message>
-) : Content {
-
-    @Serializable
-    data class Info(
-        val id: Uuid,
-        val title: String,
-        // TODO move it to general file level
-        @Serializable(with = InstantIso8601Serializer::class)
-        val creationDate: Instant
-    )
-
-}
+    val title: String,
+    // TODO move it to general file level
+    @Serializable(with = InstantIso8601Serializer::class)
+    val creationDate: Instant
+) : Content
 
 @Serializable
 data class Message(
@@ -81,15 +72,38 @@ data class Code(
     val kotlinScript: String
 ) : Content
 
-data class ChildContext(
-    val info: Context.Info
-) : Content
-
 @Serializable
 class ContentDelta(
     val conversationId: Uuid,
     val delta: Text
 )
+
+sealed interface ReasoningEvent {
+
+    @Serializable
+    @SerialName("messageStart")
+    data class MessageStart(
+        val id: Uuid
+    ) : ReasoningEvent
+
+    data class MessageContent(
+        val id: Uuid,
+        val content: String
+    ) : ReasoningEvent
+
+    @Serializable
+    @SerialName("messageEnd")
+    data class MessageEnd(
+        val id: Uuid
+    ) : ReasoningEvent
+
+    @Serializable
+    @SerialName("recursiveCognition")
+    data class RecursiveCognition(
+        val id: Uuid
+    )
+
+}
 
 //@Serializable
 //sealed class Content {

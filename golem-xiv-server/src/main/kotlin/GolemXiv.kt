@@ -18,11 +18,12 @@ package com.xemantic.ai.golem.server
 
 import com.microsoft.playwright.BrowserType
 import com.microsoft.playwright.Playwright
-import com.xemantic.ai.anthropic.Anthropic
-import com.xemantic.ai.anthropic.content.Text
-import com.xemantic.ai.anthropic.message.Message
-import com.xemantic.ai.anthropic.message.System
-import com.xemantic.ai.anthropic.message.plusAssign
+import com.xemantic.ai.golem.api.ContextInfo
+import com.xemantic.ai.golem.api.GolemOutput
+import com.xemantic.ai.golem.api.Message
+import com.xemantic.ai.golem.api.ReasoningEvent
+import com.xemantic.ai.golem.api.Text
+import com.xemantic.ai.golem.server.cognition.cognizer
 import com.xemantic.ai.golem.server.script.Content
 import com.xemantic.ai.golem.server.script.DefaultWebBrowser
 import com.xemantic.ai.golem.server.script.GOLEM_SCRIPT_API
@@ -34,10 +35,11 @@ import com.xemantic.ai.golem.server.script.extractGolemScript
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.collections.set
-import kotlin.time.Clock
 import kotlin.uuid.Uuid
 
 const val SYSTEM_PROMPT = """
@@ -64,27 +66,19 @@ inline fun <reified T : Any> service(
 
 interface Context {
 
-    val id: String
+    val id: Uuid
 
-    fun send(message: com.xemantic.ai.golem.server.script.Message) {
-
-    }
-
-    fun send(message: String) {
-
-    }
+    fun send(message: String): Flow<ReasoningEvent>
 
 }
 
-class Golem : AutoCloseable {
+class Golem(
+    private val outputs: FlowCollector<GolemOutput>
+) : AutoCloseable {
 
-    val contexts: List<com.xemantic.ai.golem.api.Context.Info> = listOf(com.xemantic.ai.golem.api.Context.Info(Uuid.random(), "foo",
-        Clock.System.now()))
+    private val contextMap = ConcurrentHashMap<Uuid, Context>()
 
-    private val anthropic: Anthropic = Anthropic()
-
-    private val contextMap = ConcurrentHashMap<String, Context>()
-
+    // TODO should it be supervisor scope?
     private val scope = CoroutineScope(Dispatchers.IO)
 
     private val scriptExecutor = GolemScriptExecutor()
@@ -98,7 +92,7 @@ class Golem : AutoCloseable {
     }
 
     inner class DefaultContext(
-        override val id: String = Uuid.random().toString(),
+        override val id: Uuid = Uuid.random(),
         private val systemPrompt: String,
         private val environmentSystemPrompt: String? = null,
         private val golemScriptApi: String? = null,
@@ -107,15 +101,16 @@ class Golem : AutoCloseable {
 
         val golemSystem = buildList {
             val coreSystem = systemPrompt + if (golemScriptApi != null) GOLEM_SCRIPT_SYSTEM_PROMPT else ""
-            add(System(text = coreSystem)) // TODO cache control
-            add(System(text = environmentSystemPrompt))
+            add(coreSystem) // TODO cach
+            if (environmentSystemPrompt != null) {
+                add(environmentSystemPrompt)
+            }
 //            if (additionalSystemPrompt != null) {
 //                add(System(text = additionalSystemPrompt)) // TODO cache control
 //            }
         }
 
         val conversation = mutableListOf<Message>()
-
 
 //        val kotlinScriptTool = Tool<KotlinScript>(name = "kotlin_script") {
 //            //golemScriptExecutor.execute(script)
@@ -129,18 +124,16 @@ class Golem : AutoCloseable {
 ////                    service<StringEditorService>("stringEditorService", stringEditorService())
         )
 
-        override fun send(message: com.xemantic.ai.golem.server.script.Message) {
-        }
-
-        override fun send(message: String) {
-            conversation += Message { +message }
+        override fun send(message: String): Flow<ReasoningEvent> {
+            conversation += Message(content = listOf(Text(message)))
             scope.launch {
                 var runGolemScript = false
                 do {
-                    val response = anthropic.messages.create {
-                        system = golemSystem
-                        messages = conversation
+                    val cognizer = cognizer() // TODO select based on hints
+                    cognizer.reason(golemSystem, conversation, hints = emptyMap()).collect {
+                        outputs.emit(GolemOutput.Reasoning(it))
                     }
+
                     conversation += response
                     println(response.text)
                     println()
@@ -169,17 +162,24 @@ class Golem : AutoCloseable {
 
     }
 
-    fun newContext(): Context {
+    fun newContext(content: List<Content>): ContextInfo {
         val context = DefaultContext(
             systemPrompt = SYSTEM_PROMPT,
             environmentSystemPrompt = environmentContext(),
             golemScriptApi = GOLEM_SCRIPT_API
         )
         contextMap[context.id] = context
+        val message = Message {
+            this.content = listOf(content)
+        }
+        scope.launch {
+            outputs.emit()
+        }
+        context.send()
         return context
     }
 
-    fun getContext(id: String): Context {
+    fun getContext(id: Uuid): Context {
         return contextMap[id]!!
     }
 

@@ -21,11 +21,13 @@ import com.xemantic.ai.golem.server.Golem
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
+import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.http.content.CompressedFileType
 import io.ktor.server.http.content.staticResources
 import io.ktor.server.plugins.calllogging.CallLogging
+import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.cors.routing.CORS
 import io.ktor.server.plugins.origin
 import io.ktor.server.routing.route
@@ -38,6 +40,9 @@ private val logger = KotlinLogging.logger {}
 fun Application.installGolemHttp(golem: Golem) {
     install(CallLogging) {
         level = org.slf4j.event.Level.DEBUG
+    }
+    install(ContentNegotiation) {
+        json()
     }
     install(CORS) {
         // Allow requests from any host

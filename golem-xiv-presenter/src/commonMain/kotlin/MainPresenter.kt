@@ -31,10 +31,12 @@ import com.xemantic.ai.golem.presenter.websocket.sendToGolem
 import com.xemantic.ai.golem.presenter.websocket.collectGolemOutput
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.client.plugins.websocket.webSocket
 import io.ktor.http.URLProtocol
+import io.ktor.serialization.kotlinx.json.json
 import io.ktor.websocket.WebSocketSession
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
@@ -77,6 +79,9 @@ class MainPresenter(
 
     private val apiClient = HttpClient {
         install(WebSockets)
+        install(ContentNegotiation) {
+            json()
+        }
         defaultRequest {
             url {
                 protocol = config.apiProtocol
@@ -101,6 +106,8 @@ class MainPresenter(
     )
 
     private val golemInput = MutableSharedFlow<GolemInput>()
+
+    private val golemOutputs = MutableSharedFlow<GolemOutput>()
 
     private val pingService = ClientPingService(apiClient)
     private val contextService = ClientContextService(apiClient)
@@ -160,7 +167,7 @@ class MainPresenter(
             Dispatchers.Default,
             contextService,
             contextView,
-            golemInput
+            golemOutputs
         )
         view.displayContext(contextView)
     }
@@ -172,19 +179,11 @@ class MainPresenter(
     private suspend fun WebSocketSession.handle(
         output: GolemOutput
     ) {
-        logger.info { this }
         when (output) {
             is GolemOutput.Welcome -> {
-                sendToGolem(GolemInput.Test("foo"))
+                logger.info { output.message }
             }
-            is GolemOutput.OsProcess -> {
-                if (true) { // process in current context or child context
-                    // update context view
-                }
-            }
-            else -> {
-
-            }
+            else -> golemOutputs.emit(output)
         }
     }
 

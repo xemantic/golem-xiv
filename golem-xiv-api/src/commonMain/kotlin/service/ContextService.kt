@@ -17,8 +17,8 @@
 package com.xemantic.ai.golem.api.service
 
 import com.xemantic.ai.golem.api.Content
-import com.xemantic.ai.golem.api.Context
 import com.xemantic.ai.golem.api.serviceGet
+import com.xemantic.ai.golem.api.servicePut
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.flow.Flow
 import kotlin.uuid.Uuid
@@ -29,9 +29,7 @@ class ClientContextService(
 
     override suspend fun start(
         content: List<Content>
-    ): Context {
-        TODO("Not yet implemented")
-    }
+    ): Context = client.servicePut("/api/contexts", content)
 
     override suspend fun get(
         id: Uuid
@@ -41,4 +39,7 @@ class ClientContextService(
         TODO("Not yet implemented")
     }
 
+    override suspend fun append(contextId: Uuid, content: List<Content>) {
+        TODO("Not yet implemented")
+    }
 }

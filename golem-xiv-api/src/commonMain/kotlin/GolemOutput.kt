@@ -21,40 +21,54 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonClassDiscriminator
 import kotlin.uuid.Uuid
 
+interface WithContextId {
+
+    val contextId: Uuid
+
+}
+
 @Serializable
 @JsonClassDiscriminator("type")
 sealed class GolemOutput {
 
     @Serializable
     @SerialName("welcome")
-    data class Welcome(
+    data class Welcome (
         val message: String
-    ) : GolemOutput()
+    ): GolemOutput()
+
+    @Serializable
+    @SerialName("message")
+    data class Message (
+        override val contextId: Uuid,
+        val message: com.xemantic.ai.golem.api.Message
+    ): GolemOutput(), WithContextId
 
     @Serializable
     @SerialName("textDelta")
     data class TextDelta (
-        val contextId: Uuid,
+        override val contextId: Uuid,
         val delta: String
-    ): GolemOutput()
+    ): GolemOutput(), WithContextId
 
     @Serializable
     @SerialName("osProcess")
     data class OsProcess(
-        val contextId: Uuid,
+        override val contextId: Uuid,
         val event: OsProcessEvent
-    ) : GolemOutput()
+    ) : GolemOutput(), WithContextId
 
     @Serializable
     @SerialName("contextAdded")
     data class ContextAdded(
-        val id: Uuid
-    ) : GolemOutput()
+        override val contextId: Uuid
+    ) : GolemOutput(), WithContextId
 
     @Serializable
     @SerialName("contextUpdated")
     data class ContextUpdated(
-        val info: Context.Info
-    ) : GolemOutput()
+        override val contextId: Uuid,
+        val info: ContextInfo
+    ) : GolemOutput(), WithContextId
 
 }
