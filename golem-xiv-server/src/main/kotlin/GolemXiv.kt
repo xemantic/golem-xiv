@@ -130,8 +130,9 @@ class Golem(
                 var runGolemScript = false
                 do {
                     val cognizer = cognizer() // TODO select based on hints
-                    cognizer.reason(golemSystem, conversation, hints = emptyMap()).collect {
-                        outputs.emit(GolemOutput.Reasoning(it))
+                    val accumulator: (ReasoningEvent) -> Unit = {}
+                    cognizer.reason(golemSystem, conversation, hints = emptyMap()).collect { // TODO it should use reduce and message collector
+                        outputs.emit(GolemOutput.Reasoning(id, it))
                     }
 
                     conversation += response

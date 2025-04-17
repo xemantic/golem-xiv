@@ -71,4 +71,11 @@ sealed class GolemOutput {
         val info: ContextInfo
     ) : GolemOutput(), WithContextId
 
+    @Serializable
+    @SerialName("reasoning")
+    data class Reasoning(
+        override val contextId: Uuid,
+        val event: ReasoningEvent
+    ) : GolemOutput(), WithContextId
+
 }
