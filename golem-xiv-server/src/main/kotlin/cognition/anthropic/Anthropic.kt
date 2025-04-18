@@ -25,14 +25,13 @@ import com.xemantic.ai.golem.api.Text
 import com.xemantic.ai.golem.server.cognition.Cognizer
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import kotlin.uuid.Uuid
 
 internal fun Content.toAnthropic() = when (this) {
     is Text -> toAnthropic()
     else -> throw IllegalStateException("Unsupported content type")
 }
 
-internal fun List<Content>.toAnthropic() = map { it.toAnthropic() }
+//internal fun List<Content>.toAnthropic() = map { it.toAnthropic() }
 
 internal fun Message.toAnthropic() = com.xemantic.ai.anthropic.message.Message {
     this.content
@@ -61,10 +60,11 @@ class AnthropicCognizer(
             this.system = system.toAnthropicSystem()
             messages = conversation.toAnthropic()
         }
-        val messageId = Uuid.random()
-        emit(ReasoningEvent.MessageStart(messageId))
-        emit(ReasoningEvent.MessageContent(messageId, response.text!!))
-        emit(ReasoningEvent.MessageEnd(messageId))
+        emit(ReasoningEvent.MessageStart())
+        emit(ReasoningEvent.TextContentStart())
+        emit(ReasoningEvent.TextContentDelta(response.text!!))
+        emit(ReasoningEvent.TextContentEnd())
+        emit(ReasoningEvent.MessageEnd())
     }
 
 }

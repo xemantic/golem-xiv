@@ -21,6 +21,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
+import io.ktor.client.request.patch
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
@@ -127,5 +128,22 @@ suspend inline fun <reified I, reified O> HttpClient.servicePut(
             uri,
             "${status.value} (${status.description})"
         )
+    }
+}
+
+suspend inline fun <reified I> HttpClient.servicePatch(
+    uri: String,
+    value: I
+) {
+    patch(uri) {
+        setBody<I>(value)
+        contentType(ContentType.Application.Json)
+    }.run {
+        if (!status.isSuccess()) {
+            throw GolemServiceException(
+                uri,
+                "${status.value} (${status.description})"
+            )
+        }
     }
 }

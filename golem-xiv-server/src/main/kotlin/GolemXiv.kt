@@ -18,13 +18,14 @@ package com.xemantic.ai.golem.server
 
 import com.microsoft.playwright.BrowserType
 import com.microsoft.playwright.Playwright
+import com.xemantic.ai.golem.api.Content
 import com.xemantic.ai.golem.api.ContextInfo
 import com.xemantic.ai.golem.api.GolemOutput
 import com.xemantic.ai.golem.api.Message
+import com.xemantic.ai.golem.api.Prompt
 import com.xemantic.ai.golem.api.ReasoningEvent
 import com.xemantic.ai.golem.api.Text
 import com.xemantic.ai.golem.server.cognition.cognizer
-import com.xemantic.ai.golem.server.script.Content
 import com.xemantic.ai.golem.server.script.DefaultWebBrowser
 import com.xemantic.ai.golem.server.script.GOLEM_SCRIPT_API
 import com.xemantic.ai.golem.server.script.GOLEM_SCRIPT_SYSTEM_PROMPT
@@ -35,8 +36,8 @@ import com.xemantic.ai.golem.server.script.extractGolemScript
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
+import kotlinx.coroutines.flow.fold
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.collections.set
@@ -68,7 +69,7 @@ interface Context {
 
     val id: Uuid
 
-    fun send(message: String): Flow<ReasoningEvent>
+    fun send(message: Prompt)
 
 }
 
@@ -124,38 +125,49 @@ class Golem(
 ////                    service<StringEditorService>("stringEditorService", stringEditorService())
         )
 
-        override fun send(message: String): Flow<ReasoningEvent> {
-            conversation += Message(content = listOf(Text(message)))
+        override fun send(prompt: Prompt) {
+            val message = Message(
+                contextId = id,
+                content = prompt.content
+            )
+            conversation += message
+            scope.launch {
+                outputs.emit(contextId = id, message)
+            }
             scope.launch {
                 var runGolemScript = false
                 do {
                     val cognizer = cognizer() // TODO select based on hints
-                    val accumulator: (ReasoningEvent) -> Unit = {}
-                    cognizer.reason(golemSystem, conversation, hints = emptyMap()).collect { // TODO it should use reduce and message collector
-                        outputs.emit(GolemOutput.Reasoning(id, it))
-                    }
+                    val message = cognizer.reason(
+                        golemSystem,
+                        conversation,
+                        hints = emptyMap()
+                    ).fold(MessageAccumulator(contextId = id)) { acc, event ->
+                        outputs.emit(GolemOutput.Reasoning(id, acc.messageId, event))
+                        acc += event
+                        acc
+                    }.build()
 
-                    conversation += response
-                    println(response.text)
-                    println()
-                    val script = extractGolemScript(response.text!!)
+                    conversation += message
+
+                    val script = extractGolemScript((message.content[0] as Text).text)
                     if (script == null) {
-                        print("[me]> ")
                         runGolemScript = false
+                        // TODO sent event that context processing is finished - return control to user
                     } else {
                         println("[machine]> Running Golem Script")
                         runGolemScript = true
                         val content = try {
                             val scriptResult = scriptExecutor.execute(dependencies, script)
-                            if (scriptResult is Content.Text) {
-                                Text(scriptResult.text)
+                            if (scriptResult is String) {
+                                Text(scriptResult)
                             } else {
                                 Text("<golem-script-error>Non-text result</golem-script-error>")
                             }
                         } catch (e: ScriptExecutionException) {
                             Text("<golem-script-error>${e.message}</golem-script-error>")
                         }
-                        conversation += Message { +content }
+                        conversation += Message(contextId = id, content = listOf(content))
                     }
                 } while (runGolemScript)
             }
@@ -163,29 +175,75 @@ class Golem(
 
     }
 
-    fun newContext(content: List<Content>): ContextInfo {
+    fun newContext(prompt: Prompt): ContextInfo {
         val context = DefaultContext(
             systemPrompt = SYSTEM_PROMPT,
             environmentSystemPrompt = environmentContext(),
             golemScriptApi = GOLEM_SCRIPT_API
         )
         contextMap[context.id] = context
-        val message = Message {
-            this.content = listOf(content)
-        }
-        scope.launch {
-            outputs.emit()
-        }
-        context.send()
-        return context
+        context.send(prompt)
+        return ContextInfo(
+            id = context.id,
+            title = "Untitled"
+        )
     }
 
-    fun getContext(id: Uuid): Context {
-        return contextMap[id]!!
-    }
+    fun getContext(id: Uuid): Context? = contextMap[id]
 
     override fun close() {
         scope.cancel()
     }
+
+}
+
+private suspend fun FlowCollector<GolemOutput>.emit(
+    contextId: Uuid,
+    message: Message
+) {
+    suspend fun emit(event: ReasoningEvent) {
+        emit(GolemOutput.Reasoning(contextId, message.id, event))
+    }
+    emit(ReasoningEvent.MessageStart())
+    message.content.forEach {
+        when (it) {
+            is Text -> {
+                emit(ReasoningEvent.TextContentStart())
+                emit(ReasoningEvent.TextContentDelta(it.text))
+                emit(ReasoningEvent.TextContentEnd())
+            }
+            else -> throw IllegalStateException("Unsupported content type: $it")
+        }
+    }
+    emit(ReasoningEvent.MessageEnd())
+}
+
+class MessageAccumulator(
+    val messageId: Uuid = Uuid.random(),
+    private val contextId: Uuid
+) {
+
+    private val textBuilder = StringBuilder()
+
+    private val content = mutableListOf<Content>()
+
+    operator fun plusAssign(event: ReasoningEvent) {
+        when (event) {
+            is ReasoningEvent.MessageStart -> {}
+            is ReasoningEvent.TextContentStart -> {}
+            is ReasoningEvent.TextContentDelta -> { textBuilder.append(event.delta) }
+            is ReasoningEvent.TextContentEnd -> {
+                content += Text(textBuilder.toString())
+                textBuilder.clear()
+            }
+            is ReasoningEvent.MessageEnd -> {}
+        }
+    }
+
+    fun build() = Message(
+        id = messageId,
+        contextId = contextId,
+        content = content
+    )
 
 }

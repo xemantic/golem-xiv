@@ -34,10 +34,11 @@ import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import io.ktor.server.websocket.WebSockets
 import io.ktor.server.websocket.webSocket
+import kotlinx.coroutines.flow.Flow
 
 private val logger = KotlinLogging.logger {}
 
-fun Application.installGolemHttp(golem: Golem) {
+fun Application.installGolemHttp(golem: Golem, outputs: Flow<GolemOutput>) {
     install(CallLogging) {
         level = org.slf4j.event.Level.DEBUG
     }

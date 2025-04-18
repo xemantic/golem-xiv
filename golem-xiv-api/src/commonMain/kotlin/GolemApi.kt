@@ -18,6 +18,7 @@ package com.xemantic.ai.golem.api
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
@@ -32,11 +33,13 @@ data class ContextInfo(
     val title: String,
     // TODO move it to general file level
     @Serializable(with = InstantIso8601Serializer::class)
-    val creationDate: Instant
+    val creationDate: Instant = Clock.System.now()
 ) : Content
 
 @Serializable
 data class Message(
+    val id: Uuid = Uuid.random(),
+    val contextId: Uuid,
     val role: Role = Role.USER,
     val content: List<Content>
 ) {
@@ -78,30 +81,39 @@ class ContentDelta(
     val delta: Text
 )
 
+@Serializable
+data class Prompt(
+    val content: List<Content>
+)
+
+// TODO maybe add timestamp
 sealed interface ReasoningEvent {
 
     @Serializable
     @SerialName("messageStart")
-    data class MessageStart(
-        val id: Uuid
-    ) : ReasoningEvent
+    class MessageStart : ReasoningEvent
 
-    data class MessageContent(
-        val id: Uuid,
-        val content: String
-    ) : ReasoningEvent
+    @Serializable
+    @SerialName("textContentStart")
+    class TextContentStart : ReasoningEvent
+
+    @Serializable
+    @SerialName("textContentDelta")
+    data class TextContentDelta(val delta: String) : ReasoningEvent
+
+    @Serializable
+    @SerialName("textContentEnd")
+    class TextContentEnd : ReasoningEvent
 
     @Serializable
     @SerialName("messageEnd")
-    data class MessageEnd(
-        val id: Uuid
-    ) : ReasoningEvent
+    class MessageEnd : ReasoningEvent
 
-    @Serializable
-    @SerialName("recursiveCognition")
-    data class RecursiveCognition(
-        val id: Uuid
-    )
+//    @Serializable
+//    @SerialName("recursiveCognition")
+//    data class RecursiveCognition(
+//        val id: Uuid
+//    )
 
 }
 

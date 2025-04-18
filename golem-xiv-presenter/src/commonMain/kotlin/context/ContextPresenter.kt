@@ -18,6 +18,7 @@ package com.xemantic.ai.golem.presenter.context
 
 import com.xemantic.ai.golem.api.Message
 import com.xemantic.ai.golem.api.GolemOutput
+import com.xemantic.ai.golem.api.Prompt
 import com.xemantic.ai.golem.api.Text
 import com.xemantic.ai.golem.api.WithContextId
 import com.xemantic.ai.golem.api.service.ContextService
@@ -127,9 +128,9 @@ class ContextPresenter(
             contextService.get(id)
         }.await()
         if (context == null) return false
-        context.messages.forEach {
-            view.addMessage(it)
-        }
+//        context.messages.forEach {
+//            view.addMessage(it)
+//        }
         return true
     }
 
@@ -147,11 +148,11 @@ class ContextPresenter(
     }
 
     private suspend fun startContext() = withContext(ioDispatcher) {
-        contextService.start(listOf(Text(currentPrompt)))
+        contextService.start(Prompt(listOf(Text(currentPrompt))))
     }
 
     private suspend fun appendToContext() = withContext(ioDispatcher) {
-        contextService.append(contexId!!, listOf(Text(currentPrompt)))
+        contextService.append(contexId!!, Prompt(listOf(Text(currentPrompt))))
     }
 
 }

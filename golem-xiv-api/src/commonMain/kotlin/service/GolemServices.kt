@@ -16,8 +16,8 @@
 
 package com.xemantic.ai.golem.api.service
 
-import com.xemantic.ai.golem.api.Content
 import com.xemantic.ai.golem.api.ContextInfo
+import com.xemantic.ai.golem.api.Prompt
 import kotlinx.coroutines.flow.Flow
 import kotlin.uuid.Uuid
 
@@ -30,12 +30,12 @@ interface PingService {
 interface ContextService {
 
     suspend fun start(
-        content: List<Content>
+        prompt: Prompt
     ): ContextInfo
 
     suspend fun append(
         contextId: Uuid,
-        content: List<Content>
+        prompt: Prompt
     )
 
     suspend fun get(id: Uuid): ContextInfo?

@@ -14,24 +14,19 @@
  * limitations under the License.
  */
 
-package com.xemantic.ai.golem.server
+package com.xemantic.ai.golem.server.context
 
-import com.xemantic.ai.golem.api.GolemOutput
-import com.xemantic.ai.golem.server.server.installGolemHttp
-import io.ktor.server.engine.embeddedServer
-import io.ktor.server.netty.Netty
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
+import com.xemantic.ai.golem.api.Message
+import com.xemantic.ai.golem.server.Context
+import kotlin.uuid.Uuid
 
-fun main() {
-    val outputs = MutableSharedFlow<GolemOutput>()
-    startServer(Golem(outputs), outputs)
-}
+interface ContextRepository {
 
-fun startServer(
-    golem: Golem, outpus: Flow<GolemOutput>
-) {
-    embeddedServer(Netty, port = 8081) {
-        installGolemHttp(golem, outpus)
-    }.start(wait = true)
+    fun create(context: Context)
+
+    fun update(
+        contextId: Uuid,
+        message: Message
+    )
+
 }
