@@ -19,8 +19,8 @@ package com.xemantic.ai.golem.presenter.context
 import com.xemantic.ai.golem.api.Message
 import com.xemantic.ai.golem.api.GolemOutput
 import com.xemantic.ai.golem.api.Prompt
+import com.xemantic.ai.golem.api.ReasoningEvent
 import com.xemantic.ai.golem.api.Text
-import com.xemantic.ai.golem.api.WithContextId
 import com.xemantic.ai.golem.api.service.ContextService
 import com.xemantic.ai.golem.presenter.util.Action
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -31,13 +31,26 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.uuid.Uuid
 
+interface MessageAppender {
+
+    fun append(text: String)
+
+    fun finalize()
+
+}
+
 interface ContextView {
 
     fun addMessage(message: Message)
+
+    fun startMessage(role: Message.Role): MessageAppender
 
     val promptChanges: Flow<String>
 
@@ -80,6 +93,8 @@ class ContextPresenter(
 
     private var contexId: Uuid? = null
 
+    private var currentMessageAppender: MessageAppender? = null
+
     init {
 
         view.sendDisabled = true
@@ -104,18 +119,30 @@ class ContextPresenter(
         scope.launch {
             view.sendActions.collect {
                 if (currentPrompt.isNotBlank()) {
-                    view.sendDisabled = true
                     sendPrompt()
                 }
             }
         }
 
         scope.launch {
-            golemOutputs.filter {
-                it is WithContextId && it.contextId == contexId
+            golemOutputs.onEach {
+                logger.info { "Received in presenter: $it" }
+            }.filterIsInstance<GolemOutput.Reasoning>()
+            .filter {
+                logger.info { "Filtering - current contextId: $contexId" }
+                logger.info { "Condition: ${it.contextId == contexId}" }
+                it.contextId == contexId
+            }.map {
+                it.event
             }.collect {
-                if (it is GolemOutput.Message) {
-                    println(it.message)
+                when (it) {
+                    is ReasoningEvent.MessageStart -> {
+                        currentMessageAppender = view.startMessage(it.role)
+                    }
+                    is ReasoningEvent.TextContentDelta -> {
+                        currentMessageAppender!!.append(it.delta)
+                    }
+                    else -> {}
                 }
             }
         }
@@ -139,6 +166,8 @@ class ContextPresenter(
     }
 
     private suspend fun sendPrompt() {
+        view.sendDisabled = true
+        view.clearPromptInput()
         if (contexId == null) {
             val context = startContext()
             contexId = context.id

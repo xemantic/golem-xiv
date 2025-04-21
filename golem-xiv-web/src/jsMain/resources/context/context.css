@@ -48,7 +48,7 @@
     display: none;
 }
 
-#messages {
+.messages {
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
@@ -66,13 +66,13 @@
     animation: fadeIn 0.3s ease-in-out;
 }
 
-.user-message {
+.message.user {
     align-self: flex-end;
     background-color: var(--user-msg-bg);
     border-bottom-right-radius: 0;
 }
 
-.ai-message {
+.message.assistant {
     align-self: flex-start;
     background-color: var(--ai-msg-bg);
     border-bottom-left-radius: 0;

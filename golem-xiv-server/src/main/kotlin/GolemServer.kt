@@ -20,18 +20,12 @@ import com.xemantic.ai.golem.api.GolemOutput
 import com.xemantic.ai.golem.server.server.installGolemHttp
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 
 fun main() {
     val outputs = MutableSharedFlow<GolemOutput>()
-    startServer(Golem(outputs), outputs)
-}
-
-fun startServer(
-    golem: Golem, outpus: Flow<GolemOutput>
-) {
+    val golem = Golem(outputs)
     embeddedServer(Netty, port = 8081) {
-        installGolemHttp(golem, outpus)
+        installGolemHttp(golem, outputs)
     }.start(wait = true)
 }

@@ -19,6 +19,7 @@ package com.xemantic.ai.golem.web.context
 import com.xemantic.ai.golem.api.Message
 import com.xemantic.ai.golem.api.Text
 import com.xemantic.ai.golem.presenter.context.ContextView
+import com.xemantic.ai.golem.presenter.context.MessageAppender
 import com.xemantic.ai.golem.web.js.actions
 import com.xemantic.ai.golem.web.js.ariaLabel
 import com.xemantic.ai.golem.web.view.HtmlView
@@ -26,9 +27,9 @@ import com.xemantic.ai.golem.web.js.eventFlow
 import com.xemantic.ai.golem.web.js.icon
 import com.xemantic.ai.golem.web.util.appendTo
 import com.xemantic.ai.golem.web.util.children
-import com.xemantic.ai.golem.web.util.inject
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
+import kotlinx.dom.appendText
 import kotlinx.html.div
 import kotlinx.html.dom.append
 import kotlinx.html.id
@@ -81,7 +82,21 @@ class HtmlContextView : ContextView, HtmlView {
         promptDiv
     )
 
+    override fun startMessage(role: Message.Role): MessageAppender {
+        val messageDiv = html.div("message ${role.name.lowercase()}")
+        messagesDiv.append(messageDiv)
+        return object : MessageAppender {
+            override fun append(text: String) {
+                messageDiv.appendText(text)
+            }
+            override fun finalize() {
+                // nothing to do
+            }
+        }
+    }
+
     override fun addMessage(message: Message) {
+        println("adding message: $message")
         messagesDiv.append {
             div("message ${message.role.name.lowercase()}") {
                 message.content.forEach {

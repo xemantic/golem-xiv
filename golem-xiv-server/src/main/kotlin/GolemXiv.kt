@@ -33,6 +33,7 @@ import com.xemantic.ai.golem.server.script.GolemScriptExecutor
 import com.xemantic.ai.golem.server.script.ScriptExecutionException
 import com.xemantic.ai.golem.server.script.WebBrowser
 import com.xemantic.ai.golem.server.script.extractGolemScript
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -41,6 +42,8 @@ import kotlinx.coroutines.flow.fold
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.collections.set
+import kotlin.time.Clock
+import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
 const val SYSTEM_PROMPT = """
@@ -69,13 +72,19 @@ interface Context {
 
     val id: Uuid
 
-    fun send(message: Prompt)
+    val info: ContextInfo
+
+    suspend fun createMessage(prompt: Prompt): Message
+
+    suspend fun send(message: Message)
 
 }
 
 class Golem(
     private val outputs: FlowCollector<GolemOutput>
 ) : AutoCloseable {
+
+    private val logger = KotlinLogging.logger {}
 
     private val contextMap = ConcurrentHashMap<Uuid, Context>()
 
@@ -97,7 +106,8 @@ class Golem(
         private val systemPrompt: String,
         private val environmentSystemPrompt: String? = null,
         private val golemScriptApi: String? = null,
-        private val hasGolemScriptApi: Boolean = true
+        private val hasGolemScriptApi: Boolean = true,
+        private val creationDate: Instant
     ) : Context {
 
         val golemSystem = buildList {
@@ -110,6 +120,12 @@ class Golem(
 //                add(System(text = additionalSystemPrompt)) // TODO cache control
 //            }
         }
+
+        override val info: ContextInfo get() = ContextInfo(
+            id = id,
+            title = "Untitled",
+            creationDate = Clock.System.now()
+        )
 
         val conversation = mutableListOf<Message>()
 
@@ -125,16 +141,18 @@ class Golem(
 ////                    service<StringEditorService>("stringEditorService", stringEditorService())
         )
 
-        override fun send(prompt: Prompt) {
-            val message = Message(
-                contextId = id,
-                content = prompt.content
-            )
+        override suspend fun createMessage(
+            prompt: Prompt
+        ) = Message(
+            contextId = id,
+            content = prompt.content
+        )
+
+        override suspend fun send(message: Message) {
+            logger.debug { "Sending message" }
             conversation += message
             scope.launch {
-                outputs.emit(contextId = id, message)
-            }
-            scope.launch {
+                logger.debug { "Context[$id]: Reasoning" }
                 var runGolemScript = false
                 do {
                     val cognizer = cognizer() // TODO select based on hints
@@ -156,6 +174,7 @@ class Golem(
                         // TODO sent event that context processing is finished - return control to user
                     } else {
                         println("[machine]> Running Golem Script")
+                        println(script)
                         runGolemScript = true
                         val content = try {
                             val scriptResult = scriptExecutor.execute(dependencies, script)
@@ -171,22 +190,21 @@ class Golem(
                     }
                 } while (runGolemScript)
             }
+            println("lunched")
         }
 
     }
 
-    fun newContext(prompt: Prompt): ContextInfo {
+    fun newContext(): Context {
+        logger.debug { "New context: start" }
         val context = DefaultContext(
             systemPrompt = SYSTEM_PROMPT,
             environmentSystemPrompt = environmentContext(),
             golemScriptApi = GOLEM_SCRIPT_API
         )
         contextMap[context.id] = context
-        context.send(prompt)
-        return ContextInfo(
-            id = context.id,
-            title = "Untitled"
-        )
+        logger.debug { "New context: created ${context.id}, returning ContextInfo" }
+        return context
     }
 
     fun getContext(id: Uuid): Context? = contextMap[id]
@@ -197,14 +215,14 @@ class Golem(
 
 }
 
-private suspend fun FlowCollector<GolemOutput>.emit(
+internal suspend fun FlowCollector<GolemOutput>.emit(
     contextId: Uuid,
     message: Message
 ) {
     suspend fun emit(event: ReasoningEvent) {
         emit(GolemOutput.Reasoning(contextId, message.id, event))
     }
-    emit(ReasoningEvent.MessageStart())
+    emit(ReasoningEvent.MessageStart(role = Message.Role.USER))
     message.content.forEach {
         when (it) {
             is Text -> {

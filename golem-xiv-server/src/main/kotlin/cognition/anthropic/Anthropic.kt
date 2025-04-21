@@ -17,6 +17,7 @@
 package com.xemantic.ai.golem.server.cognition.anthropic
 
 import com.xemantic.ai.anthropic.Anthropic
+import com.xemantic.ai.anthropic.message.Role
 import com.xemantic.ai.anthropic.message.System
 import com.xemantic.ai.golem.api.Content
 import com.xemantic.ai.golem.api.Message
@@ -31,10 +32,16 @@ internal fun Content.toAnthropic() = when (this) {
     else -> throw IllegalStateException("Unsupported content type")
 }
 
-//internal fun List<Content>.toAnthropic() = map { it.toAnthropic() }
+internal fun List<Content>.toAnthropic2() = map { it.toAnthropic() }
 
 internal fun Message.toAnthropic() = com.xemantic.ai.anthropic.message.Message {
-    this.content
+    role = this@toAnthropic.role.toAnthropic()
+    content = this@toAnthropic.content.toAnthropic2()
+}
+
+internal fun Message.Role.toAnthropic() = when (this) {
+    Message.Role.USER -> Role.USER
+    Message.Role.ASSISTANT -> Role.ASSISTANT
 }
 
 internal fun List<Message>.toAnthropic() = map {
@@ -60,7 +67,7 @@ class AnthropicCognizer(
             this.system = system.toAnthropicSystem()
             messages = conversation.toAnthropic()
         }
-        emit(ReasoningEvent.MessageStart())
+        emit(ReasoningEvent.MessageStart(role = Message.Role.ASSISTANT))
         emit(ReasoningEvent.TextContentStart())
         emit(ReasoningEvent.TextContentDelta(response.text!!))
         emit(ReasoningEvent.TextContentEnd())

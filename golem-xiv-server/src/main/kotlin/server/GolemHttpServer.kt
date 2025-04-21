@@ -34,11 +34,12 @@ import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import io.ktor.server.websocket.WebSockets
 import io.ktor.server.websocket.webSocket
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.launch
 
 private val logger = KotlinLogging.logger {}
 
-fun Application.installGolemHttp(golem: Golem, outputs: Flow<GolemOutput>) {
+fun Application.installGolemHttp(golem: Golem, outputs: MutableSharedFlow<GolemOutput>) {
     install(CallLogging) {
         level = org.slf4j.event.Level.DEBUG
     }
@@ -83,11 +84,15 @@ fun Application.installGolemHttp(golem: Golem, outputs: Flow<GolemOutput>) {
     routing {
 
         staticResources("/", "web") {
-            preCompressed(CompressedFileType.BROTLI, CompressedFileType.GZIP)
+            // does it matter for the local server?
+            preCompressed(
+                CompressedFileType.BROTLI,
+                CompressedFileType.GZIP
+            )
         }
 
         route("/api") {
-            golemApiRoute(golem)
+            golemApiRoute(logger, golem, outputs)
         }
 
         webSocket("/ws") {
@@ -104,6 +109,12 @@ fun Application.installGolemHttp(golem: Golem, outputs: Flow<GolemOutput>) {
 //            val input = receiveGolemInput()
 //            println(input)
 //
+
+            launch {
+                outputs.collect {
+                    sendGolemOutput(it)
+                }
+            }
 
             collectGolemInput {
                 logger.debug { it }

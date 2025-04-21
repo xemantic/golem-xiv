@@ -16,13 +16,13 @@
 
 package com.xemantic.ai.golem.server.server
 
-import com.xemantic.ai.golem.api.Content
-import com.xemantic.ai.golem.api.ContextInfo
+import com.xemantic.ai.golem.api.GolemOutput
 import com.xemantic.ai.golem.api.Prompt
 import com.xemantic.ai.golem.server.Golem
+import com.xemantic.ai.golem.server.emit
+import io.github.oshai.kotlinlogging.KLogger
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
-import io.ktor.server.request.receiveText
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondText
 import io.ktor.server.routing.Route
@@ -30,10 +30,13 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.patch
 import io.ktor.server.routing.post
 import io.ktor.server.routing.put
+import kotlinx.coroutines.flow.FlowCollector
 import kotlin.uuid.Uuid
 
 fun Route.golemApiRoute(
-    golem: Golem
+    logger: KLogger,
+    golem: Golem,
+    outputs: FlowCollector<GolemOutput>
 ) {
 
     get("/ping") {
@@ -48,24 +51,26 @@ fun Route.golemApiRoute(
 
     put("/contexts") {
         val prompt = call.receive<Prompt>()
-        val context = golem.newContext(prompt)
-        call.respond(
-            ContextInfo(
-                id = context.id,
-                title = "Untitled" // Can be localized in the future
-            )
-        )
+        val context = golem.newContext()
+        val message = context.createMessage(prompt)
+        call.respond(context.info)
+        outputs.emit(contextId = context.id, message)
+        context.send(message)
     }
 
     patch("/contexts/{id}") {
+        logger.debug { "Updating context: start" }
         val prompt = call.receive<Prompt>()
         val idParameter = requireNotNull(call.parameters["id"]) { "Should never happen" }
         val id = Uuid.parse(idParameter)
-        val contex = golem.getContext(id)
-        if (contex == null) {
+        val context = golem.getContext(id)
+        if (context == null) {
             call.respond(HttpStatusCode.NotFound, "resource not found $")
         } else {
-            contex.send(prompt)
+            val message = context.createMessage(prompt)
+            call.respond(context.info)
+            outputs.emit(contextId = context.id, message)
+            context.send(message)
         }
     }
 

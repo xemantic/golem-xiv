@@ -183,7 +183,10 @@ class MainPresenter(
             is GolemOutput.Welcome -> {
                 logger.info { output.message }
             }
-            else -> golemOutputs.emit(output)
+            else -> {
+                logger.info { "received $output" }
+                golemOutputs.emit(output)
+            }
         }
     }
 
