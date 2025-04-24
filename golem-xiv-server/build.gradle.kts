@@ -77,6 +77,7 @@ dependencies {
     runtimeOnly(libs.jackson.dataformat.yaml)
 
     testImplementation(libs.kotlin.test)
+    testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.xemantic.kotlin.test)
 
     implementation("com.vladsch.flexmark:flexmark:0.64.8")

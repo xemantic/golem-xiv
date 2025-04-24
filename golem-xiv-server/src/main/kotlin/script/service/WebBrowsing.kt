@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-package com.xemantic.ai.golem.server.script
+package com.xemantic.ai.golem.server.script.service
 
 import com.microsoft.playwright.Browser
-import com.microsoft.playwright.BrowserType
 import com.microsoft.playwright.Page
-import com.microsoft.playwright.Playwright
 import com.microsoft.playwright.options.WaitUntilState
 import com.vladsch.flexmark.html2md.converter.FlexmarkHtmlConverter
 import com.vladsch.flexmark.util.data.MutableDataSet
+import com.xemantic.ai.golem.server.script.candidate.WebBrowser
 
 class DefaultWebBrowser(
     val browser: Browser
@@ -33,22 +32,30 @@ class DefaultWebBrowser(
     override suspend fun open(
         url: String,
         windowId: Int?
-    ): Content {
+    ): String {
         page.navigate(url, Page.NavigateOptions().setWaitUntil(WaitUntilState.NETWORKIDLE))
         val html = page.content()
         val markdown = convertHtmlToMarkdown(html)
         //page.evaluate("window.scrollTo(0, document.body.scrollHeight)");
         //page.waitForTimeout(200.0)
-        return Content.Text(markdown)
+        return markdown
     }
 
-    override suspend fun screenshot(): Content.Binary {
+    override suspend fun openAsBinary(url: String, windowId: Int?): ByteArray {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun screenshot(): ByteArray {
 //        page.screenshot(
 //            Page.ScreenshotOptions()
 //                .setPath(Paths.get("screenshot.png"))
 //                .setFullPage(true)
 //        )
-        return Content.Binary(byteArrayOf())
+        return byteArrayOf()
+    }
+
+    override fun dispose() {
+        TODO("Not yet implemented")
     }
 
 }

@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package com.xemantic.ai.golem.server.script
+package com.xemantic.ai.golem.server.script.service
 
+import com.xemantic.ai.golem.server.script.candidate.Shell
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.BufferedReader

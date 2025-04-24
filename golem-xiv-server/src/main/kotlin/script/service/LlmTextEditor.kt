@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-package com.xemantic.ai.golem.server.script
+package com.xemantic.ai.golem.server.script.service
+
+import com.xemantic.ai.golem.server.script.candidate.LlmTextEditor
 
 class DefaultLlmTextEditor : LlmTextEditor {
 

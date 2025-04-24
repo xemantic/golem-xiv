@@ -109,7 +109,7 @@ class ContextPresenter(
             view.promptChanges.collect { prompt ->
                 currentPrompt = prompt
                 view.sendDisabled = prompt.isBlank()
-                if (prompt.isNotBlank() && (prompt.last() == '\n' != isShift)) {
+                if (prompt.isNotBlank() && (prompt.last() == '\n' && !isShift)) {
                     sendPrompt()
                 }
                 view.updatePromptInputHeight()

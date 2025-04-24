@@ -16,22 +16,4 @@
 
 package com.xemantic.ai.golem.server.script
 
-/**
- * Extracts content between <golem-script> tags from the given text.
- *
- * @param text The text to scan for golem script tags
- * @return The content between the tags, or null if no tags are found
- */
-fun extractGolemScript(text: String): String? {
-    val startTag = "<golem-script>"
-    val endTag = "</golem-script>"
 
-    val startIndex = text.indexOf(startTag)
-    if (startIndex == -1) return null
-
-    val contentStartIndex = startIndex + startTag.length
-    val endIndex = text.indexOf(endTag, contentStartIndex)
-    if (endIndex == -1) return null
-
-    return text.substring(contentStartIndex, endIndex).trim()
-}

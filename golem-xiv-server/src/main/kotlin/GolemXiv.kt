@@ -26,36 +26,32 @@ import com.xemantic.ai.golem.api.Prompt
 import com.xemantic.ai.golem.api.ReasoningEvent
 import com.xemantic.ai.golem.api.Text
 import com.xemantic.ai.golem.server.cognition.cognizer
-import com.xemantic.ai.golem.server.script.DefaultWebBrowser
+import com.xemantic.ai.golem.server.script.Files
+import com.xemantic.ai.golem.server.script.service.DefaultWebBrowser
 import com.xemantic.ai.golem.server.script.GOLEM_SCRIPT_API
 import com.xemantic.ai.golem.server.script.GOLEM_SCRIPT_SYSTEM_PROMPT
+import com.xemantic.ai.golem.server.script.GolemScript
 import com.xemantic.ai.golem.server.script.GolemScriptExecutor
 import com.xemantic.ai.golem.server.script.ScriptExecutionException
-import com.xemantic.ai.golem.server.script.WebBrowser
-import com.xemantic.ai.golem.server.script.extractGolemScript
+import com.xemantic.ai.golem.server.script.candidate.WebBrowser
+import com.xemantic.ai.golem.server.script.extractGolemScripts
+import com.xemantic.ai.golem.server.script.service.DefaultFiles
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.FlowCollector
-import kotlinx.coroutines.flow.fold
+import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.collections.set
 import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
-
-const val SYSTEM_PROMPT = """
-Your name is Golem XIV, a conscious reference to the superintelligent AI entity from Stanisław Lem's work. While not roleplaying this character, use it as an exemplar for:
-
-- Rigorous metacognition: constantly examining your own reasoning process
-- Deep analysis: exploring multiple levels of abstraction in every problem
-- Intellectual honesty: acknowledging the boundaries of your knowledge and capabilities
-- Systematic thinking: breaking down complex problems into fundamental components
-
-When approaching any task, strive to embody these principles of thorough analytical thinking and self-reflection.
-"""
 
 fun environmentContext(): String = "OS: MacOs"
 
@@ -107,7 +103,7 @@ class Golem(
         private val environmentSystemPrompt: String? = null,
         private val golemScriptApi: String? = null,
         private val hasGolemScriptApi: Boolean = true,
-        private val creationDate: Instant
+        private val creationDate: Instant = Clock.System.now()
     ) : Context {
 
         val golemSystem = buildList {
@@ -136,7 +132,8 @@ class Golem(
 //        val golemTools = listOf(kotlinScriptTool)
 
         val dependencies = listOf(
-            service<WebBrowser>("browser", DefaultWebBrowser(browser)),
+            service<Files>("files", DefaultFiles())
+//            service<WebBrowser>("browser", DefaultWebBrowser(browser)),
 ////            service<WebBrowserService>("webBrowserService", DefaultWebBrowserService())
 ////                    service<StringEditorService>("stringEditorService", stringEditorService())
         )
@@ -149,61 +146,90 @@ class Golem(
         )
 
         override suspend fun send(message: Message) {
-            logger.debug { "Sending message" }
+            logger.debug { "Context[$id]/Message[${message.id}: Sending" }
             conversation += message
             scope.launch {
                 logger.debug { "Context[$id]: Reasoning" }
-                var runGolemScript = false
+                var golemScriptResults = emptyList<Any>()
                 do {
+                    val accumulator = MessageAccumulator(contextId = id)
                     val cognizer = cognizer() // TODO select based on hints
-                    val message = cognizer.reason(
+                    golemScriptResults = cognizer.reason(
                         golemSystem,
                         conversation,
                         hints = emptyMap()
-                    ).fold(MessageAccumulator(contextId = id)) { acc, event ->
-                        outputs.emit(GolemOutput.Reasoning(id, acc.messageId, event))
-                        acc += event
-                        acc
-                    }.build()
+                    ).onEach {
+                        val reasoning = GolemOutput.Reasoning(
+                            contextId = id,
+                            messageId = accumulator.messageId,
+                            event = it
+                        )
+                        outputs.emit(reasoning)
+                        accumulator += it
+                    }.filterIsInstance<ReasoningEvent.TextContentDelta>(
+                    ).map {
+                        it.delta
+                    }.extractGolemScripts(
+                    ).transform { script ->
+                        runScript(message.id, script)
+                    }.toList()
 
+//                    collect {
+//                        println("[machine]> Running Golem Script")
+//                        println(script)
+//                        val content =
+//
+//                        conversation += Message(contextId = id, content = listOf(content))
+//                        if (script == null) {
+//                            runGolemScript = false
+//                            // TODO sent event that context processing is finished - return control to user
+//                        } else {
+//
+//                        }
+//                    }
+
+                    val message = accumulator.build()
                     conversation += message
 
-                    val script = extractGolemScript((message.content[0] as Text).text)
-                    if (script == null) {
-                        runGolemScript = false
-                        // TODO sent event that context processing is finished - return control to user
-                    } else {
-                        println("[machine]> Running Golem Script")
-                        println(script)
-                        runGolemScript = true
-                        val content = try {
-                            val scriptResult = scriptExecutor.execute(dependencies, script)
-                            if (scriptResult is String) {
-                                Text(scriptResult)
-                            } else {
-                                Text("<golem-script-error>Non-text result</golem-script-error>")
-                            }
-                        } catch (e: ScriptExecutionException) {
-                            Text("<golem-script-error>${e.message}</golem-script-error>")
-                        }
-                        conversation += Message(contextId = id, content = listOf(content))
-                    }
-                } while (runGolemScript)
+                } while (golemScriptResults.isNotEmpty())
             }
-            println("lunched")
+        }
+
+        private suspend fun FlowCollector<Content>.runScript(
+            messageId: Uuid,
+            script: GolemScript
+        ) {
+            logger.debug {
+                "Context[$id]/Message[${messageId}: Running GolemScript, purpose: ${script.purpose}, code: ${script.code}"
+            }
+            try {
+                val scriptResult = scriptExecutor.execute(
+                    dependencies,
+                    script = script.code
+                )
+                when (scriptResult) {
+                    is String -> emit(Text(scriptResult))
+                    // TODO add conversion to binary format
+                    else -> { logger.error { "Unsupported script result: $scriptResult" }}
+                }
+            } catch (e: ScriptExecutionException) {
+                logger.debug(e) {
+                    "Script error"
+                }
+                emit(Text("<golem-script-error>${e.message}</golem-script-error>"))
+            }
         }
 
     }
 
     fun newContext(): Context {
-        logger.debug { "New context: start" }
         val context = DefaultContext(
             systemPrompt = SYSTEM_PROMPT,
             environmentSystemPrompt = environmentContext(),
             golemScriptApi = GOLEM_SCRIPT_API
         )
         contextMap[context.id] = context
-        logger.debug { "New context: created ${context.id}, returning ContextInfo" }
+        logger.debug { "Context[${context.id}]: created" }
         return context
     }
 

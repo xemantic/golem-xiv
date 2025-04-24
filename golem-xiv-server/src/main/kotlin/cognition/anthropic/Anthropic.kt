@@ -17,6 +17,8 @@
 package com.xemantic.ai.golem.server.cognition.anthropic
 
 import com.xemantic.ai.anthropic.Anthropic
+import com.xemantic.ai.anthropic.event.Delta
+import com.xemantic.ai.anthropic.event.Event
 import com.xemantic.ai.anthropic.message.Role
 import com.xemantic.ai.anthropic.message.System
 import com.xemantic.ai.golem.api.Content
@@ -24,19 +26,20 @@ import com.xemantic.ai.golem.api.Message
 import com.xemantic.ai.golem.api.ReasoningEvent
 import com.xemantic.ai.golem.api.Text
 import com.xemantic.ai.golem.server.cognition.Cognizer
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
-internal fun Content.toAnthropic() = when (this) {
-    is Text -> toAnthropic()
+internal fun Content.toAnthropicContent() = when (this) {
+    is Text -> toAnthropicText()
     else -> throw IllegalStateException("Unsupported content type")
 }
 
-internal fun List<Content>.toAnthropic2() = map { it.toAnthropic() }
+internal fun List<Content>.toAnthropicContent() = map { it.toAnthropicContent() }
 
-internal fun Message.toAnthropic() = com.xemantic.ai.anthropic.message.Message {
-    role = this@toAnthropic.role.toAnthropic()
-    content = this@toAnthropic.content.toAnthropic2()
+internal fun Message.toAnthropicMessage() = com.xemantic.ai.anthropic.message.Message {
+    role = this@toAnthropicMessage.role.toAnthropic()
+    content = this@toAnthropicMessage.content.toAnthropicContent()
 }
 
 internal fun Message.Role.toAnthropic() = when (this) {
@@ -44,11 +47,11 @@ internal fun Message.Role.toAnthropic() = when (this) {
     Message.Role.ASSISTANT -> Role.ASSISTANT
 }
 
-internal fun List<Message>.toAnthropic() = map {
-    it.toAnthropic()
+internal fun List<Message>.toAnthropicMessages() = map {
+    it.toAnthropicMessage()
 }
 
-fun Text.toAnthropic() = com.xemantic.ai.anthropic.content.Text(text)
+fun Text.toAnthropicText() = com.xemantic.ai.anthropic.content.Text(text)
 
 fun List<String>.toAnthropicSystem() = map {
     System(text = it)
@@ -58,20 +61,31 @@ class AnthropicCognizer(
     private val anthropic: Anthropic
 ) : Cognizer {
 
+    private val logger = KotlinLogging.logger {}
+
     override fun reason(
         system: List<String>,
         conversation: List<Message>,
         hints: Map<String, String>
     ): Flow<ReasoningEvent> = flow {
-        val response = anthropic.messages.create {
+        logger.debug { "Streaming " }
+        anthropic.messages.stream {
             this.system = system.toAnthropicSystem()
-            messages = conversation.toAnthropic()
+            messages = conversation.toAnthropicMessages()
+        }.collect {
+            when (it) {
+                is Event.MessageStart -> emit(ReasoningEvent.MessageStart(role = Message.Role.ASSISTANT))
+                is Event.ContentBlockStart -> emit(ReasoningEvent.TextContentStart())
+                is Event.ContentBlockDelta -> emit(ReasoningEvent.TextContentDelta((it.delta as Delta.TextDelta).text))
+                is Event.ContentBlockStop -> emit(ReasoningEvent.TextContentEnd())
+                is Event.MessageStop -> emit(ReasoningEvent.MessageEnd())
+                else -> { /* do nothing at the moment */ }
+            }
         }
-        emit(ReasoningEvent.MessageStart(role = Message.Role.ASSISTANT))
-        emit(ReasoningEvent.TextContentStart())
-        emit(ReasoningEvent.TextContentDelta(response.text!!))
-        emit(ReasoningEvent.TextContentEnd())
-        emit(ReasoningEvent.MessageEnd())
+    }
+
+    private fun handleDelta(delta: String) {
+
     }
 
 }

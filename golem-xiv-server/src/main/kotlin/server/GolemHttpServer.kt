@@ -17,10 +17,14 @@
 package com.xemantic.ai.golem.server.server
 
 import com.xemantic.ai.golem.api.GolemOutput
+import com.xemantic.ai.golem.api.Prompt
 import com.xemantic.ai.golem.server.Golem
+import com.xemantic.ai.golem.server.emit
+import io.github.oshai.kotlinlogging.KLogger
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
+import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
@@ -30,12 +34,22 @@ import io.ktor.server.plugins.calllogging.CallLogging
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.cors.routing.CORS
 import io.ktor.server.plugins.origin
+import io.ktor.server.request.receive
+import io.ktor.server.response.respond
+import io.ktor.server.response.respondText
+import io.ktor.server.routing.Route
+import io.ktor.server.routing.get
+import io.ktor.server.routing.patch
+import io.ktor.server.routing.post
+import io.ktor.server.routing.put
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import io.ktor.server.websocket.WebSockets
 import io.ktor.server.websocket.webSocket
+import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
+import kotlin.uuid.Uuid
 
 private val logger = KotlinLogging.logger {}
 
@@ -54,10 +68,10 @@ fun Application.installGolemHttp(golem: Golem, outputs: MutableSharedFlow<GolemO
         // allowHost("example.com")
         // allowHost("localhost:3000")
 
-        // Configure allowed HTTP methods
         allowMethod(HttpMethod.Get)
         allowMethod(HttpMethod.Post)
         allowMethod(HttpMethod.Put)
+        allowMethod(HttpMethod.Patch)
         allowMethod(HttpMethod.Delete)
         allowMethod(HttpMethod.Options)
 
@@ -145,4 +159,56 @@ fun Application.installGolemHttp(golem: Golem, outputs: MutableSharedFlow<GolemO
     }
 }
 
+fun Route.golemApiRoute(
+    logger: KLogger,
+    golem: Golem,
+    outputs: FlowCollector<GolemOutput>
+) {
 
+    get("/ping") {
+        call.respondText("pong")
+    }
+
+    get("/contexts") {
+//        call.respond(
+//            golem.contexts
+//        )
+    }
+
+    put("/contexts") {
+        val prompt = call.receive<Prompt>()
+        val context = golem.newContext()
+        val message = context.createMessage(prompt)
+        call.respond(context.info)
+        logger.debug { "Context[${context.id}]: emitting initial message output" }
+        outputs.emit(contextId = context.id, message)
+        context.send(message)
+    }
+
+    patch("/contexts/{id}") {
+        logger.debug { "Updating context: start" }
+        val prompt = call.receive<Prompt>()
+        val idParameter = requireNotNull(call.parameters["id"]) { "Should never happen" }
+        val id = Uuid.parse(idParameter)
+        val context = golem.getContext(id)
+        if (context == null) {
+            call.respond(HttpStatusCode.NotFound, "resource not found $")
+        } else {
+            val message = context.createMessage(prompt)
+            call.respond(context.info)
+            outputs.emit(contextId = context.id, message)
+            context.send(message)
+        }
+    }
+
+    get("/contexts/{id}") {
+//        call.respond(
+//            golem.contexts
+//        )
+    }
+
+    post("/contexts") {
+
+    }
+
+}

@@ -116,7 +116,6 @@ sealed interface ReasoningEvent {
     @SerialName("messageEnd")
     class MessageEnd : ReasoningEvent {
         override fun toString(): String = "MessageEnd"
-
     }
 
 //    @Serializable
