@@ -19,7 +19,6 @@ package com.xemantic.ai.golem.api
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonClassDiscriminator
-import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
@@ -87,7 +86,6 @@ data class Prompt(
     val content: List<Content>
 )
 
-// TODO maybe add timestamp
 @Serializable
 @JsonClassDiscriminator("type")
 sealed interface ReasoningEvent {
@@ -107,16 +105,38 @@ sealed interface ReasoningEvent {
     data class TextContentDelta(val delta: String) : ReasoningEvent
 
     @Serializable
-    @SerialName("textContentEnd")
-    class TextContentEnd : ReasoningEvent {
-        override fun toString(): String = "TextContentEnd"
+    @SerialName("textContentStop")
+    class TextContentStop : ReasoningEvent {
+        override fun toString(): String = "TextContentStop"
     }
 
     @Serializable
-    @SerialName("messageEnd")
-    class MessageEnd : ReasoningEvent {
-        override fun toString(): String = "MessageEnd"
+    @SerialName("scriptStart")
+    data class ScriptStart(
+        val purpose: String
+    ) : ReasoningEvent
+
+    @Serializable
+    @SerialName("scriptDelta")
+    data class ScriptDelta(val delta: String) : ReasoningEvent
+
+    @Serializable
+    @SerialName("ScriptStop")
+    class ScriptStop : ReasoningEvent {
+        override fun toString(): String = "ScriptStop"
     }
+
+    @Serializable
+    @SerialName("messageStop")
+    class MessageStop : ReasoningEvent {
+        override fun toString(): String = "MessageStop"
+    }
+
+    @Serializable
+    @SerialName("contextTitle")
+    data class ContextTitle(
+        val title: String
+    ) : ReasoningEvent
 
 //    @Serializable
 //    @SerialName("recursiveCognition")

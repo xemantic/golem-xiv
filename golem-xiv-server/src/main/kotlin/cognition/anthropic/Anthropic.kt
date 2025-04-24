@@ -77,8 +77,8 @@ class AnthropicCognizer(
                 is Event.MessageStart -> emit(ReasoningEvent.MessageStart(role = Message.Role.ASSISTANT))
                 is Event.ContentBlockStart -> emit(ReasoningEvent.TextContentStart())
                 is Event.ContentBlockDelta -> emit(ReasoningEvent.TextContentDelta((it.delta as Delta.TextDelta).text))
-                is Event.ContentBlockStop -> emit(ReasoningEvent.TextContentEnd())
-                is Event.MessageStop -> emit(ReasoningEvent.MessageEnd())
+                is Event.ContentBlockStop -> emit(ReasoningEvent.TextContentStop())
+                is Event.MessageStop -> emit(ReasoningEvent.MessageStop())
                 else -> { /* do nothing at the moment */ }
             }
         }

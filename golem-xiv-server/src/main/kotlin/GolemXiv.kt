@@ -27,13 +27,11 @@ import com.xemantic.ai.golem.api.ReasoningEvent
 import com.xemantic.ai.golem.api.Text
 import com.xemantic.ai.golem.server.cognition.cognizer
 import com.xemantic.ai.golem.server.script.Files
-import com.xemantic.ai.golem.server.script.service.DefaultWebBrowser
 import com.xemantic.ai.golem.server.script.GOLEM_SCRIPT_API
 import com.xemantic.ai.golem.server.script.GOLEM_SCRIPT_SYSTEM_PROMPT
 import com.xemantic.ai.golem.server.script.GolemScript
 import com.xemantic.ai.golem.server.script.GolemScriptExecutor
 import com.xemantic.ai.golem.server.script.ScriptExecutionException
-import com.xemantic.ai.golem.server.script.candidate.WebBrowser
 import com.xemantic.ai.golem.server.script.extractGolemScripts
 import com.xemantic.ai.golem.server.script.service.DefaultFiles
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -254,12 +252,12 @@ internal suspend fun FlowCollector<GolemOutput>.emit(
             is Text -> {
                 emit(ReasoningEvent.TextContentStart())
                 emit(ReasoningEvent.TextContentDelta(it.text))
-                emit(ReasoningEvent.TextContentEnd())
+                emit(ReasoningEvent.TextContentStop())
             }
             else -> throw IllegalStateException("Unsupported content type: $it")
         }
     }
-    emit(ReasoningEvent.MessageEnd())
+    emit(ReasoningEvent.MessageStop())
 }
 
 class MessageAccumulator(
@@ -276,11 +274,11 @@ class MessageAccumulator(
             is ReasoningEvent.MessageStart -> {}
             is ReasoningEvent.TextContentStart -> {}
             is ReasoningEvent.TextContentDelta -> { textBuilder.append(event.delta) }
-            is ReasoningEvent.TextContentEnd -> {
+            is ReasoningEvent.TextContentStop -> {
                 content += Text(textBuilder.toString())
                 textBuilder.clear()
             }
-            is ReasoningEvent.MessageEnd -> {}
+            is ReasoningEvent.MessageStop -> {}
         }
     }
 
