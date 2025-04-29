@@ -41,13 +41,13 @@ class DefaultFiles : Files {
 }
 
 private fun File.ensureParentDir(): File {
-    val parent = parentFile
+    val parent = absoluteFile.parentFile
     if (parent.exists()) {
         if (!parent.isDirectory) {
             throw IllegalStateException("Cannot create because parent path is not a directory: $this")
         }
     } else {
-        if (!parentFile.exists()) {
+        if (!parentFile.mkdirs()) {
             throw IOException("Cannot create parent directory of file: $this")
         }
     }

@@ -17,48 +17,15 @@
 // TODO count how much comment, to preserve lines in case of errors here
 package com.xemantic.ai.golem.server.script
 
-/**
- * Represents the current context window.
- */
+/** The context window. */
 interface Context {
-
-    /**
-     * The title of this context window.
-     */
     var title: String
-
 }
 
+/** Note: create functions will also mkdirs parents. */
 interface Files {
-
-    fun readText(
-        vararg paths: String
-    ): List<String>
-
-    fun readBinary(
-        vararg paths: String
-    ): List<ByteArray>
-
-    /**
-     * Creates a text file.
-     *
-     * @param path the absolute file path.
-     * @param content the file content.
-     */
-    fun create(
-        path: String,
-        content: String,
-    )
-
-    /**
-     * Creates a binary file.
-     *
-     * @param path the absolute file path.
-     * @param content the file content.
-     */
-    fun create(
-        path: String,
-        content: ByteArray,
-    )
-
+    fun readText(vararg paths: String): List<String>
+    fun readBinary(vararg paths: String): List<ByteArray>
+    fun create(path: String, content: String)
+    fun create(path: String, content: ByteArray)
 }

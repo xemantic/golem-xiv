@@ -31,19 +31,20 @@ import com.xemantic.ai.golem.server.script.GOLEM_SCRIPT_API
 import com.xemantic.ai.golem.server.script.GOLEM_SCRIPT_SYSTEM_PROMPT
 import com.xemantic.ai.golem.server.script.GolemScript
 import com.xemantic.ai.golem.server.script.GolemScriptExecutor
-import com.xemantic.ai.golem.server.script.ScriptExecutionException
+import com.xemantic.ai.golem.server.script.GolemScriptException
 import com.xemantic.ai.golem.server.script.extractGolemScripts
 import com.xemantic.ai.golem.server.script.service.DefaultFiles
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.toList
-import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.collections.set
@@ -85,7 +86,7 @@ class Golem(
     // TODO should it be supervisor scope?
     private val scope = CoroutineScope(Dispatchers.IO)
 
-    private val scriptExecutor = GolemScriptExecutor()
+    private val scriptExecutor = GolemScriptExecutor(scope)
 
     private val playwright = Playwright.create()
 
@@ -130,6 +131,7 @@ class Golem(
 //        val golemTools = listOf(kotlinScriptTool)
 
         val dependencies = listOf(
+            service<com.xemantic.ai.golem.server.script.Context>("context", com.xemantic.ai.golem.server.script.service.DefaultContext(scope, outputs)),
             service<Files>("files", DefaultFiles())
 //            service<WebBrowser>("browser", DefaultWebBrowser(browser)),
 ////            service<WebBrowserService>("webBrowserService", DefaultWebBrowserService())
@@ -148,11 +150,11 @@ class Golem(
             conversation += message
             scope.launch {
                 logger.debug { "Context[$id]: Reasoning" }
-                var golemScriptResults = emptyList<Any>()
+
                 do {
                     val accumulator = MessageAccumulator(contextId = id)
                     val cognizer = cognizer() // TODO select based on hints
-                    golemScriptResults = cognizer.reason(
+                    val golemScriptResults = cognizer.reason(
                         golemSystem,
                         conversation,
                         hints = emptyMap()
@@ -168,35 +170,30 @@ class Golem(
                     ).map {
                         it.delta
                     }.extractGolemScripts(
-                    ).transform { script ->
-                        runScript(message.id, script)
-                    }.toList()
-
-//                    collect {
-//                        println("[machine]> Running Golem Script")
-//                        println(script)
-//                        val content =
-//
-//                        conversation += Message(contextId = id, content = listOf(content))
-//                        if (script == null) {
-//                            runGolemScript = false
-//                            // TODO sent event that context processing is finished - return control to user
-//                        } else {
-//
-//                        }
-//                    }
+                    ).map { script ->
+                        scope.async {
+                            runScript(message.id, script)
+                        }
+                    }.toList().awaitAll().filterNotNull()
 
                     val message = accumulator.build()
                     conversation += message
+
+                    if (golemScriptResults.isNotEmpty()) {
+                        conversation += Message(
+                            contextId = id,
+                            content = golemScriptResults
+                        )
+                    }
 
                 } while (golemScriptResults.isNotEmpty())
             }
         }
 
-        private suspend fun FlowCollector<Content>.runScript(
+        private suspend fun runScript(
             messageId: Uuid,
             script: GolemScript
-        ) {
+        ): Content? {
             logger.debug {
                 "Context[$id]/Message[${messageId}: Running GolemScript, purpose: ${script.purpose}, code: ${script.code}"
             }
@@ -206,16 +203,17 @@ class Golem(
                     script = script.code
                 )
                 when (scriptResult) {
-                    is String -> emit(Text(scriptResult))
+                    is String -> return Text(scriptResult)
                     // TODO add conversion to binary format
                     else -> { logger.error { "Unsupported script result: $scriptResult" }}
                 }
-            } catch (e: ScriptExecutionException) {
+            } catch (e: GolemScriptException) {
                 logger.debug(e) {
                     "Script error"
                 }
-                emit(Text("<golem-script-error>${e.message}</golem-script-error>"))
+                return Text("<golem-script-error>${e.message}</golem-script-error>")
             }
+            return null
         }
 
     }
@@ -234,6 +232,7 @@ class Golem(
     fun getContext(id: Uuid): Context? = contextMap[id]
 
     override fun close() {
+        // TODO it should wait for idle
         scope.cancel()
     }
 
@@ -279,6 +278,7 @@ class MessageAccumulator(
                 textBuilder.clear()
             }
             is ReasoningEvent.MessageStop -> {}
+            else -> {}
         }
     }
 

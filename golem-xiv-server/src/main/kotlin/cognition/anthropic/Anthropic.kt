@@ -68,7 +68,7 @@ class AnthropicCognizer(
         conversation: List<Message>,
         hints: Map<String, String>
     ): Flow<ReasoningEvent> = flow {
-        logger.debug { "Streaming " }
+        logger.debug { "Anthropic API: Streaming start" }
         anthropic.messages.stream {
             this.system = system.toAnthropicSystem()
             messages = conversation.toAnthropicMessages()
@@ -82,6 +82,7 @@ class AnthropicCognizer(
                 else -> { /* do nothing at the moment */ }
             }
         }
+        logger.debug { "Anthropic API: Streaming finished" }
     }
 
     private fun handleDelta(delta: String) {

@@ -263,3 +263,28 @@ interface Scheduler {
 
 }
 
+/**
+ * Persistent memory storage.
+ */
+interface Memory {
+
+    suspend fun listKeys(): List<String>
+
+    /**
+     * Retrieves the value associated with the specified key.
+     *
+     * @param key The key to look up in memory.
+     * @return The value associated with the key, or null if the key doesn't exist.
+     */
+    suspend fun retrieve(key: String): String
+
+    /**
+     * Stores or updates a value in memory under the specified key.
+     *
+     * @param key The key under which to store the value.
+     * @param value The value to store.
+     * @return True if operation was successful, false otherwise.
+     */
+    suspend fun store(key: String, value: String)
+
+}

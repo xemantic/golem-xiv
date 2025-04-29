@@ -14,33 +14,26 @@
  * limitations under the License.
  */
 
-package com.xemantic.ai.golem.server.script
+package com.xemantic.ai.golem.server.script.service
 
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
+import com.xemantic.ai.golem.api.GolemOutput
+import com.xemantic.ai.golem.server.script.Context
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.FlowCollector
+import kotlinx.coroutines.launch
 
-/**
- * Represents a Golem script with its required attributes and content.
- */
-@Serializable
-data class GolemScript(
-    val purpose: String,
-    val code: String
-) {
+class DefaultContext(
+    private val scope: CoroutineScope,
+    private val outputs: FlowCollector<GolemOutput>
+) : Context {
 
-    enum class ExecutionPhase {
-        @SerialName("compilation")
-        COMPILATION,
-        @SerialName("evaluation")
-        EVALUATION
-    }
-
-    sealed interface Result {
-
-        class Error(val message: String) : Result
-
-        class Value(val value: Any?) : Result
-
-    }
+    override var title: String = "Untitled"
+        get() = field
+        set(value) {
+            field = value
+            scope.launch {
+//                outputs.emit(value)
+            }
+        }
 
 }

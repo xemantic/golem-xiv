@@ -113,18 +113,35 @@ sealed interface ReasoningEvent {
     @Serializable
     @SerialName("scriptStart")
     data class ScriptStart(
+        val id: Uuid,
         val purpose: String
     ) : ReasoningEvent
 
     @Serializable
     @SerialName("scriptDelta")
-    data class ScriptDelta(val delta: String) : ReasoningEvent
+    data class ScriptDelta(
+        val id: Uuid,
+        val delta: String
+    ) : ReasoningEvent
 
     @Serializable
-    @SerialName("ScriptStop")
-    class ScriptStop : ReasoningEvent {
-        override fun toString(): String = "ScriptStop"
-    }
+    @SerialName("scriptStop")
+    data class ScriptStop(
+        val id: Uuid,
+        val purpose: String
+    ) : ReasoningEvent
+
+    @Serializable
+    @SerialName("scriptRun")
+    data class ScriptRun(
+        val id: Uuid
+    ) : ReasoningEvent
+
+    @Serializable
+    @SerialName("scriptFinished")
+    data class ScriptFinished(
+        val id: Uuid
+    ) : ReasoningEvent
 
     @Serializable
     @SerialName("messageStop")

@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
-package com.xemantic.ai.golem.server.script
+package com.xemantic.ai.golem.server.kotlin
 
-
+fun String.startsWithAnyOf(
+    vararg strings: String
+): Boolean = strings.any {
+    startsWith(it)
+}

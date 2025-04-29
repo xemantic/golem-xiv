@@ -24,7 +24,7 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 
-class GolemScriptTest {
+class GolemScriptExtractionTest {
 
     @Test
     fun `should extract simple script tag`() = runTest {
