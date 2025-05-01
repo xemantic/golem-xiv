@@ -231,7 +231,7 @@ class Golem(
 
     override fun close() {
 
-        logger.info { "Closing Golem XIV" }
+        logger.debug { "Closing Golem XIV" }
 
         runBlocking {
             scope.coroutineContext.job.children.forEach {

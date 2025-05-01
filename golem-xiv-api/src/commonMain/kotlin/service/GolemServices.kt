@@ -38,7 +38,7 @@ interface ContextService {
         prompt: Prompt
     )
 
-    suspend fun get(id: Uuid): ContextInfo?
+    suspend fun get(contextId: Uuid): ContextInfo?
 
     fun list(): Flow<ContextInfo>
 
