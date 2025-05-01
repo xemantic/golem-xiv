@@ -3,20 +3,20 @@ kotlinTarget = "2.1"
 javaTarget = "17"
 
 kotlin = "2.1.20"
-kotlinxSerialization = "1.8.0"
-kotlinxCoroutines = "1.10.1"
+kotlinxSerialization = "1.8.1"
+kotlinxCoroutines = "1.10.2"
 kotlinxHtml = "0.12.0"
 
-kotlinLogging = "7.0.3"
+kotlinLogging = "7.0.7"
 
 anthropicSdkKotlin = "0.19.0"
-xemanticKotlinTest = "1.8.10"
+xemanticKotlinTest = "1.9.0"
 
 ktor = "3.1.2"
 playwright = "1.51.0"
 
 log4j = "2.24.1"
-jackson = "2.18.3"
+jackson = "2.19.0"
 
 versionsPlugin = "0.52.0"
 dokkaPlugin = "2.0.0"
