@@ -20,6 +20,7 @@ package com.xemantic.ai.golem.server.script
 /** The context window. */
 interface Context {
     var title: String
+    //var replaceThisAssistantMessageWith: String
 }
 
 /** Note: create functions will also mkdirs parents. */

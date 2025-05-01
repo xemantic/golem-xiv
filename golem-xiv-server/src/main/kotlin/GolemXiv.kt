@@ -31,12 +31,12 @@ import com.xemantic.ai.golem.server.script.GOLEM_SCRIPT_API
 import com.xemantic.ai.golem.server.script.GOLEM_SCRIPT_SYSTEM_PROMPT
 import com.xemantic.ai.golem.server.script.GolemScript
 import com.xemantic.ai.golem.server.script.GolemScriptExecutor
-import com.xemantic.ai.golem.server.script.GolemScriptException
 import com.xemantic.ai.golem.server.script.extractGolemScripts
 import com.xemantic.ai.golem.server.script.service.DefaultFiles
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancel
@@ -45,7 +45,9 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.collections.set
 import kotlin.time.Clock
@@ -83,10 +85,9 @@ class Golem(
 
     private val contextMap = ConcurrentHashMap<Uuid, Context>()
 
-    // TODO should it be supervisor scope?
-    private val scope = CoroutineScope(Dispatchers.IO)
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-    private val scriptExecutor = GolemScriptExecutor(scope)
+    private val scriptExecutor = GolemScriptExecutor()
 
     private val playwright = Playwright.create()
 
@@ -174,7 +175,7 @@ class Golem(
                         scope.async {
                             runScript(message.id, script)
                         }
-                    }.toList().awaitAll().filterNotNull()
+                    }.toList().awaitAll().flatten()
 
                     val message = accumulator.build()
                     conversation += message
@@ -193,27 +194,24 @@ class Golem(
         private suspend fun runScript(
             messageId: Uuid,
             script: GolemScript
-        ): Content? {
+        ): List<Content> {
             logger.debug {
                 "Context[$id]/Message[${messageId}: Running GolemScript, purpose: ${script.purpose}, code: ${script.code}"
             }
-            try {
-                val scriptResult = scriptExecutor.execute(
-                    dependencies,
-                    script = script.code
+            val result = scriptExecutor.execute(
+                script = script.code,
+                dependencies = dependencies
+            )
+            val content = when (result) {
+                is GolemScript.Result.Value -> when(result.value) {
+                    is String -> Text(result.value)
+                    else -> Text(result.value.toString())
+                }
+                is GolemScript.Result.Error -> Text(
+                    "<golem-script-error>${result.message}</golem-script-error>"
                 )
-                when (scriptResult) {
-                    is String -> return Text(scriptResult)
-                    // TODO add conversion to binary format
-                    else -> { logger.error { "Unsupported script result: $scriptResult" }}
-                }
-            } catch (e: GolemScriptException) {
-                logger.debug(e) {
-                    "Script error"
-                }
-                return Text("<golem-script-error>${e.message}</golem-script-error>")
             }
-            return null
+            return listOf(content)
         }
 
     }
@@ -232,8 +230,25 @@ class Golem(
     fun getContext(id: Uuid): Context? = contextMap[id]
 
     override fun close() {
-        // TODO it should wait for idle
+
+        logger.info { "Closing Golem XIV" }
+
+        runBlocking {
+            scope.coroutineContext.job.children.forEach {
+                it.join()
+            }
+        }
+
+        scriptExecutor.close()
+
         scope.cancel()
+
+        runBlocking {
+            scope.coroutineContext.job.join()
+        }
+
+        logger.debug { "Golem XIV closed" }
+
     }
 
 }

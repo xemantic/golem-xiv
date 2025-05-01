@@ -19,6 +19,56 @@ package com.xemantic.ai.golem.server.script.candidate
 import com.xemantic.ai.golem.server.SYSTEM_PROMPT
 import com.xemantic.ai.golem.server.environmentContext
 
+interface Memory {
+    // Entity/fact management
+    suspend fun storeFact(fact: Fact): String  // Returns ID of stored fact
+    suspend fun getFact(id: String): Fact?
+    suspend fun updateFact(id: String, fact: Fact): Boolean
+
+    // Relationship management
+    suspend fun createRelationship(sourceId: String, relationshipType: String, targetId: String): String
+    suspend fun getRelationships(entityId: String): List<Relationship>
+
+    // Query capabilities
+    suspend fun query(queryString: String): QueryResult
+
+    // Episodic memory capabilities
+    suspend fun rememberInteraction(interaction: Interaction)
+    suspend fun getRelevantMemories(context: String, limit: Int = 5): List<Memory>
+
+    // Optional: Vector embedding for similarity search
+    suspend fun findSimilar(description: String, limit: Int = 5): List<Fact>
+}
+
+// Supporting data classes
+data class Fact(
+    val content: String,
+    val metadata: Map<String, Any> = emptyMap(),
+    val confidence: Float = 1.0f,
+    val timestamp: Long = System.currentTimeMillis()
+)
+
+data class Relationship(
+    val sourceId: String,
+    val type: String,
+    val targetId: String,
+    val metadata: Map<String, Any> = emptyMap(),
+    val confidence: Float = 1.0f
+)
+
+data class Interaction(
+    val type: String,  // e.g., "user_message", "agent_action"
+    val content: String,
+    val timestamp: Long = System.currentTimeMillis(),
+    val metadata: Map<String, Any> = emptyMap()
+)
+
+data class QueryResult(
+    val facts: List<Fact> = emptyList(),
+    val relationships: List<Relationship> = emptyList(),
+    val rawResult: Any? = null
+)
+
 /**
  * Starts a recursive version of yourself with a fresh token window. If there is any tool use involved,
  */
@@ -263,28 +313,3 @@ interface Scheduler {
 
 }
 
-/**
- * Persistent memory storage.
- */
-interface Memory {
-
-    suspend fun listKeys(): List<String>
-
-    /**
-     * Retrieves the value associated with the specified key.
-     *
-     * @param key The key to look up in memory.
-     * @return The value associated with the key, or null if the key doesn't exist.
-     */
-    suspend fun retrieve(key: String): String
-
-    /**
-     * Stores or updates a value in memory under the specified key.
-     *
-     * @param key The key under which to store the value.
-     * @param value The value to store.
-     * @return True if operation was successful, false otherwise.
-     */
-    suspend fun store(key: String, value: String)
-
-}
