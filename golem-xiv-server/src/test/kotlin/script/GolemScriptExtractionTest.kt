@@ -19,6 +19,7 @@ package com.xemantic.ai.golem.server.script
 import com.xemantic.kotlin.test.assert
 import com.xemantic.kotlin.test.have
 import com.xemantic.kotlin.test.should
+import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
@@ -29,7 +30,7 @@ class GolemScriptExtractionTest {
     @Test
     fun `should extract simple script tag`() = runTest {
         // given
-        val flow = flowOf("<golem-script purpose=\"test\">Test content</golem-script>")
+        val flow = flowOf("""<golem-script purpose="test">"foo"</golem-script>""")
 
         // when
         val scripts = flow.extractGolemScripts().toList()
@@ -39,7 +40,7 @@ class GolemScriptExtractionTest {
             have(size == 1)
             this[0] should {
                 have(purpose == "test")
-                have(code == "Test content")
+                have(code == "\"foo\"")
             }
         }
     }
@@ -49,7 +50,7 @@ class GolemScriptExtractionTest {
         // given
         val flow = flowOf("""
             <golem-script purpose="test">
-            Test content
+            println("foo")
             </golem-script>
         """".trimIndent())
 
@@ -61,18 +62,29 @@ class GolemScriptExtractionTest {
             have(size == 1)
             this[0] should {
                 have(purpose == "test")
-                have(code == "Test content")
+                have(code == "println(\"foo\")")
             }
         }
     }
 
     @Test
-    fun `should extract multiple script tags`() = runTest {
+    fun `should extract multiple multiline script tags from chunked String flow`() = runTest {
         // given
-        val flow = flowOf(
-            "<golem-script purpose=\"test1\">Test content 1</golem-script>" +
-                    "<golem-script purpose=\"test2\">Test content 2</golem-script>"
-        )
+        val input = """
+            <golem-script purpose="Set title">
+            context.title = "Test run"
+            </golem-script>
+            
+            Some non-script paragraph.
+            
+            <golem-script purpose="Calculate numbers">
+            val result = 2+2
+            println(result)
+            result
+            </golem-script>
+        """.trimIndent()
+
+        val flow = input.chunked(5).asFlow()
 
         // when
         val scripts = flow.extractGolemScripts().toList()
@@ -81,34 +93,16 @@ class GolemScriptExtractionTest {
         scripts should {
             have(size == 2)
             this[0] should {
-                have(purpose == "test1")
-                have(code == "Test content 1")
+                have(purpose == "Set title")
+                have(code == "context.title = \"Test run\"")
             }
             this[1] should {
-                have(purpose == "test2")
-                have(code == "Test content 2")
-            }
-        }
-    }
-
-    @Test
-    fun `should extract script tag across emissions`() = runTest {
-        // given
-        val flow = flowOf(
-            "<golem-script purpose=\"test\">",
-            "Test content",
-            "</golem-script>"
-        )
-
-        // when
-        val scripts = flow.extractGolemScripts().toList()
-
-        // then
-        scripts should {
-            have(size == 1)
-            this[0] should {
-                have(purpose == "test")
-                have(code == "Test content")
+                have(purpose == "Calculate numbers")
+                have(code == """
+                    val result = 2+2
+                    println(result)
+                    result
+                """.trimIndent())
             }
         }
     }
@@ -147,7 +141,7 @@ class GolemScriptExtractionTest {
         """.trimIndent()
 
         val flow = flowOf("""
-            <golem-script purpose=\"code\">
+            <golem-script purpose="code">
             $script
             </golem-script>"
         """.trimIndent())
@@ -165,10 +159,9 @@ class GolemScriptExtractionTest {
         }
     }
 
-    // TODO what should happen with empty purpose
     @Test
-    fun `should not extract script with empty purpose`() = runTest {
-        val flow = flowOf("<golem-script purpose=\"\">Test content</golem-script>")
+    fun `should extract script with empty purpose`() = runTest {
+        val flow = flowOf("<golem-script purpose=\"\">null</golem-script>")
         val scripts = flow.extractGolemScripts().toList()
 
         // then
@@ -176,55 +169,7 @@ class GolemScriptExtractionTest {
             have(size == 1)
             this[0] should {
                 have(purpose == "")
-                have(code == "Test content")
-            }
-        }
-    }
-
-    @Test
-    fun `should extract script with multiline content`() = runTest {
-        // given
-        val flow = flowOf("""
-            <golem-script purpose="multiline">
-            Line 1
-            Line 2
-            Line 3
-            </golem-script>
-        """.trimIndent())
-
-        // when
-        val scripts = flow.extractGolemScripts().toList()
-
-        // then
-        scripts should {
-            have(size == 1)
-            this[0] should {
-                have(purpose == "multiline")
-                have(code == "\nLine 1\nLine 2\nLine 3")
-            }
-        }
-    }
-
-    @Test
-    fun `extract script tag with fragmented chunks`() = runTest {
-        // given
-        val flow = flowOf(
-            "<golem-script pur",
-            "pose=\"fragmented\">Content ",
-            "split across ",
-            "multiple chunks</golem-",
-            "script>"
-        )
-
-        // when
-        val scripts = flow.extractGolemScripts().toList()
-
-        // then
-        scripts should {
-            have(size == 1)
-            this[0] should {
-                have(purpose == "fragmented")
-                have(code == "Content split across multiple chunks")
+                have(code == "null")
             }
         }
     }
