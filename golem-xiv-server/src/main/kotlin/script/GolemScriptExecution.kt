@@ -20,7 +20,11 @@ import com.xemantic.ai.golem.server.kotlin.startsWithAnyOf
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.async
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.job
+import kotlinx.coroutines.runBlocking
 import kotlin.concurrent.atomics.AtomicInt
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.concurrent.atomics.fetchAndIncrement
@@ -44,11 +48,7 @@ import kotlin.time.measureTimedValue
 
 // TODO implement script cache
 @OptIn(ExperimentalAtomicApi::class)
-class GolemScriptExecutor(
-    private val scope: CoroutineScope
-) {
-
-    private val scriptIdSeq = AtomicInt(1)
+class GolemScriptExecutor {
 
     class Dependency<T : Any>(
         val name: String,
@@ -57,6 +57,10 @@ class GolemScriptExecutor(
     )
 
     private val logger = KotlinLogging.logger {}
+
+    private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    private val scriptIdSeq = AtomicInt(1)
 
     private val scriptingHost = BasicJvmScriptingHost()
 
@@ -73,33 +77,40 @@ class GolemScriptExecutor(
         )
     }
 
-    @Throws(GolemScriptException::class)
     suspend fun execute(
-        dependencies: List<Dependency<*>>,
-        script: String
-    ): Any? {
+        script: String,
+        dependencies: List<Dependency<*>> = emptyList(),
+    ): GolemScript.Result {
 
         val scriptId = scriptIdSeq.fetchAndIncrement()
         logger.debug { "GolemScript[$scriptId]: Executing" }
 
         val (result, duration) = measureTimedValue {
-            scope.async {// TODO is this scope needed?
-                GolemScriptHandler(
-                    scriptId,
-                    scope = this,
-                    dependencies,
-                    script
-                ).handle()
-            }.await()
+            GolemScriptHandler(
+                scriptId,
+                scope,
+                dependencies,
+                script
+            ).handle()
         }
 
-        logger.debug { "GolemScript[$scriptId]: Execution took $duration" }
+        logger.debug { "GolemScript[$scriptId]: Execution took $duration in total" }
 
-        return when (result) {
-            is GolemScript.Result.Value -> result.value
-            is GolemScript.Result.Error -> throw GolemScriptException(result.message)
+        return result
+    }
+
+    fun close() {
+        logger.debug { "Closing GolemScriptExecutor" }
+        runBlocking {
+            scope.coroutineContext.job.children.forEach {
+                it.join()
+            }
         }
-
+        scope.cancel()
+        runBlocking {
+            scope.coroutineContext.job.join()
+        }
+        logger.debug { "GolemScriptExecutor closed" }
     }
 
     private inner class GolemScriptHandler(
@@ -117,14 +128,16 @@ class GolemScriptExecutor(
 
         private val scriptParts = splitScriptImportsAndBody(script)
 
-        private val suspendableScript = scriptParts.imports.joinToString(separator = "", postfix = "\n") +
-                "_golemScriptScope.async {\n${scriptParts.body.joinToString(separator = "\n")}\n}\n"
+        private val suspendableScript = if (scriptParts.imports.isNotEmpty()) {
+            scriptParts.imports.joinToString(separator = "\n") + "\n"
+        } else {
+            ""
+        } + "_golemScriptScope.async {\n${scriptParts.body.joinToString(separator = "\n")}\n}"
 
         suspend fun handle(): GolemScript.Result {
             val compilationResult = compile()
             val result = when (compilationResult) {
                 is ResultWithDiagnostics.Success -> {
-                    logger.debug { "GolemScript[$scriptId]: Compilation succeeded" }
                     val compiledScript = compilationResult.value
                     evaluate(compiledScript)
                 }
@@ -133,7 +146,6 @@ class GolemScriptExecutor(
                         phase = GolemScript.ExecutionPhase.COMPILATION,
                         failure = compilationResult
                     )
-                    logger.debug { "GolemScript[$scriptId]: Compilation failed: $failureMessage" }
                     GolemScript.Result.Error(failureMessage)
                 }
             }
@@ -141,21 +153,30 @@ class GolemScriptExecutor(
         }
 
         private suspend fun compile(): ResultWithDiagnostics<CompiledScript>  {
-            logger.debug { "GolemScript[$scriptId]: Compiling" }
+            logger.debug { "GolemScript[$scriptId]: Compiling (1/2)" }
             val (compileResult, duration) = measureTimedValue {
                 scriptingHost.compiler(
                     script = suspendableScript.toScriptSource(),
                     scriptCompilationConfiguration = compilationConfig()
                 )
             }
-            logger.debug { "GolemScript[$scriptId]: Compilation took $duration" }
+
+//            when (compileResult) {
+//                is GolemScript.Result.Value -> logger.debug {
+//                    "GolemScript[$scriptId]: Evaluation (2/2) succeeded after $duration"
+//                }
+//                is GolemScript.Result.Error -> logger.debug {
+//                    "GolemScript[$scriptId]: Evaluation (2/2) failed after $duration"
+//                }
+//            }
+            logger.debug { "GolemScript[$scriptId]: Compilation (1/2)  $duration" }
             return compileResult
         }
 
         private suspend fun evaluate(
             compiledScript: CompiledScript
         ): GolemScript.Result {
-            logger.debug { "GolemScript[$scriptId]: Evaluating" }
+            logger.debug { "GolemScript[$scriptId]: Evaluating (2/2)" }
             val (evaluationResult, duration) = measureTimedValue {
                 scriptingHost.evaluator(
                     compiledScript = compiledScript,
@@ -164,60 +185,80 @@ class GolemScriptExecutor(
             }
             val result = when (evaluationResult) {
                 is ResultWithDiagnostics.Success<EvaluationResult> -> {
-                    logger.debug { "GolemScript[$scriptId]: Evaluation succeeded" }
                     evaluationResult.value.returnValue.toGolemScriptResult()
                 }
                 is ResultWithDiagnostics.Failure -> {
+                    // in practice, this never happens
                     val failureMessage = errorReporter().toFailureMessage(
                         phase = GolemScript.ExecutionPhase.EVALUATION,
                         failure = evaluationResult
                     )
-                    logger.debug { "GolemScript[$scriptId]: Compilation failed: $failureMessage" }
+                    logger.debug { "GolemScript[$scriptId]: Evaluation failed: $failureMessage" }
                     GolemScript.Result.Error(failureMessage)
                 }
             }
-            logger.debug { "GolemScript[$scriptId]: Evaluation took $duration" }
+            when (result) {
+                is GolemScript.Result.Value -> logger.debug {
+                    "GolemScript[$scriptId]: Evaluation (2/2) succeeded after $duration"
+                }
+                is GolemScript.Result.Error -> logger.debug {
+                    "GolemScript[$scriptId]: Evaluation (2/2) failed after $duration"
+                }
+            }
+
             return result
         }
 
         private suspend fun ResultValue.toGolemScriptResult() = when (this) {
-            is ResultValue.Value -> GolemScript.Result.Value(
-                (value as Deferred<Any?>).await()
-            )
+            is ResultValue.Value -> {
+                try {
+                    GolemScript.Result.Value(
+                        (value as Deferred<Any?>).await()
+                    )
+                } catch (e: Exception) {
+                    logger.debug(e) {
+                        "GolemScript[$scriptId]: Evaluation failed with error"
+                    }
+                    val failureMessage = errorReporter().toFailureMessage(e.cause!!)
+                    GolemScript.Result.Error(
+                        failureMessage
+                    )
+                }
+            }
             is ResultValue.Unit -> GolemScript.Result.Value(Unit)
             is ResultValue.Error -> {
-                val failureMessage = errorReporter().toFailureMessage(
-                    errorResultValue = this
-                )
+                val failureMessage = errorReporter().toFailureMessage(error)
                 GolemScript.Result.Error(
                     message = failureMessage
                 )
             }
-            is ResultValue.NotEvaluated -> throw IllegalStateException("Should never happen")
+            is ResultValue.NotEvaluated -> throw IllegalStateException(
+                "Should never happen"
+            )
         }
 
         private fun evaluationConfig() = ScriptEvaluationConfiguration {
-            providedProperties(*(allDependencies.map { it.name to it.value }.toTypedArray()))
+            providedProperties(
+                *(allDependencies.map { it.name to it.value }.toTypedArray())
+            )
         }
 
         private fun compilationConfig() = ScriptCompilationConfiguration(compilationConfigurationTemplate) {
-            providedProperties(*(allDependencies.map { it.name to KotlinType(it.type) }.toTypedArray()))
+            providedProperties(
+                *(allDependencies.map { it.name to KotlinType(it.type)}.toTypedArray())
+            )
         }
 
         private fun errorReporter() = GolemScriptErrorReporter(
             scriptLines = suspendableScript.lines(),
-            lastImportLine = scriptParts.imports.size + 1
+            lastImportLine = scriptParts.imports.size
         )
 
     }
 
 }
 
-class GolemScriptException(
-    msg: String,
-) : RuntimeException(msg)
-
-private fun Iterable<ScriptDiagnostic>.filterNonIgnorable() = filter {
+private fun Iterable<ScriptDiagnostic>.filterNonIgnorable() = filterNot {
     it.ignorable
 }
 
@@ -245,10 +286,11 @@ private class GolemScriptErrorReporter(
     }
 
     fun toFailureMessage(
-        errorResultValue: ResultValue.Error
+        throwable: Throwable
     ) = buildString {
         append("<golem-script> execution failed during phase: ${GolemScript.ExecutionPhase.EVALUATION.name}\n")
-        appendException(error = errorResultValue.error)
+        appendException(error = throwable)
+        append("\n")
     }
 
     private fun StringBuilder.appendException(
@@ -262,21 +304,50 @@ private class GolemScriptErrorReporter(
             append(it)
         }
         append("\n")
-        error.stackTrace.filter {
-            it?.fileName?.startsWith("script.kts") ?: false
-        }.forEach {
-            append("  at ")
-            append(it.className)
-            append(".")
-            append(it.methodName)
-            append("(")
-            append(it.fileName)
-            append(":")
-            append(it.lineNumber)
-            append(")\n  | ")
-            append(scriptLines[it.lineNumber - 1])
-            append("\n")
+
+        error.stackTrace.forEachIndexed { index, trace ->
+
+            val isScriptTrace = trace.className.startsWith(
+                "Script"
+            ) && (trace.fileName == "script.kts")
+
+            if (isScriptTrace || index == 0) {
+                val className = if (isScriptTrace) {
+                    "Script"
+                } else {
+                    trace.className
+                }
+
+                val fileName = if (isScriptTrace) {
+                    "golem-script.kts"
+                } else {
+                    trace.fileName
+                }
+
+                val lineNumber = if (isScriptTrace) {
+                    trace.lineNumber - 1
+                } else {
+                    trace.lineNumber
+                }
+
+                append("  at ")
+                append(className)
+                append(".")
+                append(trace.methodName)
+                append("(")
+                append(fileName)
+                append(":")
+                append(lineNumber)
+                append(")\n")
+                if (isScriptTrace) {
+                    append("  | ")
+                    append(scriptLines[lineNumber])
+                    append("\n")
+                }
+            }
+
         }
+
         error.cause?.let {
             appendException(
                 prefix = "Caused by: ",
@@ -299,8 +370,10 @@ private class GolemScriptErrorReporter(
         line: Int
     ): Int = if (line <= lastImportLine) {
         line
+    } else if (line == scriptLines.size){
+        line - 2
     } else {
-        line + 1
+        line - 1
     }
 
     private fun StringBuilder.appendLocation(
@@ -324,16 +397,21 @@ private class GolemScriptErrorReporter(
 
         (startLine..endLine).forEach { line ->
             append("  | ")
-            val scriptLine = scriptLines[line - 1]
-            val lineBuilder = StringBuilder(line)
-            if (line == startLine) {
-                lineBuilder.insert(location.start.col - 1, "<error>")
-                if ((line == endLine) && (location.end != null)) {
-                    lineBuilder.insert(location.end!!.col + 6, "</error>")
+            val lineIndexOffset = if ((line <= lastImportLine) || (startLine == (scriptLines.size - 1))) 1 else 0
+            val scriptLine = scriptLines[line - lineIndexOffset]
+            val lineBuilder = StringBuilder(scriptLine)
+            if (location.start.line == scriptLines.size) {
+                lineBuilder.append("<error/>")
+            } else {
+                if (line == startLine) {
+                    lineBuilder.insert(location.start.col - 1, "<error>")
+                    if ((line == endLine) && (location.end != null)) {
+                        lineBuilder.insert(location.end!!.col + 6, "</error>")
+                    }
                 }
-            }
-            if ((line != startLine) && (line == endLine)) { // TODO should it be else without first expression?
-                lineBuilder.insert(location.end!!.col - 1, "</error>")
+                if ((line != startLine) && (line == endLine)) { // TODO should it be else without first expression?
+                    lineBuilder.insert(location.end!!.col - 1, "</error>")
+                }
             }
 
             append(lineBuilder)
