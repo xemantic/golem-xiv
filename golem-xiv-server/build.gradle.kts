@@ -72,6 +72,8 @@ dependencies {
 
     implementation(libs.playwright)
 
+    implementation(libs.log4j.api)
+
     runtimeOnly(libs.log4j.slf4j2)
     runtimeOnly(libs.jackson.databind)
     runtimeOnly(libs.jackson.dataformat.yaml)
