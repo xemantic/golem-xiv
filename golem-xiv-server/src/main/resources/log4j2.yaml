@@ -1,5 +1,6 @@
 Configuration:
   status: warn
+  shutdownHook: disable
   Appenders:
     Console:
       - name: Console_Info
