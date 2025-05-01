@@ -46,7 +46,6 @@ import kotlin.script.experimental.jvm.jvm
 import kotlin.script.experimental.jvmhost.BasicJvmScriptingHost
 import kotlin.time.measureTimedValue
 
-// TODO implement script cache
 @OptIn(ExperimentalAtomicApi::class)
 class GolemScriptExecutor {
 
@@ -135,7 +134,9 @@ class GolemScriptExecutor {
         } + "_golemScriptScope.async {\n${scriptParts.body.joinToString(separator = "\n")}\n}"
 
         suspend fun handle(): GolemScript.Result {
+
             val compilationResult = compile()
+
             val result = when (compilationResult) {
                 is ResultWithDiagnostics.Success -> {
                     val compiledScript = compilationResult.value
@@ -146,43 +147,52 @@ class GolemScriptExecutor {
                         phase = GolemScript.ExecutionPhase.COMPILATION,
                         failure = compilationResult
                     )
+                    logger.debug {
+                        "GolemScript[$scriptId]: Compilation (1/2) failure message: $failureMessage"
+                    }
                     GolemScript.Result.Error(failureMessage)
                 }
             }
+
             return result
         }
 
         private suspend fun compile(): ResultWithDiagnostics<CompiledScript>  {
+
             logger.debug { "GolemScript[$scriptId]: Compiling (1/2)" }
-            val (compileResult, duration) = measureTimedValue {
+
+            val (compilationResult, duration) = measureTimedValue {
                 scriptingHost.compiler(
                     script = suspendableScript.toScriptSource(),
                     scriptCompilationConfiguration = compilationConfig()
                 )
             }
 
-//            when (compileResult) {
-//                is GolemScript.Result.Value -> logger.debug {
-//                    "GolemScript[$scriptId]: Evaluation (2/2) succeeded after $duration"
-//                }
-//                is GolemScript.Result.Error -> logger.debug {
-//                    "GolemScript[$scriptId]: Evaluation (2/2) failed after $duration"
-//                }
-//            }
-            logger.debug { "GolemScript[$scriptId]: Compilation (1/2)  $duration" }
-            return compileResult
+            when (compilationResult) {
+                is ResultWithDiagnostics.Success -> logger.debug {
+                    "GolemScript[$scriptId]: Compilation (1/2) succeeded after $duration"
+                }
+                is ResultWithDiagnostics.Failure -> logger.debug {
+                    "GolemScript[$scriptId]: Compilation (1/2) failed after $duration"
+                }
+            }
+
+            return compilationResult
         }
 
         private suspend fun evaluate(
             compiledScript: CompiledScript
         ): GolemScript.Result {
+
             logger.debug { "GolemScript[$scriptId]: Evaluating (2/2)" }
+
             val (evaluationResult, duration) = measureTimedValue {
                 scriptingHost.evaluator(
                     compiledScript = compiledScript,
                     scriptEvaluationConfiguration = evaluationConfig()
                 )
             }
+
             val result = when (evaluationResult) {
                 is ResultWithDiagnostics.Success<EvaluationResult> -> {
                     evaluationResult.value.returnValue.toGolemScriptResult()
@@ -193,10 +203,10 @@ class GolemScriptExecutor {
                         phase = GolemScript.ExecutionPhase.EVALUATION,
                         failure = evaluationResult
                     )
-                    logger.debug { "GolemScript[$scriptId]: Evaluation failed: $failureMessage" }
                     GolemScript.Result.Error(failureMessage)
                 }
             }
+
             when (result) {
                 is GolemScript.Result.Value -> logger.debug {
                     "GolemScript[$scriptId]: Evaluation (2/2) succeeded after $duration"
@@ -439,7 +449,7 @@ private fun splitScriptImportsAndBody(
     } else {
         ScriptParts(
             imports = lines.subList(0, lastImportIndex + 1),
-            body = lines.subList(lastImportIndex + 1, lines.size) // TODO it will fail if script consists only out ouf imports
+            body = lines.subList(lastImportIndex + 1, lines.size)
         )
     }
 }
