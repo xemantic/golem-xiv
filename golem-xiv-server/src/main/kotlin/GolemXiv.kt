@@ -182,7 +182,7 @@ class Golem(
                         scope.async {
                             runScript(message.id, script)
                         }
-                    }.toList().awaitAll().flatten()
+                    }.toList().awaitAll().filterNotNull().flatten()
 
                     val message = accumulator.build()
                     conversation += message
@@ -201,7 +201,7 @@ class Golem(
         private suspend fun runScript(
             messageId: Uuid,
             script: GolemScript
-        ): List<Content> {
+        ): List<Content>? {
             logger.debug {
                 "Context[$id]/Message[${messageId}: Running GolemScript, purpose: ${script.purpose}, code: ${script.code}"
             }
@@ -211,14 +211,15 @@ class Golem(
             )
             val content = when (result) {
                 is GolemScript.Result.Value -> when(result.value) {
-                    is String -> Text(result.value)
-                    else -> Text(result.value.toString())
+                    is String -> listOf(Text(result.value))
+                    is Unit -> null
+                    else -> listOf(Text(result.value.toString()))
                 }
-                is GolemScript.Result.Error -> Text(
+                is GolemScript.Result.Error -> listOf(Text(
                     "<golem-script-error>${result.message}</golem-script-error>"
-                )
+                ))
             }
-            return listOf(content)
+            return content
         }
 
     }
