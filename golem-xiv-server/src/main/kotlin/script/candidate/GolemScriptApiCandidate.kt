@@ -252,13 +252,6 @@ interface LlmTextEditor {
 
 interface WebBrowser {
 
-    /**
-     * Opens given URL.
-     *
-     * @param url the URL to open.
-     * @param windowId the window ID to use.
-     * @return 2 element list, where the first element is the URL content, either binary or text, and the second element represent unique id of the window being open to server this request.
-     */
     suspend fun open(
         url: String,
         windowId: Int? = null
@@ -271,7 +264,7 @@ interface WebBrowser {
 
     suspend fun screenshot(): ByteArray
 
-    fun dispose()
+    fun close()
 
 }
 

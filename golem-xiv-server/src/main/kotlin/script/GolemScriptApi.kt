@@ -17,9 +17,13 @@
 // TODO count how much comment, to preserve lines in case of errors here
 package com.xemantic.ai.golem.server.script
 
+import kotlin.time.Instant
+
 /** The context window. */
 interface Context {
     var title: String
+//    val startDate: Instant
+//    val updateDate: Instant
     //var replaceThisAssistantMessageWith: String
 }
 
@@ -29,4 +33,9 @@ interface Files {
     fun readBinary(vararg paths: String): List<ByteArray>
     fun create(path: String, content: String)
     fun create(path: String, content: ByteArray)
+}
+
+interface WebBrowser {
+    /** @return given [url] as Markdown. */
+    suspend fun open(url: String): String
 }

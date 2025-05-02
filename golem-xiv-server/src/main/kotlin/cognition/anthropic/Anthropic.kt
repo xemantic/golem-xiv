@@ -17,6 +17,8 @@
 package com.xemantic.ai.golem.server.cognition.anthropic
 
 import com.xemantic.ai.anthropic.Anthropic
+import com.xemantic.ai.anthropic.cache.CacheControl
+import com.xemantic.ai.anthropic.collections.transformLast
 import com.xemantic.ai.anthropic.event.Delta
 import com.xemantic.ai.anthropic.event.Event
 import com.xemantic.ai.anthropic.message.Role
@@ -54,7 +56,7 @@ internal fun List<Message>.toAnthropicMessages() = map {
 fun Text.toAnthropicText() = com.xemantic.ai.anthropic.content.Text(text)
 
 fun List<String>.toAnthropicSystem() = map {
-    System(text = it)
+    System(text = it, cacheControl = CacheControl.Ephemeral())
 }
 
 class AnthropicCognizer(
@@ -71,7 +73,15 @@ class AnthropicCognizer(
         logger.debug { "Anthropic API: Streaming start" }
         anthropic.messages.stream {
             this.system = system.toAnthropicSystem()
-            messages = conversation.toAnthropicMessages()
+            messages = conversation.toAnthropicMessages().transformLast {
+                copy {
+                    content = content.transformLast {
+                        alterCacheControl(
+                            CacheControl.Ephemeral()
+                        )
+                    }
+                }
+            }
         }.collect {
             when (it) {
                 is Event.MessageStart -> emit(ReasoningEvent.MessageStart(role = Message.Role.ASSISTANT))

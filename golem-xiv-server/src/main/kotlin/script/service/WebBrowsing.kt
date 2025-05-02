@@ -21,7 +21,7 @@ import com.microsoft.playwright.Page
 import com.microsoft.playwright.options.WaitUntilState
 import com.vladsch.flexmark.html2md.converter.FlexmarkHtmlConverter
 import com.vladsch.flexmark.util.data.MutableDataSet
-import com.xemantic.ai.golem.server.script.candidate.WebBrowser
+import com.xemantic.ai.golem.server.script.WebBrowser
 
 class DefaultWebBrowser(
     val browser: Browser
@@ -29,10 +29,7 @@ class DefaultWebBrowser(
 
     private val page by lazy { browser.newPage() }
 
-    override suspend fun open(
-        url: String,
-        windowId: Int?
-    ): String {
+    override suspend fun open(url: String): String {
         page.navigate(url, Page.NavigateOptions().setWaitUntil(WaitUntilState.NETWORKIDLE))
         val html = page.content()
         val markdown = convertHtmlToMarkdown(html)
@@ -41,22 +38,22 @@ class DefaultWebBrowser(
         return markdown
     }
 
-    override suspend fun openAsBinary(url: String, windowId: Int?): ByteArray {
-        TODO("Not yet implemented")
-    }
 
-    override suspend fun screenshot(): ByteArray {
-//        page.screenshot(
-//            Page.ScreenshotOptions()
-//                .setPath(Paths.get("screenshot.png"))
-//                .setFullPage(true)
-//        )
-        return byteArrayOf()
-    }
+//    override suspend fun screenshot(): ByteArray {
+////        page.screenshot(
+////            Page.ScreenshotOptions()
+////                .setPath(Paths.get("screenshot.png"))
+////                .setFullPage(true)
+////        )
+//        return byteArrayOf()
+//    }
 
-    override fun dispose() {
-        TODO("Not yet implemented")
-    }
+//    override fun close() {
+//
+//    }
+//    override fun dispose() {
+//        TODO("Not yet implemented")
+//    }
 
 }
 

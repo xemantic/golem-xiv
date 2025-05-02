@@ -25,6 +25,8 @@ import java.net.URI
 import java.io.IOException
 import java.io.InputStreamReader
 
+fun operatingSystemName(): String = System.getProperty("os.name")!!
+
 fun openBrowser(url: String) {
     val os = System.getProperty("os.name").lowercase()
     try {

@@ -26,13 +26,17 @@ import com.xemantic.ai.golem.api.Prompt
 import com.xemantic.ai.golem.api.ReasoningEvent
 import com.xemantic.ai.golem.api.Text
 import com.xemantic.ai.golem.server.cognition.cognizer
+import com.xemantic.ai.golem.server.kotlin.describeCurrentMoment
+import com.xemantic.ai.golem.server.os.operatingSystemName
 import com.xemantic.ai.golem.server.script.Files
 import com.xemantic.ai.golem.server.script.GOLEM_SCRIPT_API
 import com.xemantic.ai.golem.server.script.GOLEM_SCRIPT_SYSTEM_PROMPT
 import com.xemantic.ai.golem.server.script.GolemScript
 import com.xemantic.ai.golem.server.script.GolemScriptExecutor
+import com.xemantic.ai.golem.server.script.WebBrowser
 import com.xemantic.ai.golem.server.script.extractGolemScripts
 import com.xemantic.ai.golem.server.script.service.DefaultFiles
+import com.xemantic.ai.golem.server.script.service.DefaultWebBrowser
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -54,7 +58,10 @@ import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
-fun environmentContext(): String = "OS: MacOs"
+fun environmentContext(): String = """
+Host OS: ${operatingSystemName()}
+Current time: ${describeCurrentMoment()}
+""".trimIndent()
 
 inline fun <reified T : Any> service(
     name: String,
@@ -133,8 +140,8 @@ class Golem(
 
         val dependencies = listOf(
             service<com.xemantic.ai.golem.server.script.Context>("context", com.xemantic.ai.golem.server.script.service.DefaultContext(scope, outputs)),
-            service<Files>("files", DefaultFiles())
-//            service<WebBrowser>("browser", DefaultWebBrowser(browser)),
+            service<Files>("files", DefaultFiles()),
+            service<WebBrowser>("browser", DefaultWebBrowser(browser)),
 ////            service<WebBrowserService>("webBrowserService", DefaultWebBrowserService())
 ////                    service<StringEditorService>("stringEditorService", stringEditorService())
         )

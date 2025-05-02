@@ -52,6 +52,7 @@ Here are object instances injected to the script:
 <golem-script-api>
 val context: Context
 val files: Files
+val browser: WebBrowser
 <golem-script-api>
 
 The script execution is wrapped in a coroutine, therefore suspended functions can be called directly.
