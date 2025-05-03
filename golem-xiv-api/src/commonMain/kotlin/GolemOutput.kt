@@ -75,7 +75,6 @@ sealed class GolemOutput {
     @SerialName("reasoning")
     data class Reasoning(
         override val contextId: Uuid,
-        val messageId: Uuid,
         val event: ReasoningEvent
     ) : GolemOutput(), WithContextId
 

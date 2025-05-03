@@ -38,7 +38,7 @@ data class ContextInfo(
 
 @Serializable
 data class Message(
-    val id: Uuid = Uuid.random(),
+    val id: Uuid,
     val contextId: Uuid,
     val role: Role = Role.USER,
     val content: List<Content>
@@ -69,10 +69,12 @@ data class Document(
     val path: String
 ) : Content
 
+/** Added to user messages to indicate called services/tools, not sent to LLM */
 @Serializable
-@SerialName("code")
-data class Code(
-    val kotlinScript: String
+@SerialName("call")
+data class Call(
+    val name: String,
+    val description: String
 ) : Content
 
 @Serializable
@@ -92,43 +94,34 @@ sealed interface ReasoningEvent {
 
     @Serializable
     @SerialName("messageStart")
-    data class MessageStart(val role: Message.Role) : ReasoningEvent
-
-    @Serializable
-    @SerialName("textContentStart")
-    class TextContentStart : ReasoningEvent {
-        override fun toString(): String = "TextContentStart"
-    }
-
-    @Serializable
-    @SerialName("textContentDelta")
-    data class TextContentDelta(val delta: String) : ReasoningEvent
-
-    @Serializable
-    @SerialName("textContentStop")
-    class TextContentStop : ReasoningEvent {
-        override fun toString(): String = "TextContentStop"
-    }
-
-    @Serializable
-    @SerialName("scriptStart")
-    data class ScriptStart(
-        val id: Uuid,
-        val purpose: String
+    data class MessageStart(
+        val messageId: Uuid,
+        val role: Message.Role
     ) : ReasoningEvent
 
     @Serializable
-    @SerialName("scriptDelta")
-    data class ScriptDelta(
-        val id: Uuid,
+    @SerialName("messageStop")
+    data class MessageStop(
+        val messageId: Uuid,
+    ) : ReasoningEvent
+
+    @Serializable
+    @SerialName("textContentStart")
+    data class TextContentStart(
+        val messageId: Uuid
+    ) : ReasoningEvent
+
+    @Serializable
+    @SerialName("textContentDelta")
+    data class TextContentDelta(
+        val messageId: Uuid,
         val delta: String
     ) : ReasoningEvent
 
     @Serializable
-    @SerialName("scriptStop")
-    data class ScriptStop(
-        val id: Uuid,
-        val purpose: String
+    @SerialName("textContentStop")
+    data class TextContentStop(
+        val messageId: Uuid
     ) : ReasoningEvent
 
     @Serializable
@@ -143,11 +136,7 @@ sealed interface ReasoningEvent {
         val id: Uuid
     ) : ReasoningEvent
 
-    @Serializable
-    @SerialName("messageStop")
-    class MessageStop : ReasoningEvent {
-        override fun toString(): String = "MessageStop"
-    }
+
 
     @Serializable
     @SerialName("contextTitle")

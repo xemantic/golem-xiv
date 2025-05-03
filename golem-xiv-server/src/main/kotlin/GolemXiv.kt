@@ -26,6 +26,7 @@ import com.xemantic.ai.golem.api.Prompt
 import com.xemantic.ai.golem.api.ReasoningEvent
 import com.xemantic.ai.golem.api.Text
 import com.xemantic.ai.golem.server.cognition.cognizer
+import com.xemantic.ai.golem.server.kotlin.awaitEach
 import com.xemantic.ai.golem.server.kotlin.describeCurrentMoment
 import com.xemantic.ai.golem.server.os.operatingSystemName
 import com.xemantic.ai.golem.server.script.Files
@@ -42,7 +43,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.filterIsInstance
@@ -149,6 +149,7 @@ class Golem(
         override suspend fun createMessage(
             prompt: Prompt
         ) = Message(
+            id = Uuid.random(),
             contextId = id,
             content = prompt.content
         )
@@ -160,7 +161,11 @@ class Golem(
                 logger.debug { "Context[$id]: Reasoning" }
 
                 do {
+
                     val accumulator = MessageAccumulator(contextId = id)
+
+                    var responseMessageId: Uuid? = null
+
                     val cognizer = cognizer() // TODO select based on hints
                     val golemScriptResults = cognizer.reason(
                         golemSystem,
@@ -169,11 +174,10 @@ class Golem(
                     ).onEach {
                         val reasoning = GolemOutput.Reasoning(
                             contextId = id,
-                            messageId = accumulator.messageId,
                             event = it
                         )
-                        outputs.emit(reasoning)
                         accumulator += it
+                        outputs.emit(reasoning)
                     }.filterIsInstance<ReasoningEvent.TextContentDelta>(
                     ).map {
                         it.delta
@@ -182,13 +186,44 @@ class Golem(
                         scope.async {
                             runScript(message.id, script)
                         }
-                    }.toList().awaitAll().filterNotNull().flatten()
+                    }.toList().awaitEach {
+
+                        if (responseMessageId == null) {
+                            responseMessageId = Uuid.random()
+                            outputs.emitReasoningEvent(
+                                ReasoningEvent.MessageStart(
+                                    messageId = responseMessageId,
+                                    role = Message.Role.USER
+                                )
+                            )
+                        }
+
+                        it?.forEach {
+                            outputs.emitReasoningEvent(
+                                ReasoningEvent.TextContentStart(responseMessageId)
+                            )
+                            outputs.emitReasoningEvent(
+                                ReasoningEvent.TextContentDelta(responseMessageId, (it as Text).text)
+                            )
+                            outputs.emitReasoningEvent(
+                                ReasoningEvent.TextContentStop(responseMessageId)
+                            )
+                        }
+                    }.filterNotNull().flatten()
 
                     val message = accumulator.build()
+
+                    if (responseMessageId != null) {
+                        outputs.emitReasoningEvent(
+                            ReasoningEvent.MessageStop(responseMessageId)
+                        )
+                    }
+
                     conversation += message
 
-                    if (golemScriptResults.isNotEmpty()) {
+                    if (responseMessageId != null) {
                         conversation += Message(
+                            id = responseMessageId,
                             contextId = id,
                             content = golemScriptResults
                         )
@@ -220,6 +255,12 @@ class Golem(
                 ))
             }
             return content
+        }
+
+        private suspend fun FlowCollector<GolemOutput>.emitReasoningEvent(
+            event: ReasoningEvent
+        ) {
+            emit(GolemOutput.Reasoning(contextId = id, event))
         }
 
     }
@@ -266,24 +307,23 @@ internal suspend fun FlowCollector<GolemOutput>.emit(
     message: Message
 ) {
     suspend fun emit(event: ReasoningEvent) {
-        emit(GolemOutput.Reasoning(contextId, message.id, event))
+        emit(GolemOutput.Reasoning(contextId, event))
     }
-    emit(ReasoningEvent.MessageStart(role = Message.Role.USER))
+    emit(ReasoningEvent.MessageStart(message.id, role = Message.Role.USER))
     message.content.forEach {
         when (it) {
             is Text -> {
-                emit(ReasoningEvent.TextContentStart())
-                emit(ReasoningEvent.TextContentDelta(it.text))
-                emit(ReasoningEvent.TextContentStop())
+                emit(ReasoningEvent.TextContentStart(message.id))
+                emit(ReasoningEvent.TextContentDelta(message.id, it.text))
+                emit(ReasoningEvent.TextContentStop(message.id))
             }
             else -> throw IllegalStateException("Unsupported content type: $it")
         }
     }
-    emit(ReasoningEvent.MessageStop())
+    emit(ReasoningEvent.MessageStop(message.id))
 }
 
 class MessageAccumulator(
-    val messageId: Uuid = Uuid.random(),
     private val contextId: Uuid
 ) {
 
@@ -291,9 +331,11 @@ class MessageAccumulator(
 
     private val content = mutableListOf<Content>()
 
+    private var id: Uuid? = null
+
     operator fun plusAssign(event: ReasoningEvent) {
         when (event) {
-            is ReasoningEvent.MessageStart -> {}
+            is ReasoningEvent.MessageStart -> id = event.messageId
             is ReasoningEvent.TextContentStart -> {}
             is ReasoningEvent.TextContentDelta -> { textBuilder.append(event.delta) }
             is ReasoningEvent.TextContentStop -> {
@@ -306,7 +348,7 @@ class MessageAccumulator(
     }
 
     fun build() = Message(
-        id = messageId,
+        id = id!!,
         contextId = contextId,
         content = content
     )

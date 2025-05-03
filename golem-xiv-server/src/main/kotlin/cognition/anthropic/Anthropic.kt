@@ -30,7 +30,8 @@ import com.xemantic.ai.golem.api.Text
 import com.xemantic.ai.golem.server.cognition.Cognizer
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.transform
+import kotlin.uuid.Uuid
 
 internal fun Content.toAnthropicContent() = when (this) {
     is Text -> toAnthropicText()
@@ -69,9 +70,13 @@ class AnthropicCognizer(
         system: List<String>,
         conversation: List<Message>,
         hints: Map<String, String>
-    ): Flow<ReasoningEvent> = flow {
+    ): Flow<ReasoningEvent> {
+
         logger.debug { "Anthropic API: Streaming start" }
-        anthropic.messages.stream {
+
+        val messageId = Uuid.random()
+
+        val flow = anthropic.messages.stream {
             this.system = system.toAnthropicSystem()
             messages = conversation.toAnthropicMessages().transformLast {
                 copy {
@@ -82,21 +87,25 @@ class AnthropicCognizer(
                     }
                 }
             }
-        }.collect {
-            when (it) {
-                is Event.MessageStart -> emit(ReasoningEvent.MessageStart(role = Message.Role.ASSISTANT))
-                is Event.ContentBlockStart -> emit(ReasoningEvent.TextContentStart())
-                is Event.ContentBlockDelta -> emit(ReasoningEvent.TextContentDelta((it.delta as Delta.TextDelta).text))
-                is Event.ContentBlockStop -> emit(ReasoningEvent.TextContentStop())
-                is Event.MessageStop -> emit(ReasoningEvent.MessageStop())
-                else -> { /* do nothing at the moment */ }
+        }.transform { event ->
+            when (event) {
+                is Event.MessageStart -> ReasoningEvent.MessageStart(
+                    messageId,
+                    role = Message.Role.ASSISTANT
+                )
+                is Event.ContentBlockStart -> ReasoningEvent.TextContentStart(messageId)
+                is Event.ContentBlockDelta -> ReasoningEvent.TextContentDelta(messageId, (event.delta as Delta.TextDelta).text)
+                is Event.ContentBlockStop -> ReasoningEvent.TextContentStop(messageId)
+                is Event.MessageStop -> ReasoningEvent.MessageStop(messageId)
+                else -> null
+            }?.let {
+                emit(it)
             }
         }
+
         logger.debug { "Anthropic API: Streaming finished" }
-    }
 
-    private fun handleDelta(delta: String) {
-
+        return flow
     }
 
 }

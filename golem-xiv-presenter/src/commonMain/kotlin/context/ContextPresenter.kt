@@ -93,7 +93,7 @@ class ContextPresenter(
 
     private var contexId: Uuid? = null
 
-    private var currentMessageAppender: MessageAppender? = null
+    private val messageAppenderMap = mutableMapOf<Uuid, MessageAppender>()
 
     init {
 
@@ -125,22 +125,18 @@ class ContextPresenter(
         }
 
         scope.launch {
-            golemOutputs.onEach {
-                logger.info { "Received in presenter: $it" }
-            }.filterIsInstance<GolemOutput.Reasoning>()
-            .filter {
-                logger.info { "Filtering - current contextId: $contexId" }
-                logger.info { "Condition: ${it.contextId == contexId}" }
+            golemOutputs.filterIsInstance<GolemOutput.Reasoning>().filter {
                 it.contextId == contexId
             }.map {
                 it.event
             }.collect {
+                logger.info { "$it" }
                 when (it) {
                     is ReasoningEvent.MessageStart -> {
-                        currentMessageAppender = view.startMessage(it.role)
+                        messageAppenderMap[it.messageId] = view.startMessage(it.role)
                     }
                     is ReasoningEvent.TextContentDelta -> {
-                        currentMessageAppender!!.append(it.delta)
+                        messageAppenderMap[it.messageId]!!.append(it.delta)
                     }
                     else -> {}
                 }

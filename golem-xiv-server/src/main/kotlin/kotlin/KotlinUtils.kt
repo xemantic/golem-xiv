@@ -16,6 +16,10 @@
 
 package com.xemantic.ai.golem.server.kotlin
 
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
@@ -43,3 +47,21 @@ private val LocalDateTime.asOnClock
         "${this.hour.time}:${this.minute.time}:${this.second.time}"
 
 private val Int.time get() = toString().padStart(2, '0')
+
+suspend fun <T> Collection<Deferred<T>>.awaitEach(
+    onEach: suspend (T) -> Unit
+): List<T> = coroutineScope {
+    if (isEmpty()) return@coroutineScope emptyList()
+
+    // Map each deferred to a new deferred that processes the result
+    val processed = mapIndexed { index, deferred ->
+        async {
+            val result = deferred.await()
+            onEach(result)
+            index to result
+        }
+    }
+
+    // Await all the processed deferreds and sort the results by index
+    processed.awaitAll().sortedBy { it.first }.map { it.second }
+}
