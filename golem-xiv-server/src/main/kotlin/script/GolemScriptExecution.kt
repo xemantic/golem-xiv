@@ -229,7 +229,17 @@ class GolemScriptExecutor {
                     logger.debug(e) {
                         "GolemScript[$scriptId]: Evaluation failed with error"
                     }
-                    val failureMessage = errorReporter().toFailureMessage(e.cause!!)
+                    val cause = e.cause
+                    val throwable = if (
+                        (cause != null)
+                        && (cause::class == e::class)
+                        && (cause.message == cause.message)
+                    ) {
+                        cause
+                    } else {
+                        e
+                    }
+                    val failureMessage = errorReporter().toFailureMessage(throwable)
                     GolemScript.Result.Error(
                         failureMessage
                     )
