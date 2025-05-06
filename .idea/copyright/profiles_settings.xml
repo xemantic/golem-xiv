@@ -1,7 +1,7 @@
 <component name="CopyrightManager">
-  <settings default="apache2.0">
+  <settings default="xemantic copyright">
     <module2copyright>
-      <element module="All" copyright="apache2.0" />
+      <element module="All" copyright="xemantic copyright" />
     </module2copyright>
   </settings>
 </component>
