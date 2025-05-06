@@ -72,6 +72,7 @@ dependencies {
     implementation(libs.ktor.serialization.kotlinx.json)
 
     implementation(libs.playwright)
+    implementation(libs.neo4j)
 
     implementation(libs.dashscope) {
         exclude(group = "org.slf4j", module = "slf4j-simple")

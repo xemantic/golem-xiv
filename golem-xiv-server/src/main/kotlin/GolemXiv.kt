@@ -25,9 +25,11 @@ import com.xemantic.ai.golem.server.script.GOLEM_SCRIPT_API
 import com.xemantic.ai.golem.server.script.GOLEM_SCRIPT_SYSTEM_PROMPT
 import com.xemantic.ai.golem.server.script.GolemScript
 import com.xemantic.ai.golem.server.script.GolemScriptExecutor
+import com.xemantic.ai.golem.server.script.Memory
 import com.xemantic.ai.golem.server.script.WebBrowser
 import com.xemantic.ai.golem.server.script.extractGolemScripts
 import com.xemantic.ai.golem.server.script.service.DefaultFiles
+import com.xemantic.ai.golem.server.script.service.DefaultMemory
 import com.xemantic.ai.golem.server.script.service.DefaultWebBrowser
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CoroutineScope
@@ -133,6 +135,7 @@ class Golem(
             service<com.xemantic.ai.golem.server.script.Context>("context", com.xemantic.ai.golem.server.script.service.DefaultContext(scope, outputs)),
             service<Files>("files", DefaultFiles()),
             service<WebBrowser>("browser", DefaultWebBrowser(browser)),
+            service<Memory>("memory", DefaultMemory())
 ////            service<WebBrowserService>("webBrowserService", DefaultWebBrowserService())
 ////                    service<StringEditorService>("stringEditorService", stringEditorService())
         )

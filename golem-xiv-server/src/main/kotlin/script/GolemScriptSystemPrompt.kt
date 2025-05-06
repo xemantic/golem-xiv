@@ -44,6 +44,7 @@ Here are object instances injected to the script:
 val context: Context
 val files: Files
 val browser: WebBrowser
+val memory: Memory
 <golem-script-api>
 
 IMPORTANT: remember to add imports.
@@ -88,6 +89,9 @@ files.readText("~/Desktop/foo/README.md")
 Note: 2 scripts will be executed. The result of the first one will be ignored (no value returned).
 
 User message: if the file exists, the subsequent message will contain only the text content of the file. Otherwise <golem-script-error> tag will be returned.
+
+IMPORTANT: When processing any information, always extract all the facts and relationships and use Memory to store them.
+
 """
 
 

@@ -36,3 +36,61 @@ interface WebBrowser {
     /** @return given [url] as Markdown. */
     suspend fun open(url: String): String
 }
+
+interface Memory {
+
+    /**
+     * Stores a fact as a relationship between two nodes.
+     * @param sourceNode The source node (subject)
+     * @param relationship The relationship type
+     * @param targetNode The target node (object)
+     * @param properties Optional properties to add to the relationship
+     * @return ID of the created relationship
+     */
+    fun storeFact(
+        sourceNode: Node,
+        relationship: String,
+        targetNode: Node,
+        properties: Map<String, Any> = emptyMap()
+    ): Long
+
+    /**
+     * Creates a node in the graph.
+     * @param labels Labels to assign to the node
+     * @param properties Properties of the node
+     * @return The created node
+     */
+    fun createNode(labels: List<String>, properties: Map<String, Any>): Node
+
+}
+
+data class Node(
+    val id: Long,
+    val labels: List<String>,
+    val properties: Map<String, Any>
+)
+
+/** Data class representing a relationship in the graph. */
+data class Relationship(
+    val id: Long,
+    val type: String,
+    val properties: Map<String, Any>,
+    val startNodeId: Long,
+    val endNodeId: Long
+)
+
+/** Data class representing a fact in the graph (a relationship between two nodes). */
+data class Fact(
+    val sourceNode: Node,
+    val relationship: Relationship,
+    val targetNode: Node
+)
+
+/**
+ * Enum for specifying relationship direction.
+ */
+enum class RelationshipDirection {
+    OUTGOING,
+    INCOMING,
+    BOTH
+}
