@@ -36,4 +36,8 @@ private val defaultCognizer = AnthropicCognizer(
     Anthropic()
 )
 
+//private val defaultCognizer = DashscopeCognizer(
+//    Generation(Protocol.HTTP.value, "https://dashscope-intl.aliyuncs.com/api/v1")
+//)
+
 fun cognizer(): Cognizer = defaultCognizer
