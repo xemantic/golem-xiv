@@ -60,6 +60,7 @@ dependencies {
 
     implementation(libs.anthropic.sdk.kotlin)
     implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.kotlinx.coroutines.rx2) // needed by dashscope cognizer
 
     implementation(libs.ktor.client.java)
     implementation(libs.ktor.server.core)
@@ -71,6 +72,10 @@ dependencies {
     implementation(libs.ktor.serialization.kotlinx.json)
 
     implementation(libs.playwright)
+
+    implementation(libs.dashscope) {
+        exclude(group = "org.slf4j", module = "slf4j-simple")
+    }
 
     implementation(libs.log4j.api)
 
