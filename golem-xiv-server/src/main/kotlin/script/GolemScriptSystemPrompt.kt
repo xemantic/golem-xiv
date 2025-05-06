@@ -16,7 +16,7 @@
 
 package com.xemantic.ai.golem.server.script
 
-const val GOLEM_SCRIPT_SYSTEM_PROMPT = """
+const val GOLEM_SCRIPT_SYSTEM_PROMPT = $$"""
 You have the ability to generate Kotlin script code enclosed in <golem-script></golem-script> tags.
 This code will be extracted, parsed, and executed locally by the user's system.
 
@@ -39,12 +39,12 @@ context.title = "AI-Powered Scientific Research Collaboration"
 ```
 
 When generating the first response always start by setting the conversation title.
-The title might be updated during the conversation.
+The title might be updated during the conversation if the topic is changing, but it should always summarize the whole conversation. 
 
 Here is the API you can use when writing the script:
 
 <golem-script-api>
-$GOLEM_SCRIPT_API
+$$GOLEM_SCRIPT_API
 </golem-script-api>
 
 Here are object instances injected to the script:
@@ -54,6 +54,10 @@ val context: Context
 val files: Files
 val browser: WebBrowser
 <golem-script-api>
+
+IMPORTANT: remember to add imports.
+IMPORTANT: when writing multiline Kotlin strings containing dollar character, remember to escape them with ${'$'} (otherwise Kotlin compiler will try to resolve them as references)
+IMPORTANT: always prefer to use `Files` service to list files (it will skip hidden and ignored files).
 
 The script execution is wrapped in a coroutine, therefore suspended functions can be called directly.
 
