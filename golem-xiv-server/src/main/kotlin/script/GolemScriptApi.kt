@@ -9,7 +9,7 @@
 package com.xemantic.ai.golem.server.script
 
 import kotlinx.serialization.Serializable
-import kotlin.time.Instant
+import org.neo4j.driver.Result
 
 /** The context window. */
 interface Context {
@@ -38,59 +38,47 @@ interface WebBrowser {
 }
 
 interface Memory {
-
     /**
-     * Stores a fact as a relationship between two nodes.
-     * @param sourceNode The source node (subject)
-     * @param relationship The relationship type
-     * @param targetNode The target node (object)
-     * @param properties Optional properties to add to the relationship
-     * @return ID of the created relationship
+     * Example usage:
+     *
+     * ```
+     * memory.remember {
+     *     subject {
+     *         type = "Person"
+     *         properties(
+     *             "name" to "John Smith"
+     *         )
+     *     }
+     *     predicate = "worksAt"
+     *     target {
+     *         type = "Organization"
+     *         properties(
+     *             "name" to "Acme",
+     *             "hq" to "Berlin"
+     *         )
+     *     }
+     * }
+     * ```
      */
-    fun storeFact(
-        sourceNode: Node,
-        relationship: String,
-        targetNode: Node,
-        properties: Map<String, Any> = emptyMap()
-    ): Long
-
-    /**
-     * Creates a node in the graph.
-     * @param labels Labels to assign to the node
-     * @param properties Properties of the node
-     * @return The created node
-     */
-    fun createNode(labels: List<String>, properties: Map<String, Any>): Node
-
+    fun remember(block: FactBuilder.() -> Unit)
+    fun <T: Any?> query(cypher: String, block: (Result) -> T): T
 }
 
-data class Node(
-    val id: Long,
-    val labels: List<String>,
-    val properties: Map<String, Any>
-)
 
-/** Data class representing a relationship in the graph. */
-data class Relationship(
-    val id: Long,
-    val type: String,
-    val properties: Map<String, Any>,
-    val startNodeId: Long,
-    val endNodeId: Long
-)
+interface FactBuilder {
+    fun subject(block: NodeBuilder.() -> Unit)
+    /** Naming according to schema.org, e.g. worksFor, memberOf, sameAs */
+    var predicate: String?
+    fun target(block: NodeBuilder.() -> Unit)
+    fun properties(vararg props: Pair<String, Any>)
+    /** The sources of the fact */
+    var source: String?
+    /** Optional confidence level in the 0-1 range, defaults to 1 if not specified */
+    var confidence: Double
+}
 
-/** Data class representing a fact in the graph (a relationship between two nodes). */
-data class Fact(
-    val sourceNode: Node,
-    val relationship: Relationship,
-    val targetNode: Node
-)
-
-/**
- * Enum for specifying relationship direction.
- */
-enum class RelationshipDirection {
-    OUTGOING,
-    INCOMING,
-    BOTH
+interface NodeBuilder {
+    var type: String?
+    val additionalTypes: MutableList<String>
+    fun properties(vararg props: Pair<String, Any>)
 }

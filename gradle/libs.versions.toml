@@ -49,6 +49,7 @@ playwright = { module = "com.microsoft.playwright:playwright", version.ref = "pl
 dashscope = { module = "com.alibaba:dashscope-sdk-java", version.ref = "dashscope" }
 
 neo4j = { module = "org.neo4j:neo4j", version.ref = "neo4j" }
+neo4j-harness = { module = "org.neo4j.test:neo4j-harness", version.ref = "neo4j" }
 
 ktor-websockets = { module = "io.ktor:ktor-websockets", version.ref = "ktor" }
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }

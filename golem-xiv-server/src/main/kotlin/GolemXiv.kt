@@ -19,6 +19,7 @@ import com.xemantic.ai.golem.api.Text
 import com.xemantic.ai.golem.server.cognition.cognizer
 import com.xemantic.ai.golem.server.kotlin.awaitEach
 import com.xemantic.ai.golem.server.kotlin.describeCurrentMoment
+import com.xemantic.ai.golem.server.neo4j.Neo4JProvider
 import com.xemantic.ai.golem.server.os.operatingSystemName
 import com.xemantic.ai.golem.server.script.Files
 import com.xemantic.ai.golem.server.script.GOLEM_SCRIPT_API
@@ -89,6 +90,8 @@ class Golem(
 
     private val scriptExecutor = GolemScriptExecutor()
 
+    private val neo4JProvider = Neo4JProvider()
+
     private val playwright = Playwright.create()
 
     private val browser by lazy {
@@ -135,7 +138,7 @@ class Golem(
             service<com.xemantic.ai.golem.server.script.Context>("context", com.xemantic.ai.golem.server.script.service.DefaultContext(scope, outputs)),
             service<Files>("files", DefaultFiles()),
             service<WebBrowser>("browser", DefaultWebBrowser(browser)),
-            service<Memory>("memory", DefaultMemory())
+            //service<Memory>("memory", DefaultMemory(neo4JProvider.graphDb))
 ////            service<WebBrowserService>("webBrowserService", DefaultWebBrowserService())
 ////                    service<StringEditorService>("stringEditorService", stringEditorService())
         )
@@ -289,6 +292,8 @@ class Golem(
         runBlocking {
             scope.coroutineContext.job.join()
         }
+
+        neo4JProvider.close()
 
         logger.debug { "Golem XIV closed" }
 
