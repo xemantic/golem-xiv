@@ -43,14 +43,14 @@ class DefaultMemory(
                 println("Properties: ${builder.props}")
 
                 val relationshipQuery = $$"""
-                    CREATE (s$$subjectLabel {id: $subjectId})
+                    CREATE (s$$subjectLabel {externalId: $subjectId})
                     SET s += $subjectProps
-                    CREATE (t$$targetLabel {id: $targetId})
+                    CREATE (t$$targetLabel {externalId: $targetId})
                     SET t += $targetProps
 
                     WITH s, t
-                    MATCH (s$$subjectLabel {id: $subjectId})
-                    MATCH (t$$targetLabel {id: $targetId})
+                    MATCH (s$$subjectLabel {externalId: $subjectId})
+                    MATCH (t$$targetLabel {externalId: $targetId})
                     CREATE (s)-[r:$${builder.predicate} $props]->(t)
                     SET r += $props
                     RETURN ID(r) as relationshipId
@@ -59,6 +59,7 @@ class DefaultMemory(
                 val result = tx.run(
                     relationshipQuery,
                     Values.parameters(
+                        "externalId", Uuid.random().toString(),
                         "subjectId", subjectId,
                         "subjectProps", builder.subjectBuilder.props,
                         "targetId", targetId,

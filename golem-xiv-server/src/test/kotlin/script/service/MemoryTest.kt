@@ -5,9 +5,8 @@
  * Unauthorized reproduction or distribution is prohibited.
  */
 
-package com.xemantic.ai.golem.server.script
+package com.xemantic.ai.golem.server.script.service
 
-import com.xemantic.ai.golem.server.script.service.DefaultMemory
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.neo4j.driver.AuthTokens
@@ -18,7 +17,7 @@ import org.neo4j.harness.junit.extension.Neo4jExtension
 import kotlin.use
 
 @ExtendWith(Neo4jExtension::class)
-class FactRememberingTest {
+class MemoryTest {
 
     @Test
     fun rememberFact(neo4j: Neo4j) = testWithNeo4jDriver(neo4j) { driver ->
@@ -42,13 +41,14 @@ class FactRememberingTest {
         }
 
         memory.query("""
-            MATCH ()-[r]->() 
-            RETURN type(r) AS type, r AS relationship, id(r) AS id
-            LIMIT 100
-        """.trimIndent()) {
-            val value = it.single()
-            val rel = it.single()["r"].asRelationship()
-            println(rel)
+            MATCH (subject)-[predicate]->(target) 
+            RETURN predicate, subject, target
+        """.trimIndent()) { result ->
+            val record = result.single()
+
+            val relationship = record["predicate"].asRelationship()
+            val subject = record["subject"].asNode()
+            val target = record["target"].asNode()
         }
     }
 

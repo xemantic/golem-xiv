@@ -46,6 +46,8 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import org.neo4j.driver.AuthTokens
+import org.neo4j.driver.GraphDatabase
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.collections.set
 import kotlin.time.Clock
@@ -100,6 +102,8 @@ class Golem(
         )!!
     }
 
+    val neo4j = GraphDatabase.driver("bolt://localhost:7687", AuthTokens.basic("neo4j", "neo4jneo4j"))
+
     inner class DefaultContext(
         override val id: Uuid = Uuid.random(),
         private val systemPrompt: String,
@@ -134,11 +138,13 @@ class Golem(
 
 //        val golemTools = listOf(kotlinScriptTool)
 
+
+
         val dependencies = listOf(
             service<com.xemantic.ai.golem.server.script.Context>("context", com.xemantic.ai.golem.server.script.service.DefaultContext(scope, outputs)),
             service<Files>("files", DefaultFiles()),
             service<WebBrowser>("browser", DefaultWebBrowser(browser)),
-            //service<Memory>("memory", DefaultMemory(neo4JProvider.graphDb))
+            service<Memory>("memory", DefaultMemory(neo4j))
 ////            service<WebBrowserService>("webBrowserService", DefaultWebBrowserService())
 ////                    service<StringEditorService>("stringEditorService", stringEditorService())
         )
@@ -293,7 +299,8 @@ class Golem(
             scope.coroutineContext.job.join()
         }
 
-        neo4JProvider.close()
+        neo4j.close()
+        //neo4JProvider.close()
 
         logger.debug { "Golem XIV closed" }
 
