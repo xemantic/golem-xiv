@@ -136,7 +136,7 @@ class Golem(
 
 
         val dependencies = listOf(
-            service<com.xemantic.ai.golem.server.script.Context>("phenomena", com.xemantic.ai.golem.server.script.service.DefaultContext(scope, outputs)),
+//            service<com.xemantic.ai.golem.server.script.Context>("phenomena", com.xemantic.ai.golem.server.script.service.DefaultContext(scope, outputs)),
             service<Files>("files", DefaultFiles()),
             service<WebBrowser>("browser", DefaultWebBrowser(browser)),
             service<Memory>("memory", DefaultMemory(neo4j))
@@ -297,9 +297,11 @@ class Golem(
             val phenomena = when (result) {
                 is GolemScript.Result.Value -> when(result.value) {
                     is String -> listOf(
-                        Phenomenon.Text(
+                        Phenomenon.Fulfillment(
                             id = Uuid.random().toString(),
-                            text = result.value
+                            intentId = intent.id,
+                            intentSystemId = intent.systemId,
+                            result = result.value
                         )
                     )
                     is Unit -> null
@@ -313,6 +315,7 @@ class Golem(
                 is GolemScript.Result.Error -> listOf(Phenomenon.Impediment(
                     id = Uuid.random().toString(),
                     intentId = intent.id,
+                    intentSystemId = intent.systemId,
                     reason = result.message
                 ))
             }

@@ -69,7 +69,7 @@ class HtmlWorkspaceView : WorkspaceView, HtmlView {
 //        )
     )
 
-    override val element = html.div("phenomena").children(
+    override val element = html.div("workspace").children(
         messagesDiv,
         promptDiv
     )
@@ -146,13 +146,13 @@ class HtmlWorkspaceView : WorkspaceView, HtmlView {
             sendButton.disabled = value
         }
 
-    override fun addTextResponse(text: String) {
-//        content.append {
-//            div("text") {
-//                +text
-//            }
-//        }
-    }
+//    override fun addTextResponse(text: String) {
+////        content.append {
+////            div("text") {
+////                +text
+////            }
+////        }
+//    }
 
 //    override fun addToolUseRequest(request: AgentOutput.ToolUseRequest) {
 //        content.append.div("tool-use") {

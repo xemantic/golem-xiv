@@ -9,6 +9,7 @@ package com.xemantic.ai.golem.server.cognition.anthropic
 
 import com.xemantic.ai.anthropic.Anthropic
 import com.xemantic.ai.anthropic.cache.CacheControl
+import com.xemantic.ai.anthropic.content.ToolUse
 import com.xemantic.ai.anthropic.event.Event
 import com.xemantic.ai.anthropic.message.Message
 import com.xemantic.ai.anthropic.message.Role
@@ -28,6 +29,9 @@ import kotlin.uuid.Uuid
 
 internal fun Phenomenon.toAnthropicContent() = when (this) {
     is Phenomenon.Text -> toAnthropicText()
+    //is Phenomenon.Intent ->
+    is Phenomenon.Fulfillment -> toAnthropicToolResult()
+    is Phenomenon.Impediment -> toAnthropicToolResult()
     else -> throw IllegalStateException("Unsupported content type")
 }
 
@@ -48,6 +52,23 @@ internal fun List<Expression>.toAnthropicMessages() = map {
 }
 
 fun Phenomenon.Text.toAnthropicText() = com.xemantic.ai.anthropic.content.Text(text)
+
+fun Phenomenon.Fulfillment.toAnthropicToolResult() = com.xemantic.ai.anthropic.content.ToolResult {
+    toolUseId = intentSystemId
+    content = listOf(com.xemantic.ai.anthropic.content.Text(result))
+}
+
+fun Phenomenon.Impediment.toAnthropicToolResult() = com.xemantic.ai.anthropic.content.ToolResult {
+    toolUseId = intentSystemId
+    content = listOf(com.xemantic.ai.anthropic.content.Text(reason))
+    isError = true
+}
+
+//fun Phenomenon.Intent.toAnthropic() = ToolUse {
+//    id = systemId,
+//    input = J
+//
+//}
 
 fun List<String>.toAnthropicSystem() = map {
     System(text = it, cacheControl = CacheControl.Ephemeral())

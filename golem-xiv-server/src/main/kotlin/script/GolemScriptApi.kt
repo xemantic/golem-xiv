@@ -11,13 +11,13 @@ package com.xemantic.ai.golem.server.script
 import kotlinx.serialization.Serializable
 import org.neo4j.driver.Result
 
-/** The context window. */
-interface Context {
-    var title: String
-//    val startDate: Instant
-//    val updateDate: Instant
-    //var replaceThisAssistantMessageWith: String
-}
+///** The context window. */
+//interface Context {
+//    var title: String
+////    val startDate: Instant
+////    val updateDate: Instant
+//    //var replaceThisAssistantMessageWith: String
+//}
 
 /** Note: create functions will also mkdirs parents. */
 interface Files {

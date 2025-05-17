@@ -54,7 +54,7 @@ interface WorkspaceView {
 
     fun clearPromptInput()
 
-    fun addTextResponse(text: String)
+//    fun addTextResponse(text: String)
 
 //    fun addToolUseRequest(request: AgentOutput.ToolUseRequest)
 //
@@ -95,6 +95,7 @@ class WorkspacePresenter(
 
         scope.launch {
             view.promptChanges.collect { prompt ->
+                logger.info { "prompt changes: $prompt" }
                 currentPrompt = prompt
                 view.sendDisabled = prompt.isBlank()
                 if (prompt.isNotBlank() && (prompt.last() == '\n' && !isShift)) {
@@ -153,14 +154,13 @@ class WorkspacePresenter(
         view.sendDisabled = true
         view.clearPromptInput()
         if (workspaceId == null) {
-            val workspace = initiateWorkspace()
-            workspaceId = this@WorkspacePresenter.workspaceId!!
+            workspaceId = initiateWorkspace()
         } else {
             integrateWithWorkspace()
         }
     }
 
-    private suspend fun initiateWorkspace() = withContext(ioDispatcher) {
+    private suspend fun initiateWorkspace(): String = withContext(ioDispatcher) {
         cognitiveWorkspaceService.initiate(
             phenomena = listOf(Phenomenon.Text(id = "N/A", currentPrompt))
         )

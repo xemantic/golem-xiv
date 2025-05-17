@@ -97,6 +97,7 @@ sealed interface Phenomenon {
     data class Impediment(
         val id: String,
         val intentId: String,  // Reference to the original intent
+        val intentSystemId: String,
         val reason: String,    // Why the intent failed
     ) : Phenomenon
 
