@@ -5,12 +5,13 @@
  * Unauthorized reproduction or distribution is prohibited.
  */
 
-package com.xemantic.ai.golem.web.context
+package com.xemantic.ai.golem.web.phenomena
 
-import com.xemantic.ai.golem.api.Message
-import com.xemantic.ai.golem.api.Text
-import com.xemantic.ai.golem.presenter.context.ContextView
-import com.xemantic.ai.golem.presenter.context.MessageAppender
+import com.xemantic.ai.golem.api.Agent
+import com.xemantic.ai.golem.api.Expression
+import com.xemantic.ai.golem.api.Phenomenon
+import com.xemantic.ai.golem.presenter.phenomena.ExpressionAppender
+import com.xemantic.ai.golem.presenter.phenomena.WorkspaceView
 import com.xemantic.ai.golem.web.js.actions
 import com.xemantic.ai.golem.web.js.ariaLabel
 import com.xemantic.ai.golem.web.view.HtmlView
@@ -31,7 +32,7 @@ import org.w3c.dom.HTMLTextAreaElement
 import org.w3c.dom.events.InputEvent
 import org.w3c.dom.events.KeyboardEvent
 
-class HtmlContextView : ContextView, HtmlView {
+class HtmlWorkspaceView : WorkspaceView, HtmlView {
 
     private val messagesDiv = html.div("messages")
 
@@ -68,15 +69,21 @@ class HtmlContextView : ContextView, HtmlView {
 //        )
     )
 
-    override val element = html.div("context").children(
+    override val element = html.div("phenomena").children(
         messagesDiv,
         promptDiv
     )
 
-    override fun startMessage(role: Message.Role): MessageAppender {
-        val messageDiv = html.div("message ${role.name.lowercase()}")
+    override fun starExpression(agent: Agent): ExpressionAppender {
+        val role = if (agent.category == Agent.Category.SELF) {
+            "assistant"
+        } else {
+            "user"
+        }
+        // TODO this should be changed a lot
+        val messageDiv = html.div("message $role")
         messagesDiv.append(messageDiv)
-        return object : MessageAppender {
+        return object : ExpressionAppender {
             override fun append(text: String) {
                 messageDiv.appendText(text)
             }
@@ -86,14 +93,20 @@ class HtmlContextView : ContextView, HtmlView {
         }
     }
 
-    override fun addMessage(message: Message) {
-        println("adding message: $message")
+    override fun addExpression(expression: Expression) {
+        println("adding expression: $expression")
         messagesDiv.append {
-            div("message ${message.role.name.lowercase()}") {
-                message.content.forEach {
+            val role = if (expression.agent.category == Agent.Category.SELF) {
+                "assistant"
+            } else {
+                "user"
+            }
+            // TODO this should be changed a lot
+            div("message $role") {
+                expression.phenomena.forEach {
                     div("content") {
                         when (it) {
-                            is Text -> { +it.text }
+                            is Phenomenon.Text -> { +it.text }
                             else -> { +it.toString() }
                         }
                     }

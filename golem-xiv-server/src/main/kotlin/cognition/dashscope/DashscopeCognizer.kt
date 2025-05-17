@@ -9,11 +9,13 @@ package com.xemantic.ai.golem.server.cognition.dashscope
 
 import com.alibaba.dashscope.aigc.generation.Generation
 import com.alibaba.dashscope.aigc.generation.GenerationParam
+import com.alibaba.dashscope.common.Message
 import com.alibaba.dashscope.common.MessageContentText
 import com.alibaba.dashscope.common.Role
-import com.xemantic.ai.golem.api.Message
-import com.xemantic.ai.golem.api.ReasoningEvent
-import com.xemantic.ai.golem.api.Text
+import com.xemantic.ai.anthropic.tool.Tool
+import com.xemantic.ai.golem.api.Agent
+import com.xemantic.ai.golem.api.Expression
+import com.xemantic.ai.golem.api.CognitionEvent
 import com.xemantic.ai.golem.server.cognition.Cognizer
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.transform
@@ -24,15 +26,21 @@ import kotlin.uuid.Uuid
  * Alibaba Dashscope can access Qwen models.
  */
 class DashscopeCognizer(
-    private val generation: Generation
+    private val generation: Generation,
+    private val golemTools: List<Tool>
 ) : Cognizer {
+
+    // TODO convert from anthropic to GSON tool schema
+    private val tools = golemTools.map {
+
+    }
 
     override fun reason(
         system: List<String>,
-        conversation: List<Message>,
+        conversation: List<Expression>,
         hints: Map<String, String>
-    ): Flow<ReasoningEvent> {
-        val messageId = Uuid.random()
+    ): Flow<CognitionEvent> {
+        val expressionId = Uuid.random().toString()
         val system = system.toDashscopeMessage(Role.SYSTEM)
         val messages = conversation.map { it.toDashscopeMessage() }
         val fullMessages = buildList {
@@ -52,13 +60,13 @@ class DashscopeCognizer(
         var aggregatedMessage = ""
         return generation.streamCall(param).asFlow().transform {generationResult ->
             if (aggregatedMessage.isEmpty()) {
-                emit(ReasoningEvent.MessageStart(messageId, role = Message.Role.ASSISTANT))
-                emit(ReasoningEvent.TextContentStart(messageId))
+                //emit(CognitionEvent.ExpressionStart(messageId, role = Expression.Role.ASSISTANT))
+                //emit(CognitionEvent.TextStart(messageId))
             }
             val content = generationResult.output.choices[0].message.content
             val chunk = content.substringAfter(aggregatedMessage)
             aggregatedMessage += chunk
-            emit(ReasoningEvent.TextContentDelta(messageId, chunk))
+            //emit(CognitionEvent.TextDelta(messageId, chunk))
 
             println(chunk)
             //println(generationResult.output.choices[0].message.contents)
@@ -79,12 +87,12 @@ private fun List<String>.toDashscopeMessage(
     .contents(toDashscopeContents())
     .build()
 
-private fun Message.toDashscopeMessage(): com.alibaba.dashscope.common.Message = com.alibaba.dashscope.common.Message.builder()
-    .role(role.toDashscopeRole().value)
-    .contents(content.filterIsInstance<Text>().map { it.text }.toDashscopeContents())
+private fun Expression.toDashscopeMessage(): Message = Message.builder()
+    .role(agent.toDashscopeRole().value)
+    //.contents(phenomena.filterIsInstance<Text>().map { it.text }.toDashscopeContents())
     .build()
 
-private fun Message.Role.toDashscopeRole(): Role = when (this) {
-    Message.Role.USER -> Role.USER
-    Message.Role.ASSISTANT -> Role.ASSISTANT
+private fun Agent.toDashscopeRole(): Role = when (this.category) {
+    Agent.Category.SELF -> Role.USER
+    else  -> Role.ASSISTANT
 }

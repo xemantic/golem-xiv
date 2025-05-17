@@ -5,31 +5,28 @@
  * Unauthorized reproduction or distribution is prohibited.
  */
 
-package com.xemantic.ai.golem.presenter.context
+package com.xemantic.ai.golem.presenter.phenomena // TODO maybe it should be rather workspace?
 
-import com.xemantic.ai.golem.api.Message
+import com.xemantic.ai.golem.api.Agent
+import com.xemantic.ai.golem.api.Expression
 import com.xemantic.ai.golem.api.GolemOutput
-import com.xemantic.ai.golem.api.Prompt
-import com.xemantic.ai.golem.api.ReasoningEvent
-import com.xemantic.ai.golem.api.Text
-import com.xemantic.ai.golem.api.service.ContextService
+import com.xemantic.ai.golem.api.CognitionEvent
+import com.xemantic.ai.golem.api.Phenomenon
+import com.xemantic.ai.golem.api.service.CognitiveWorkspaceService
 import com.xemantic.ai.golem.presenter.util.Action
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlin.uuid.Uuid
 
-interface MessageAppender {
+interface ExpressionAppender {
 
     fun append(text: String)
 
@@ -37,11 +34,11 @@ interface MessageAppender {
 
 }
 
-interface ContextView {
+interface WorkspaceView {
 
-    fun addMessage(message: Message)
+    fun addExpression(expression: Expression)
 
-    fun startMessage(role: Message.Role): MessageAppender
+    fun starExpression(agent: Agent): ExpressionAppender
 
     val promptChanges: Flow<String>
 
@@ -65,11 +62,11 @@ interface ContextView {
 
 }
 
-class ContextPresenter(
+class WorkspacePresenter(
     mainScope: CoroutineScope,
     private val ioDispatcher: CoroutineDispatcher,
-    private val contextService: ContextService,
-    private val view: ContextView,
+    private val cognitiveWorkspaceService: CognitiveWorkspaceService,
+    private val view: WorkspaceView,
     private val golemOutputs: Flow<GolemOutput>
 ) {
 
@@ -82,9 +79,9 @@ class ContextPresenter(
 
     private var currentPrompt: String = ""
 
-    private var contexId: Uuid? = null
+    private var workspaceId: String? = null
 
-    private val messageAppenderMap = mutableMapOf<Uuid, MessageAppender>()
+    private val expressionAppenderMap = mutableMapOf<String, ExpressionAppender>()
 
     init {
 
@@ -116,18 +113,18 @@ class ContextPresenter(
         }
 
         scope.launch {
-            golemOutputs.filterIsInstance<GolemOutput.Reasoning>().filter {
-                it.contextId == contexId
+            golemOutputs.filterIsInstance<GolemOutput.Cognition>().filter {
+                it.workspaceId == workspaceId
             }.map {
                 it.event
             }.collect {
                 logger.info { "$it" }
                 when (it) {
-                    is ReasoningEvent.MessageStart -> {
-                        messageAppenderMap[it.messageId] = view.startMessage(it.role)
+                    is CognitionEvent.ExpressionInitiation -> {
+                        expressionAppenderMap[it.expressionId] = view.starExpression(it.agent)
                     }
-                    is ReasoningEvent.TextContentDelta -> {
-                        messageAppenderMap[it.messageId]!!.append(it.delta)
+                    is CognitionEvent.TextUnfolding -> {
+                        expressionAppenderMap[it.expressionId]!!.append(it.textDelta)
                     }
                     else -> {}
                 }
@@ -136,17 +133,17 @@ class ContextPresenter(
 
     }
 
-    suspend fun loadContext(id: Uuid): Boolean {
-        logger.info { "Loading context: $id" }
-        val context = scope.async(ioDispatcher) {
-            contextService.get(id)
-        }.await()
-        if (context == null) return false
-//        context.messages.forEach {
-//            view.addMessage(it)
-//        }
-        return true
-    }
+//    suspend fun loadContext(id: Uuid): Boolean {
+//        logger.info { "Loading context: $id" }
+//        val context = scope.async(ioDispatcher) {
+//            cognitiveWorkspaceService.get(id)
+//        }.await()
+//        if (context == null) return false
+////        context.messages.forEach {
+////            view.addMessage(it)
+////        }
+//        return true
+//    }
 
     fun dispose() {
         scope.cancel()
@@ -155,20 +152,25 @@ class ContextPresenter(
     private suspend fun sendPrompt() {
         view.sendDisabled = true
         view.clearPromptInput()
-        if (contexId == null) {
-            val context = startContext()
-            contexId = context.id
+        if (workspaceId == null) {
+            val workspace = initiateWorkspace()
+            workspaceId = this@WorkspacePresenter.workspaceId!!
         } else {
-            appendToContext()
+            integrateWithWorkspace()
         }
     }
 
-    private suspend fun startContext() = withContext(ioDispatcher) {
-        contextService.start(Prompt(listOf(Text(currentPrompt))))
+    private suspend fun initiateWorkspace() = withContext(ioDispatcher) {
+        cognitiveWorkspaceService.initiate(
+            phenomena = listOf(Phenomenon.Text(id = "N/A", currentPrompt))
+        )
     }
 
-    private suspend fun appendToContext() = withContext(ioDispatcher) {
-        contextService.append(contexId!!, Prompt(listOf(Text(currentPrompt))))
+    private suspend fun integrateWithWorkspace() = withContext(ioDispatcher) {
+        cognitiveWorkspaceService.integrate(
+            workspaceId = workspaceId!!,
+            phenomena = listOf(Phenomenon.Text(id = "N/A", currentPrompt))
+        )
     }
 
 }

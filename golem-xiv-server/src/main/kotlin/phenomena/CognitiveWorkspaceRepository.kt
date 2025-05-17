@@ -5,19 +5,19 @@
  * Unauthorized reproduction or distribution is prohibited.
  */
 
-package com.xemantic.ai.golem.server.context
+package com.xemantic.ai.golem.server.phenomena
 
-import com.xemantic.ai.golem.api.Message
-import com.xemantic.ai.golem.server.Context
+import com.xemantic.ai.golem.api.Expression
+import com.xemantic.ai.golem.server.CognitiveWorkspace
 import kotlin.uuid.Uuid
 
-interface ContextRepository {
+interface CognitiveWorkspaceRepository {
 
-    fun create(context: Context)
+    fun create(context: CognitiveWorkspace)
 
     fun update(
         contextId: Uuid,
-        message: Message
+        expression: Expression
     )
 
 }

@@ -8,8 +8,9 @@
 package com.xemantic.ai.golem.server.cognition
 
 import com.xemantic.ai.anthropic.Anthropic
-import com.xemantic.ai.golem.api.Message
-import com.xemantic.ai.golem.api.ReasoningEvent
+import com.xemantic.ai.anthropic.tool.Tool
+import com.xemantic.ai.golem.api.Expression
+import com.xemantic.ai.golem.api.CognitionEvent
 import com.xemantic.ai.golem.server.cognition.anthropic.AnthropicCognizer
 import kotlinx.coroutines.flow.Flow
 
@@ -17,18 +18,17 @@ interface Cognizer {
 
     fun reason(
         system: List<String>,
-        conversation: List<Message>,
+        phenomenalFlow: List<Expression>,
         hints: Map<String, String>
-    ): Flow<ReasoningEvent>
+    ): Flow<CognitionEvent>
 
 }
-
-private val defaultCognizer = AnthropicCognizer(
-    Anthropic()
-)
 
 //private val defaultCognizer = DashscopeCognizer(
 //    Generation(Protocol.HTTP.value, "https://dashscope-intl.aliyuncs.com/api/v1")
 //)
 
-fun cognizer(): Cognizer = defaultCognizer
+fun cognizer(tools: List<Tool>): Cognizer = AnthropicCognizer(
+    Anthropic(),
+    golemTools = tools
+)

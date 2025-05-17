@@ -9,12 +9,12 @@ package com.xemantic.ai.golem.web.main
 
 import com.xemantic.ai.golem.presenter.MainView
 import com.xemantic.ai.golem.presenter.Theme
-import com.xemantic.ai.golem.presenter.context.ContextView
+import com.xemantic.ai.golem.presenter.phenomena.WorkspaceView
 import com.xemantic.ai.golem.presenter.util.Action
-import com.xemantic.ai.golem.web.context.HtmlContextView
 import com.xemantic.ai.golem.web.js.eventFlow
 import com.xemantic.ai.golem.web.navigation.HtmlHeaderView
 import com.xemantic.ai.golem.web.navigation.HtmlSidebarView
+import com.xemantic.ai.golem.web.phenomena.HtmlWorkspaceView
 import com.xemantic.ai.golem.web.view.HtmlView
 import kotlinx.browser.document
 import kotlinx.browser.localStorage
@@ -25,7 +25,6 @@ import kotlinx.html.*
 import kotlinx.html.dom.create
 import org.w3c.dom.HTMLElement
 import org.w3c.dom.events.Event
-import kotlin.uuid.Uuid
 
 class HtmlMainView(
     private val body: HTMLElement,
@@ -70,17 +69,17 @@ class HtmlMainView(
         sidebarView.theme(theme)
     }
 
-    override fun contextView(): ContextView = HtmlContextView()
+    override fun workspaceView(): WorkspaceView = HtmlWorkspaceView()
 
-    override fun displayContext(view: ContextView) {
+    override fun displayWorkspace(view: WorkspaceView) {
         mainElement.innerHTML = ""
         mainElement.append((view as HtmlView).element)
     }
 
-    override val contextSelection: Flow<Uuid> = window.eventFlow<Event>(
+    override val workspaceSelection: Flow<String> = window.eventFlow<Event>(
         "hashchange"
     ).map {
-        Uuid.parse(window.location.hash)
+        window.location.hash // TODO more parsing here?
     }
 
     override val resizes: Flow<Action>
