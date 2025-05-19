@@ -12,8 +12,10 @@ import kotlinx.coroutines.flow.transform
 
 sealed interface JsonEvent {
 
-    object ObjectStart : JsonEvent { override fun toString(): String = "ObjectStart" }
+    object DocumentStart : JsonEvent { override fun toString(): String = "DocumentStart" }
+    object DocumentEnd : JsonEvent { override fun toString(): String = "DocumentEnd" }
 
+    object ObjectStart : JsonEvent { override fun toString(): String = "ObjectStart" }
     object ObjectEnd : JsonEvent { override fun toString(): String = "ObjectEnd" }
 
     @JvmInline
@@ -39,19 +41,18 @@ sealed interface JsonEvent {
 
 class JsonParsingException(msg: String) : RuntimeException(msg)
 
-class IncrementalJsonParser {
+interface StreamingJsonParser {
 
-    fun parse(chunk: String): List<JsonEvent> {
-        TODO()
-    }
+    fun parse(chunk: String): List<JsonEvent>
+
+    fun reset()
 
 }
 
-fun Flow<String>.toJsonEvents(): Flow<JsonEvent> {
-    val parser = IncrementalJsonParser()
-    return transform { chunk ->
-        parser.parse(chunk).forEach { event ->
-            emit(event)
-        }
+fun Flow<String>.toJsonEvents(
+    parser: StreamingJsonParser = DefaultStreamingJsonParser()
+): Flow<JsonEvent> = transform { chunk ->
+    parser.parse(chunk).forEach { event ->
+        emit(event)
     }
 }
