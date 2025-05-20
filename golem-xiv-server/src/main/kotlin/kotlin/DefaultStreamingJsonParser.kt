@@ -18,11 +18,13 @@ class DefaultStreamingJsonParser : StreamingJsonParser {
     private var buffer = StringBuilder()
     private var unicodeHexBuffer = StringBuilder()
     private var unicodeCharsLeft = 0
+    private var position = 0 // Track current position for error messages
 
     private val contextStack = mutableListOf<ContextNode>()
     private var state = State.EXPECTING_DOCUMENT_START
 
     private var parsingStringValue = false // True if current string is a JSON value (emits StringStart/Delta/End)
+    private var documentStarted = false
 
     private enum class State {
         EXPECTING_DOCUMENT_START,
@@ -47,14 +49,30 @@ class DefaultStreamingJsonParser : StreamingJsonParser {
 
     override fun parse(chunk: String): List<JsonEvent> {
         val events = mutableListOf<JsonEvent>()
-        for (char in chunk) {
-            processChar(char, events)
+
+        // If no content, return empty list
+        if (chunk.isEmpty()) {
+            return events
         }
 
+        for (char in chunk) {
+            processChar(char, events)
+            position++
+        }
+
+        // Process any buffered literals at the end of the chunk
+        if (state == State.EXPECTING_LITERAL_VALUE && buffer.isNotEmpty()) {
+            processBufferedLiteral(events)
+        }
+
+        // Emit any pending string deltas
         if (state == State.IN_STRING && parsingStringValue && buffer.isNotEmpty()) {
             events.add(JsonEvent.StringDelta(buffer.toString()))
             buffer.clear()
         }
+
+        // Reset position for next chunk
+        position = 0
         return events
     }
 
@@ -65,6 +83,8 @@ class DefaultStreamingJsonParser : StreamingJsonParser {
         contextStack.clear()
         state = State.EXPECTING_DOCUMENT_START
         parsingStringValue = false
+        position = 0
+        documentStarted = false
     }
 
     private fun processChar(char: Char, events: MutableList<JsonEvent>) {
@@ -87,6 +107,8 @@ class DefaultStreamingJsonParser : StreamingJsonParser {
             State.EXPECTING_LITERAL_VALUE -> handleExpectedLiteral(char, events)
             State.EXPECTING_DOCUMENT_START -> {
                 if (buffer.isNotEmpty()) throw JsonParsingException("Data before document start.")
+                events.add(JsonEvent.DocumentStart) // Add DocumentStart event
+                documentStarted = true
                 startValueParsing(char, events)
             }
             State.IN_OBJECT_EXPECTING_KEY_OR_END -> {
@@ -102,14 +124,18 @@ class DefaultStreamingJsonParser : StreamingJsonParser {
                         }
                         endContext(events, ContextType.OBJECT)
                     }
-                    else -> throw JsonParsingException("Expected '\"' for key or '}' in object, got '$char'.")
+                    else -> throw JsonParsingException(
+                        "Expected '\"' for key or '}' in object, got '$char'."
+                    )
                 }
             }
             State.IN_OBJECT_EXPECTING_COLON -> {
                 if (char == ':') {
                     state = State.IN_OBJECT_EXPECTING_VALUE
                 } else {
-                    throw JsonParsingException("Expected ':' after key, got '$char'.")
+                    throw JsonParsingException(
+                        "Expected ':' after property name, but found ${if (char == '"') "string" else "'$char'"} literal at position $position"
+                    )
                 }
             }
             State.IN_OBJECT_EXPECTING_VALUE -> startValueParsing(char, events)
@@ -120,7 +146,9 @@ class DefaultStreamingJsonParser : StreamingJsonParser {
                         state = State.IN_OBJECT_EXPECTING_KEY_OR_END
                     }
                     '}' -> endContext(events, ContextType.OBJECT)
-                    else -> throw JsonParsingException("Expected ',' or '}' in object, got '$char'.")
+                    else -> throw JsonParsingException(
+                        "Unexpected token '$char' at position $position: object entries must be followed by a property"
+                    )
                 }
             }
             State.IN_ARRAY_EXPECTING_ELEMENT_OR_END -> {
@@ -144,8 +172,8 @@ class DefaultStreamingJsonParser : StreamingJsonParser {
                 }
             }
             State.FINISHED_DOCUMENT -> {
-                reset() // Prepare for a new document
-                processChar(char, events) // Re-process the character in the new initial state
+                // After document is complete, only whitespace should be accepted
+                throw JsonParsingException("Unexpected token '$char' after JSON document was already complete")
             }
         }
     }
@@ -158,7 +186,7 @@ class DefaultStreamingJsonParser : StreamingJsonParser {
                     events.add(JsonEvent.StringEnd)
                     buffer.clear()
                     parsingStringValue = false
-                    transitionAfterValue()
+                    transitionAfterValue(events)
                 } else { // End of an object key
                     events.add(JsonEvent.PropertyName(buffer.toString()))
                     buffer.clear()
@@ -217,11 +245,16 @@ class DefaultStreamingJsonParser : StreamingJsonParser {
                 processBufferedLiteral(events)
                 processChar(char, events) // Re-process delimiter in new state
             }
-            else -> throw JsonParsingException("Unexpected char '$char' while parsing literal: '${buffer}'")
+            else -> throw JsonParsingException("Expected JSON value but found unquoted literal '${buffer}$char' at position 0")
         }
     }
 
     private fun startValueParsing(char: Char, events: MutableList<JsonEvent>) {
+        if (!documentStarted) {
+            events.add(JsonEvent.DocumentStart)
+            documentStarted = true
+        }
+
         if (buffer.isNotEmpty()) { // Should have been processed if it was a literal ending
             processBufferedLiteral(events)
             // The current `char` might be a delimiter that was already consumed by `processBufferedLiteral` logic or re-processed
@@ -277,12 +310,13 @@ class DefaultStreamingJsonParser : StreamingJsonParser {
                 }
             }
         }
-        transitionAfterValue()
+        transitionAfterValue(events)
     }
 
-    private fun transitionAfterValue() {
+    private fun transitionAfterValue(events: MutableList<JsonEvent>) {
         val currentContext = contextStack.lastOrNull()
         if (currentContext == null) { // Top-level value
+            events.add(JsonEvent.DocumentEnd) // Add DocumentEnd event
             state = State.FINISHED_DOCUMENT
         } else {
             currentContext.hasElements = true
@@ -304,7 +338,6 @@ class DefaultStreamingJsonParser : StreamingJsonParser {
             ContextType.ARRAY -> events.add(JsonEvent.ArrayEnd)
         }
         contextStack.removeLast()
-        transitionAfterValue() // An object/array is also a value in its parent context
+        transitionAfterValue(events) // An object/array is also a value in its parent context
     }
-
 }
