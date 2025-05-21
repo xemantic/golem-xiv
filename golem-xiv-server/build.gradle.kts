@@ -72,9 +72,7 @@ dependencies {
     implementation(libs.ktor.serialization.kotlinx.json)
 
     implementation(libs.playwright)
-    implementation(libs.neo4j) {
-        exclude(group = "org.neo4j", module = "neo4j-slf4j-provider")
-    }
+    implementation(libs.neo4j.java.driver)
 
     implementation(libs.dashscope) {
         exclude(group = "org.slf4j", module = "slf4j-simple")
@@ -89,7 +87,7 @@ dependencies {
     testImplementation(libs.kotlin.test)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.xemantic.kotlin.test)
-    testImplementation(libs.neo4j.harness)
+    testImplementation(libs.neo4j.test.harness)
 
     implementation("com.vladsch.flexmark:flexmark:0.64.8")
     implementation("com.vladsch.flexmark:flexmark-html2md-converter:0.64.8")

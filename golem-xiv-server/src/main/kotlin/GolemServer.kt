@@ -41,7 +41,6 @@ import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import io.ktor.server.websocket.WebSockets
 import io.ktor.server.websocket.webSocket
-import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import org.apache.logging.log4j.LogManager
@@ -143,6 +142,7 @@ fun Application.module() {
 
             launch {
                 outputs.collect {
+                    logger.debug { "Go: $it" }
                     sendGolemOutput(it)
                 }
             }

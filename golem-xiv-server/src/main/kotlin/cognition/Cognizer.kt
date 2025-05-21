@@ -28,7 +28,9 @@ interface Cognizer {
 //    Generation(Protocol.HTTP.value, "https://dashscope-intl.aliyuncs.com/api/v1")
 //)
 
+private val anthropic = Anthropic()
+
 fun cognizer(tools: List<Tool>): Cognizer = AnthropicCognizer(
-    Anthropic(),
+    anthropic,
     golemTools = tools
 )

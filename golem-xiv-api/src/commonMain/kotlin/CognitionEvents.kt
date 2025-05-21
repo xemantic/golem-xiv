@@ -59,23 +59,52 @@ sealed interface CognitionEvent {
     @SerialName("intentInitiation")
     data class IntentInitiation(
         val expressionId: String,
-        val purpose: String,
         val systemId: String,
         val recursiveWorkspaceId: String? = null
     ) : CognitionEvent
 
     @Serializable
-    @SerialName("intentUnfolding")
-    data class IntentUnfolding(
+    @SerialName("intentPurposeInitiation")
+    data class IntentPurposeInitiation(
+        val expressionId: String
+    ) : CognitionEvent
+
+    @Serializable
+    @SerialName("intentPurposeUnfolding")
+    data class IntentPurposeUnfolding(
         val expressionId: String,
-        val instructionsDelta: String
+        val purposeDelta: String,
+    ) : CognitionEvent
+
+    @Serializable
+    @SerialName("intentPurposeCulmination")
+    data class IntentPurposeCulmination(
+        val expressionId: String,
+    ) : CognitionEvent
+
+    @Serializable
+    @SerialName("intentCodeInitiation")
+    data class IntentCodeInitiation(
+        val expressionId: String
+    ) : CognitionEvent
+
+    @Serializable
+    @SerialName("intentCodeUnfolding")
+    data class IntentCodeUnfolding(
+        val expressionId: String,
+        val codeDelta: String,
+    ) : CognitionEvent
+
+    @Serializable
+    @SerialName("intentCodeCulmination")
+    data class IntentCodeCulmination(
+        val expressionId: String,
     ) : CognitionEvent
 
     @Serializable
     @SerialName("intentCulmination")
     data class IntentCulmination(
-        val expressionId: String,
-        val recursiveWorkspaceId: String? = null
+        val expressionId: String
     ) : CognitionEvent
 
     @Serializable

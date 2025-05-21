@@ -11,6 +11,8 @@ import com.xemantic.ai.golem.api.Agent
 import com.xemantic.ai.golem.api.Expression
 import com.xemantic.ai.golem.api.Phenomenon
 import com.xemantic.ai.golem.presenter.phenomena.ExpressionAppender
+import com.xemantic.ai.golem.presenter.phenomena.IntentAppender
+import com.xemantic.ai.golem.presenter.phenomena.TextAppender
 import com.xemantic.ai.golem.presenter.phenomena.WorkspaceView
 import com.xemantic.ai.golem.web.js.actions
 import com.xemantic.ai.golem.web.js.ariaLabel
@@ -75,22 +77,49 @@ class HtmlWorkspaceView : WorkspaceView, HtmlView {
     )
 
     override fun starExpression(agent: Agent): ExpressionAppender {
+
         val role = if (agent.category == Agent.Category.SELF) {
             "assistant"
         } else {
             "user"
         }
+
         // TODO this should be changed a lot
         val messageDiv = html.div("message $role")
         messagesDiv.append(messageDiv)
         return object : ExpressionAppender {
-            override fun append(text: String) {
-                messageDiv.appendText(text)
+
+            override fun textAppender(): TextAppender {
+                val textDiv = html.div("text")
+                messageDiv.append(textDiv)
+                return  { textDiv.append(it) }
             }
-            override fun finalize() {
-                // nothing to do
+
+            override fun intentAppender(): IntentAppender {
+
+                val intentDiv = html.div("intent")
+                messageDiv.append(intentDiv)
+
+                return object : IntentAppender {
+
+                    override fun purposeAppender(): TextAppender {
+                        val purposeDiv = html.div("purpose")
+                        intentDiv.append(purposeDiv)
+                        return { purposeDiv.append(it) }
+                    }
+
+                    override fun codeAppender(): TextAppender {
+                        val codeDiv = html.div("code")
+                        intentDiv.append(codeDiv)
+                        return { codeDiv.append(it) }
+                    }
+
+                }
+
             }
+
         }
+
     }
 
     override fun addExpression(expression: Expression) {

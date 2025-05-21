@@ -16,6 +16,7 @@ ktor = "3.1.3"
 playwright = "1.51.0"
 dashscope = "2.19.5"
 neo4j = "2025.04.0"
+neo4jDriver = "5.28.5"
 
 log4j = "2.24.1"
 jackson = "2.19.0"
@@ -49,7 +50,8 @@ playwright = { module = "com.microsoft.playwright:playwright", version.ref = "pl
 dashscope = { module = "com.alibaba:dashscope-sdk-java", version.ref = "dashscope" }
 
 neo4j = { module = "org.neo4j:neo4j", version.ref = "neo4j" }
-neo4j-harness = { module = "org.neo4j.test:neo4j-harness", version.ref = "neo4j" }
+neo4j-java-driver = { module = "org.neo4j.driver:neo4j-java-driver", version.ref = "neo4jDriver" }
+neo4j-test-harness = { module = "org.neo4j.test:neo4j-harness", version.ref = "neo4j" }
 
 ktor-websockets = { module = "io.ktor:ktor-websockets", version.ref = "ktor" }
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }

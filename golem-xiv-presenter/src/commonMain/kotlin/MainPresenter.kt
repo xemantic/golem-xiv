@@ -34,6 +34,8 @@ import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 interface MainView {
 
@@ -167,6 +169,7 @@ class MainPresenter(
 
     }
 
+    @OptIn(ExperimentalTime::class)
     private suspend fun WebSocketSession.handle(
         output: GolemOutput
     ) {
@@ -175,7 +178,7 @@ class MainPresenter(
                 logger.info { output.message }
             }
             else -> {
-                logger.info { "received $output" }
+                logger.info { "received: ${Clock.System.now()} $output" }
                 golemOutputs.emit(output)
             }
         }

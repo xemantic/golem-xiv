@@ -26,11 +26,21 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+typealias TextAppender = (text: String) -> Unit
+
 interface ExpressionAppender {
 
-    fun append(text: String)
+    fun textAppender(): TextAppender
 
-    fun finalize()
+    fun intentAppender(): IntentAppender
+
+}
+
+interface IntentAppender {
+
+    fun purposeAppender(): TextAppender
+
+    fun codeAppender(): TextAppender
 
 }
 
@@ -114,6 +124,10 @@ class WorkspacePresenter(
         }
 
         scope.launch {
+            var intentAppender: IntentAppender? = null
+            var textAppender: TextAppender? = null
+            var purposeAppender: TextAppender? = null
+            var codeAppender: TextAppender? = null
             golemOutputs.filterIsInstance<GolemOutput.Cognition>().filter {
                 it.workspaceId == workspaceId
             }.map {
@@ -124,8 +138,26 @@ class WorkspacePresenter(
                     is CognitionEvent.ExpressionInitiation -> {
                         expressionAppenderMap[it.expressionId] = view.starExpression(it.agent)
                     }
+                    is CognitionEvent.TextInitiation -> {
+                        textAppender = expressionAppenderMap[it.expressionId]!!.textAppender()
+                    }
                     is CognitionEvent.TextUnfolding -> {
-                        expressionAppenderMap[it.expressionId]!!.append(it.textDelta)
+                        textAppender!!(it.textDelta)
+                    }
+                    is CognitionEvent.IntentInitiation -> {
+                        intentAppender = expressionAppenderMap[it.expressionId]!!.intentAppender()
+                    }
+                    is CognitionEvent.IntentPurposeInitiation -> {
+                        purposeAppender = intentAppender!!.purposeAppender()
+                    }
+                    is CognitionEvent.IntentPurposeUnfolding -> {
+                        purposeAppender!!(it.purposeDelta)
+                    }
+                    is CognitionEvent.IntentCodeInitiation -> {
+                        codeAppender = intentAppender!!.codeAppender()
+                    }
+                    is CognitionEvent.IntentCodeUnfolding -> {
+                        codeAppender!!(it.codeDelta)
                     }
                     else -> {}
                 }

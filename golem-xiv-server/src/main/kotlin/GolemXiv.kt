@@ -17,7 +17,6 @@ import com.xemantic.ai.golem.api.Expression
 import com.xemantic.ai.golem.api.CognitionEvent
 import com.xemantic.ai.golem.server.cognition.cognizer
 import com.xemantic.ai.golem.server.kotlin.describeCurrentMoment
-import com.xemantic.ai.golem.server.neo4j.Neo4JProvider
 import com.xemantic.ai.golem.server.os.operatingSystemName
 import com.xemantic.ai.golem.server.phenomena.ExpressionAccumulator
 import com.xemantic.ai.golem.server.script.Files
@@ -86,8 +85,6 @@ class Golem(
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     private val scriptExecutor = GolemScriptExecutor()
-
-    private val neo4JProvider = Neo4JProvider()
 
     private val playwright = Playwright.create()
 
@@ -201,7 +198,8 @@ class Golem(
                         hints = emptyMap()
                     ).collect { event ->
                         accumulator += event
-                        emit(event) // TODO don't output script events, just the script - fix the intent purpose scanning
+                        logger.debug { "Em: $event" }
+                        emit(event)
                     }
 
                     val expression = accumulator.build()
@@ -286,11 +284,11 @@ class Golem(
 
             logger.debug {
                 "Workspace[$id]/Expression[${actualizationId}: " +
-                        "Actualizing intent, purpose: ${intent.purpose}, instructions: ${intent.instructions}"
+                        "Actualizing intent, purpose: ${intent.purpose}, code: ${intent.code}"
             }
 
             val result = scriptExecutor.execute(
-                script = intent.instructions,
+                script = intent.code,
                 dependencies = dependencies
             )
 

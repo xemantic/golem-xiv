@@ -80,7 +80,7 @@ sealed interface Phenomenon {
         val id: String,
         val systemId: String,
         val purpose: String,
-        val instructions: String
+        val code: String
     ) : Phenomenon
 
     @Serializable

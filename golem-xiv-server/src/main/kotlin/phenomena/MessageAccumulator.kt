@@ -16,7 +16,7 @@ import kotlin.time.Clock
 import kotlin.time.Instant
 
 class ExpressionAccumulator(
-    private val workspaceId: String
+    private val workspaceId: String // TODO why it is not being used?
 ) {
 
     private val textBuilder = StringBuilder()
@@ -30,6 +30,8 @@ class ExpressionAccumulator(
     private var intentSystemId: String? = null
 
     private var intentPurpose: String? = null
+
+    private var intentCode: String? = null
 
     operator fun plusAssign(event: CognitionEvent) {
         event.process()
@@ -57,15 +59,25 @@ class ExpressionAccumulator(
         is TextCulmination -> culminate { text -> Phenomenon.Text(id!!, text) }
         is IntentInitiation -> {
             intentSystemId = systemId
-            intentPurpose = purpose
         }
-        is IntentUnfolding -> textBuilder.append(instructionsDelta)
-        is IntentCulmination -> culminate { text ->
+        is IntentPurposeInitiation -> { /* nothing to do */ }
+        is IntentPurposeUnfolding -> textBuilder.append(purposeDelta)
+        is IntentPurposeCulmination -> {
+            intentPurpose = textBuilder.toString()
+            textBuilder.clear()
+        }
+        is IntentCodeInitiation -> { /* nothing to do */ }
+        is IntentCodeUnfolding -> textBuilder.append(codeDelta)
+        is IntentCodeCulmination -> {
+            intentCode = textBuilder.toString()
+            textBuilder.clear()
+        }
+        is IntentCulmination -> culminate { text -> // TODO for some reason it is triggered twice
             Phenomenon.Intent(
                 id = id!!,
                 systemId = intentSystemId!!,
                 purpose = intentPurpose!!,
-                instructions = text
+                code = intentCode!!
             )
         }
         is ExpressionCulmination -> { /* nothing to do */ }
