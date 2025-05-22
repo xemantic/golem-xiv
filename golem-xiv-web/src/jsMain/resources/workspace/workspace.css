@@ -65,6 +65,7 @@
     padding: 1rem;
     border-radius: 8px;
     animation: fadeIn 0.3s ease-in-out;
+    backdrop-filter: blur(6px);
 }
 
 .message.user {
@@ -111,6 +112,7 @@
     background-color: var(--input-bg);
     padding: 0.75rem;
     box-shadow: 0 2px 10px var(--shadow-color);
+    backdrop-filter: blur(6px);
 }
 
 .prompt textarea {
