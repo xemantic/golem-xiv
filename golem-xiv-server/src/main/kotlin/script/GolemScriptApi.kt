@@ -64,7 +64,6 @@ interface Memory {
     fun <T: Any?> query(cypher: String, block: (Result) -> T): T
 }
 
-
 interface FactBuilder {
     fun subject(block: NodeBuilder.() -> Unit)
     /** Naming according to schema.org, e.g. worksFor, memberOf, sameAs */

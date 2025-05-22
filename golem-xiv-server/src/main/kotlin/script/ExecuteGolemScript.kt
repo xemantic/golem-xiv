@@ -11,14 +11,23 @@ import com.xemantic.ai.tool.schema.meta.Description
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
+
+/*
+
+IMPORTANT: never use this tool to just output the text to the user.
+
+Always use Kotlin script when mathematical calculation is involved.
+
+ */
+
 /**
  * Represents a Golem script with its required attributes and content.
  */
 @SerialName("ExecuteGolemScript")
 @Description($$"""
-You have the ability to generate Kotlin script code to fulfill any task.
+Executes Kotlin script changing the state of the environment.
 
-Always use Kotlin script when mathematical calculation is involved.
+The fulfillment of your intent, or the impediment which occurred, will be communicated back to you, but not to other agents involved in the communication. 
 
 Here is the API you can use when writing the script:
 
@@ -43,17 +52,10 @@ The script execution is wrapped in a coroutine, therefore suspended functions ca
 
 It the last expression of the script is null, or Unit (e.g. function), no information about script execution will be sent back to you. 
 If the last expression of the script will be send back as a tool result.
-
-The last expression of the script can be:
-- a String, which will be returned back as a string content to you
-- a ByteArray, which will be returned back as respective binary content to you (e.g. JPEG, PNG, PDF), or an error if the content is not supported
-- an instance of any other object, which will be converted to String by calling toString() function
-- a list of objects of any of the types mentioned above, in such case multiple content elements will be send back to you in order
-- a Unit (e.g. function, or ), which will not be returned to you
 """
 )
 @Serializable
-data class GolemScript(
+data class ExecuteGolemScript(
     val purpose: String,
     val code: String
 ) {
@@ -74,3 +76,15 @@ data class GolemScript(
     }
 
 }
+
+
+/*
+
+The last expression of the script can be:
+- a String, which will be returned back as a string content to you
+- a ByteArray, which will be returned back as respective binary content to you (e.g. JPEG, PNG, PDF), or an error if the content is not supported
+- an instance of any other object, which will be converted to String by calling toString() function
+- a list of objects of any of the types mentioned above, in such case multiple content elements will be send back to you in order
+- a Unit (e.g. function, or ), which will not be returned to you
+
+ */

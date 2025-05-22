@@ -33,7 +33,7 @@ class GolemScriptExecutorTest {
 
         // then
         result should {
-            be<GolemScript.Result.Value>()
+            be<ExecuteGolemScript.Result.Value>()
             have(value == "foo")
         }
     }
@@ -53,7 +53,7 @@ class GolemScriptExecutorTest {
 
         // then
         result should {
-            be<GolemScript.Result.Value>()
+            be<ExecuteGolemScript.Result.Value>()
             have(value == "foo")
         }
     }
@@ -76,7 +76,7 @@ class GolemScriptExecutorTest {
 
         // then
         result should {
-            be<GolemScript.Result.Value>()
+            be<ExecuteGolemScript.Result.Value>()
             have(value == "test function with annotation")
         }
     }
@@ -96,7 +96,7 @@ class GolemScriptExecutorTest {
 
         // then
         result should {
-            be<GolemScript.Result.Value>()
+            be<ExecuteGolemScript.Result.Value>()
             have(value == "suspend function result")
         }
     }
@@ -121,7 +121,7 @@ class GolemScriptExecutorTest {
 
         // then
         result should {
-            be<GolemScript.Result.Value>()
+            be<ExecuteGolemScript.Result.Value>()
             have(value == "FOO")
         }
     }
@@ -139,7 +139,7 @@ class GolemScriptExecutorTest {
 
         // then
         result should {
-            be<GolemScript.Result.Value>()
+            be<ExecuteGolemScript.Result.Value>()
             have(value == null)
         }
     }
@@ -155,7 +155,7 @@ class GolemScriptExecutorTest {
 
         // then
         result should {
-            be<GolemScript.Result.Value>()
+            be<ExecuteGolemScript.Result.Value>()
             have(value is Unit)
         }
     }
@@ -174,7 +174,7 @@ class GolemScriptExecutorTest {
 
         // then
         result should {
-            be<GolemScript.Result.Value>()
+            be<ExecuteGolemScript.Result.Value>()
             have(value is Unit)
         }
     }
@@ -192,7 +192,7 @@ class GolemScriptExecutorTest {
 
         // then
         result should {
-            be<GolemScript.Result.Value>()
+            be<ExecuteGolemScript.Result.Value>()
             have(value is Unit)
         }
     }
@@ -216,7 +216,7 @@ class GolemScriptExecutorTest {
 
         // then
         result should {
-            be<GolemScript.Result.Error>()
+            be<ExecuteGolemScript.Result.Error>()
             have(message == """
                 <golem-script> execution failed during phase: COMPILATION
                 [ERROR] Unresolved reference 'asdf'.
@@ -256,7 +256,7 @@ class GolemScriptExecutorTest {
 
         // then
         result should {
-            be<GolemScript.Result.Error>()
+            be<ExecuteGolemScript.Result.Error>()
             have(message == """
                 <golem-script> execution failed during phase: COMPILATION
                 [ERROR] Unresolved reference 'foo'.
@@ -288,7 +288,7 @@ class GolemScriptExecutorTest {
 
         // then
         result should {
-            be<GolemScript.Result.Error>()
+            be<ExecuteGolemScript.Result.Error>()
             have(message == """
                 <golem-script> execution failed during phase: COMPILATION
                 [ERROR] Expecting '"'
@@ -314,7 +314,7 @@ class GolemScriptExecutorTest {
 
         // then
         result should {
-            be<GolemScript.Result.Error>()
+            be<ExecuteGolemScript.Result.Error>()
             have(message == """
                 <golem-script> execution failed during phase: EVALUATION
                 java.lang.Exception: must fail
@@ -347,7 +347,7 @@ class GolemScriptExecutorTest {
 
         // then
         result should {
-            be<GolemScript.Result.Error>()
+            be<ExecuteGolemScript.Result.Error>()
             have(message == $$"""
                 <golem-script> execution failed during phase: EVALUATION
                 java.lang.Exception: must fail
@@ -384,7 +384,7 @@ class GolemScriptExecutorTest {
 
         // then
         result1 should {
-            be<GolemScript.Result.Error>()
+            be<ExecuteGolemScript.Result.Error>()
             have(message == """
                 <golem-script> execution failed during phase: EVALUATION
                 java.lang.Exception: must fail
@@ -396,7 +396,7 @@ class GolemScriptExecutorTest {
             )
         }
         result2 should {
-            be<GolemScript.Result.Value>()
+            be<ExecuteGolemScript.Result.Value>()
             have(value == "foo")
         }
     }
@@ -434,11 +434,11 @@ class GolemScriptExecutorTest {
 
         // then
         deferred1.await() should {
-            be<GolemScript.Result.Value>()
+            be<ExecuteGolemScript.Result.Value>()
             have(value == "foo")
         }
         deferred2.await() should {
-            be<GolemScript.Result.Value>()
+            be<ExecuteGolemScript.Result.Value>()
             have(value == "foo")
         }
     }

@@ -56,12 +56,17 @@ class AnthropicCognizer(
 
         var toolUseId: String? = null
 
+        val messageFlow = phenomenalFlow.toAnthropicMessages().addCacheBreakpoint()
+
+        logger.trace {
+            "Anthropic messages: $messageFlow"
+        }
+
         val flow = anthropic.messages.stream {
             this.system = system.toAnthropicSystem()
-            messages = phenomenalFlow.toAnthropicMessages().addCacheBreakpoint()
+            messages = messageFlow
             tools = golemTools
         }.transform { event ->
-            logger.debug { "In: $event" }
             when (event) {
                 is Event.MessageStart -> {
                     emit(
@@ -105,7 +110,6 @@ class AnthropicCognizer(
                         is Event.ContentBlockDelta.Delta.InputJsonDelta -> {
                             val jsonDelta = (event.delta as Event.ContentBlockDelta.Delta.InputJsonDelta).partialJson
                             intentBroadcaster.add(jsonDelta).forEach { result ->
-                                logger.debug { "Co: $result" }
                                 emit(result)
                             }
                         }

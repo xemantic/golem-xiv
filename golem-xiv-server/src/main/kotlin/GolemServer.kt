@@ -142,7 +142,6 @@ fun Application.module() {
 
             launch {
                 outputs.collect {
-                    logger.debug { "Go: $it" }
                     sendGolemOutput(it)
                 }
             }

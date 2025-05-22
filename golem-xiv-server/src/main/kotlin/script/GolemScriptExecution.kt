@@ -70,7 +70,7 @@ class GolemScriptExecutor {
     suspend fun execute(
         script: String,
         dependencies: List<Dependency<*>> = emptyList(),
-    ): GolemScript.Result {
+    ): ExecuteGolemScript.Result {
 
         val scriptId = scriptIdSeq.fetchAndIncrement()
         logger.debug { "GolemScript[$scriptId]: Executing" }
@@ -124,7 +124,7 @@ class GolemScriptExecutor {
             ""
         } + "_golemScriptScope.async {\n${scriptParts.body.joinToString(separator = "\n")}\n}"
 
-        suspend fun handle(): GolemScript.Result {
+        suspend fun handle(): ExecuteGolemScript.Result {
 
             val compilationResult = compile()
 
@@ -135,13 +135,13 @@ class GolemScriptExecutor {
                 }
                 is ResultWithDiagnostics.Failure -> {
                     val failureMessage = errorReporter().toFailureMessage(
-                        phase = GolemScript.ExecutionPhase.COMPILATION,
+                        phase = ExecuteGolemScript.ExecutionPhase.COMPILATION,
                         failure = compilationResult
                     )
                     logger.debug {
                         "GolemScript[$scriptId]: Compilation (1/2) failure message: $failureMessage"
                     }
-                    GolemScript.Result.Error(failureMessage)
+                    ExecuteGolemScript.Result.Error(failureMessage)
                 }
             }
 
@@ -173,7 +173,7 @@ class GolemScriptExecutor {
 
         private suspend fun evaluate(
             compiledScript: CompiledScript
-        ): GolemScript.Result {
+        ): ExecuteGolemScript.Result {
 
             logger.debug { "GolemScript[$scriptId]: Evaluating (2/2)" }
 
@@ -191,18 +191,18 @@ class GolemScriptExecutor {
                 is ResultWithDiagnostics.Failure -> {
                     // in practice, this never happens
                     val failureMessage = errorReporter().toFailureMessage(
-                        phase = GolemScript.ExecutionPhase.EVALUATION,
+                        phase = ExecuteGolemScript.ExecutionPhase.EVALUATION,
                         failure = evaluationResult
                     )
-                    GolemScript.Result.Error(failureMessage)
+                    ExecuteGolemScript.Result.Error(failureMessage)
                 }
             }
 
             when (result) {
-                is GolemScript.Result.Value -> logger.debug {
+                is ExecuteGolemScript.Result.Value -> logger.debug {
                     "GolemScript[$scriptId]: Evaluation (2/2) succeeded after $duration"
                 }
-                is GolemScript.Result.Error -> logger.debug {
+                is ExecuteGolemScript.Result.Error -> logger.debug {
                     "GolemScript[$scriptId]: Evaluation (2/2) failed after $duration"
                 }
             }
@@ -213,7 +213,7 @@ class GolemScriptExecutor {
         private suspend fun ResultValue.toGolemScriptResult() = when (this) {
             is ResultValue.Value -> {
                 try {
-                    GolemScript.Result.Value(
+                    ExecuteGolemScript.Result.Value(
                         (value as Deferred<Any?>).await()
                     )
                 } catch (e: Exception) {
@@ -231,15 +231,15 @@ class GolemScriptExecutor {
                         e
                     }
                     val failureMessage = errorReporter().toFailureMessage(throwable)
-                    GolemScript.Result.Error(
+                    ExecuteGolemScript.Result.Error(
                         failureMessage
                     )
                 }
             }
-            is ResultValue.Unit -> GolemScript.Result.Value(Unit)
+            is ResultValue.Unit -> ExecuteGolemScript.Result.Value(Unit)
             is ResultValue.Error -> {
                 val failureMessage = errorReporter().toFailureMessage(error)
-                GolemScript.Result.Error(
+                ExecuteGolemScript.Result.Error(
                     message = failureMessage
                 )
             }
@@ -287,7 +287,7 @@ private class GolemScriptErrorReporter(
 ) {
 
     fun toFailureMessage(
-        phase: GolemScript.ExecutionPhase,
+        phase: ExecuteGolemScript.ExecutionPhase,
         failure: ResultWithDiagnostics.Failure
     ) = buildString {
         append("<golem-script> execution failed during phase: ${phase.name}\n")
@@ -299,7 +299,7 @@ private class GolemScriptErrorReporter(
     fun toFailureMessage(
         throwable: Throwable
     ) = buildString {
-        append("<golem-script> execution failed during phase: ${GolemScript.ExecutionPhase.EVALUATION.name}\n")
+        append("<golem-script> execution failed during phase: ${ExecuteGolemScript.ExecutionPhase.EVALUATION.name}\n")
         appendException(error = throwable)
         append("\n")
     }

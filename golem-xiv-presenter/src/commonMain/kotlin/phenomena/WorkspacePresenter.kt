@@ -105,7 +105,6 @@ class WorkspacePresenter(
 
         scope.launch {
             view.promptChanges.collect { prompt ->
-                logger.info { "prompt changes: $prompt" }
                 currentPrompt = prompt
                 view.sendDisabled = prompt.isBlank()
                 if (prompt.isNotBlank() && (prompt.last() == '\n' && !isShift)) {

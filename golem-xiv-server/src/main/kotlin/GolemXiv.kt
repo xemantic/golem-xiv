@@ -22,7 +22,7 @@ import com.xemantic.ai.golem.server.phenomena.ExpressionAccumulator
 import com.xemantic.ai.golem.server.script.Files
 import com.xemantic.ai.golem.server.script.GOLEM_SCRIPT_API
 import com.xemantic.ai.golem.server.script.GOLEM_SCRIPT_SYSTEM_PROMPT
-import com.xemantic.ai.golem.server.script.GolemScript
+import com.xemantic.ai.golem.server.script.ExecuteGolemScript
 import com.xemantic.ai.golem.server.script.GolemScriptExecutor
 import com.xemantic.ai.golem.server.script.Memory
 import com.xemantic.ai.golem.server.script.WebBrowser
@@ -106,7 +106,8 @@ class Golem(
     ) : CognitiveWorkspace {
 
         val golemSystem = buildList {
-            val coreSystem = systemPrompt + if (golemScriptApi != null) GOLEM_SCRIPT_SYSTEM_PROMPT else ""
+            //val coreSystem = systemPrompt + if (golemScriptApi != null) GOLEM_SCRIPT_SYSTEM_PROMPT else ""
+            val coreSystem = systemPrompt
             add(coreSystem) // TODO cach
             if (environmentSystemPrompt != null) {
                 add(environmentSystemPrompt)
@@ -141,7 +142,7 @@ class Golem(
 ////                    service<StringEditorService>("stringEditorService", stringEditorService())
         )
 
-        val tool = Tool<GolemScript> {
+        val tool = Tool<ExecuteGolemScript> {
             logger.debug { "Context[$id]/GolemScript, purpose: ${this.purpose}" }
             scriptExecutor.execute(script = code)
         }
@@ -198,7 +199,6 @@ class Golem(
                         hints = emptyMap()
                     ).collect { event ->
                         accumulator += event
-                        logger.debug { "Em: $event" }
                         emit(event)
                     }
 
@@ -227,35 +227,38 @@ class Golem(
                             )
                         )
 
-                        intents.forEach { intent ->
+                        val intent = intents.first()
 
-                            emit(
-                                CognitionEvent.FulfillmentInitiation(
-                                    expressionId = actualizationId,
-                                )
+                        emit(
+                            CognitionEvent.FulfillmentInitiation(
+                                expressionId = actualizationId,
                             )
+                        )
 
-                            // TODO why we need this async?
-                            val deferred = scope.async {
-                                actualize(actualizationId, intent)
-                            }
+                        // TODO why we need this async?
+                        val deferred = scope.async {
+                            actualize(actualizationId, intent)
+                        }.await()!!
 
-                            val result = deferred.await()
-
-                            emit(
-                                CognitionEvent.FulfillmentCulmination(
-                                    expressionId = actualizationId,
-                                )
+                        emit(
+                            CognitionEvent.FulfillmentUnfolding(
+                                expressionId = actualizationId,
+                                designation = deferred.toString()
                             )
+                        )
 
-                        }
+                        emit(
+                            CognitionEvent.FulfillmentCulmination(
+                                expressionId = actualizationId
+                            )
+                        )
 
                         val culminationMoment = Clock.System.now()
 
                         val expression = Expression(
                             id = actualizationId,
                             agent = agent,
-                            phenomena = emptyList(),
+                            phenomena = deferred,
                             initiationMoment = initiationMoment,
                             culminationMoment = culminationMoment
                         )
@@ -293,7 +296,7 @@ class Golem(
             )
 
             val phenomena = when (result) {
-                is GolemScript.Result.Value -> when(result.value) {
+                is ExecuteGolemScript.Result.Value -> when(result.value) {
                     is String -> listOf(
                         Phenomenon.Fulfillment(
                             id = Uuid.random().toString(),
@@ -310,7 +313,7 @@ class Golem(
                         )
                     )
                 }
-                is GolemScript.Result.Error -> listOf(Phenomenon.Impediment(
+                is ExecuteGolemScript.Result.Error -> listOf(Phenomenon.Impediment(
                     id = Uuid.random().toString(),
                     intentId = intent.id,
                     intentSystemId = intent.systemId,
