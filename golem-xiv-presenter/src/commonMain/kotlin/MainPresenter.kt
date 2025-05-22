@@ -9,14 +9,14 @@ package com.xemantic.ai.golem.presenter
 
 import com.xemantic.ai.golem.api.GolemInput
 import com.xemantic.ai.golem.api.GolemOutput
-import com.xemantic.ai.golem.api.service.ClientContextService
+import com.xemantic.ai.golem.api.service.ClientCognitiveWorkspaceService
 import com.xemantic.ai.golem.api.service.ClientPingService
-import com.xemantic.ai.golem.presenter.context.ContextPresenter
-import com.xemantic.ai.golem.presenter.context.ContextView
 import com.xemantic.ai.golem.presenter.navigation.HeaderPresenter
 import com.xemantic.ai.golem.presenter.navigation.HeaderView
 import com.xemantic.ai.golem.presenter.navigation.SidebarPresenter
 import com.xemantic.ai.golem.presenter.navigation.SidebarView
+import com.xemantic.ai.golem.presenter.phenomena.WorkspacePresenter
+import com.xemantic.ai.golem.presenter.phenomena.WorkspaceView
 import com.xemantic.ai.golem.presenter.util.Action
 import com.xemantic.ai.golem.presenter.websocket.sendToGolem
 import com.xemantic.ai.golem.presenter.websocket.collectGolemOutput
@@ -34,19 +34,19 @@ import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
-import kotlin.uuid.Uuid
+import kotlin.time.ExperimentalTime
 
 interface MainView {
 
     fun theme(theme: Theme)
 
-    fun contextView(): ContextView
+    fun workspaceView(): WorkspaceView
 
-    fun displayContext(view: ContextView)
+    fun displayWorkspace(view: WorkspaceView)
 
     val resizes: Flow<Action>
 
-    val contextSelection: Flow<Uuid>
+    val workspaceSelection: Flow<String>
 
 }
 
@@ -101,10 +101,10 @@ class MainPresenter(
     private val golemOutputs = MutableSharedFlow<GolemOutput>()
 
     private val pingService = ClientPingService(apiClient)
-    private val contextService = ClientContextService(apiClient)
+    private val workspaceService = ClientCognitiveWorkspaceService(apiClient)
 
-    private lateinit var contextPresenter: ContextPresenter
-    private lateinit var contextView: ContextView
+    private lateinit var workspacePresenter: WorkspacePresenter
+    private lateinit var workspaceView: WorkspaceView
 
     init {
 
@@ -119,14 +119,15 @@ class MainPresenter(
             logger.info { "Server ping: $pong" }
         }
 
-        scope.launch {
-            view.contextSelection.collect {
-                initContex()
-                contextPresenter.loadContext(it)
-                contextPresenter.dispose()
-                //contextView
-            }
-        }
+        // TODO is it needed for a single context?
+//        scope.launch {
+//            view.contextSelection.collect {
+//                initContex()
+//                contextPresenter.ini(it)
+//                contextPresenter.dispose()
+//                //contextView
+//            }
+//        }
 
         scope.launch {
             logger.error { "wsPort ${config.apiPort}" }
@@ -149,24 +150,25 @@ class MainPresenter(
     }
 
     fun initContex() {
-        if (::contextPresenter.isInitialized) {
-            contextPresenter.dispose()
+        if (::workspacePresenter.isInitialized) {
+            workspacePresenter.dispose()
         }
-        contextView = view.contextView()
-        contextPresenter = ContextPresenter(
+        workspaceView = view.workspaceView()
+        workspacePresenter = WorkspacePresenter(
             scope,
             Dispatchers.Default,
-            contextService,
-            contextView,
+            workspaceService,
+            workspaceView,
             golemOutputs
         )
-        view.displayContext(contextView)
+        view.displayWorkspace(workspaceView)
     }
 
     fun onContextSelected() {
 
     }
 
+    @OptIn(ExperimentalTime::class)
     private suspend fun WebSocketSession.handle(
         output: GolemOutput
     ) {
@@ -175,7 +177,6 @@ class MainPresenter(
                 logger.info { output.message }
             }
             else -> {
-                logger.info { "received $output" }
                 golemOutputs.emit(output)
             }
         }

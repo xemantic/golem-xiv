@@ -7,6 +7,7 @@ header {
     position: sticky; /* Make header sticky */
     top: 0; /* Stick to the top */
     z-index: 10; /* Ensure it's above other content */
+    backdrop-filter: blur(6px);
 }
 
 nav {

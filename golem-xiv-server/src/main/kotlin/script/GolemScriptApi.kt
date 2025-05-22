@@ -11,13 +11,13 @@ package com.xemantic.ai.golem.server.script
 import kotlinx.serialization.Serializable
 import org.neo4j.driver.Result
 
-/** The context window. */
-interface Context {
-    var title: String
-//    val startDate: Instant
-//    val updateDate: Instant
-    //var replaceThisAssistantMessageWith: String
-}
+///** The context window. */
+//interface Context {
+//    var title: String
+////    val startDate: Instant
+////    val updateDate: Instant
+//    //var replaceThisAssistantMessageWith: String
+//}
 
 /** Note: create functions will also mkdirs parents. */
 interface Files {
@@ -63,7 +63,6 @@ interface Memory {
     fun remember(block: FactBuilder.() -> Unit)
     fun <T: Any?> query(cypher: String, block: (Result) -> T): T
 }
-
 
 interface FactBuilder {
     fun subject(block: NodeBuilder.() -> Unit)

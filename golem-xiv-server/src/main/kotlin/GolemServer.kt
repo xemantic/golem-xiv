@@ -8,7 +8,7 @@
 package com.xemantic.ai.golem.server
 
 import com.xemantic.ai.golem.api.GolemOutput
-import com.xemantic.ai.golem.api.Prompt
+import com.xemantic.ai.golem.api.Phenomenon
 import com.xemantic.ai.golem.server.server.collectGolemInput
 import com.xemantic.ai.golem.server.server.sendGolemOutput
 import io.github.oshai.kotlinlogging.KLogger
@@ -41,11 +41,9 @@ import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import io.ktor.server.websocket.WebSockets
 import io.ktor.server.websocket.webSocket
-import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import org.apache.logging.log4j.LogManager
-import kotlin.uuid.Uuid
 
 val logger = KotlinLogging.logger {}
 
@@ -60,7 +58,7 @@ fun Application.module() {
 
     logger.info { "Starting Golem XIV server" }
 
-    val outputs = MutableSharedFlow<GolemOutput>()
+    val outputs = MutableSharedFlow<GolemOutput>() // TODO can we move outputs to Golem?
     val golem = Golem(outputs)
 
     monitor.subscribe(ApplicationStopPreparing) {
@@ -124,7 +122,7 @@ fun Application.module() {
         }
 
         route("/api") {
-            golemApiRoute(logger, golem, outputs)
+            golemApiRoute(logger, golem)
         }
 
         webSocket("/ws") {
@@ -179,53 +177,51 @@ fun Application.module() {
 
 fun Route.golemApiRoute(
     logger: KLogger,
-    golem: Golem,
-    outputs: FlowCollector<GolemOutput>
+    golem: Golem
 ) {
 
     get("/ping") {
         call.respondText("pong")
     }
 
-    get("/contexts") {
+    get("/workspaces") {
 //        call.respond(
 //            golem.contexts
 //        )
     }
 
-    put("/contexts") {
-        val prompt = call.receive<Prompt>()
-        val context = golem.newContext()
-        val message = context.createMessage(prompt)
-        call.respond(context.info)
-        logger.debug { "Context[${context.id}]: emitting initial message output" }
-        outputs.emit(contextId = context.id, message)
-        context.send(message)
+    put("/workspaces") {
+        val phenomena = call.receive<List<Phenomenon>>()
+        val workspace = golem.newCognitiveWorkspace()
+        val expression = workspace.structure(phenomena)
+        call.respond(workspace.id)
+        workspace.integrate(expression)
     }
 
-    patch("/contexts/{id}") {
+    patch("/workspaces/{id}") {
         logger.debug { "Updating context: start" }
-        val prompt = call.receive<Prompt>()
-        val idParameter = requireNotNull(call.parameters["id"]) { "Should never happen" }
-        val id = Uuid.parse(idParameter)
-        val context = golem.getContext(id)
-        if (context == null) {
-            call.respond(HttpStatusCode.NotFound, "resource not found $")
+        val id = requireNotNull(call.parameters["id"]) { "Should never happen" }
+        val phenomena = call.receive<List<Phenomenon>>()
+        val workspace = golem.getCognitiveWorkspace(id)
+        if (workspace == null) {
+            call.respond(
+                status = HttpStatusCode.NotFound,
+                message = "Cognitive workspace not found: $id"
+            )
         } else {
-            val message = context.createMessage(prompt)
-            call.respond(context.info)
-            outputs.emit(contextId = context.id, message)
-            context.send(message)
+            val expression = workspace.structure(phenomena)
+            call.respond("Phenomena received")
+            workspace.integrate(expression)
         }
     }
 
-    get("/contexts/{id}") {
+    get("/workspaces/{id}") {
 //        call.respond(
 //            golem.contexts
 //        )
     }
 
-    post("/contexts") {
+    post("/workspaces") {
 
     }
 

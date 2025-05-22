@@ -9,26 +9,23 @@ package com.xemantic.ai.golem.server
 
 import com.microsoft.playwright.BrowserType
 import com.microsoft.playwright.Playwright
-import com.xemantic.ai.golem.api.Content
-import com.xemantic.ai.golem.api.ContextInfo
+import com.xemantic.ai.anthropic.tool.Tool
+import com.xemantic.ai.golem.api.Agent
+import com.xemantic.ai.golem.api.Phenomenon
 import com.xemantic.ai.golem.api.GolemOutput
-import com.xemantic.ai.golem.api.Message
-import com.xemantic.ai.golem.api.Prompt
-import com.xemantic.ai.golem.api.ReasoningEvent
-import com.xemantic.ai.golem.api.Text
+import com.xemantic.ai.golem.api.Expression
+import com.xemantic.ai.golem.api.CognitionEvent
 import com.xemantic.ai.golem.server.cognition.cognizer
-import com.xemantic.ai.golem.server.kotlin.awaitEach
 import com.xemantic.ai.golem.server.kotlin.describeCurrentMoment
-import com.xemantic.ai.golem.server.neo4j.Neo4JProvider
 import com.xemantic.ai.golem.server.os.operatingSystemName
+import com.xemantic.ai.golem.server.phenomena.ExpressionAccumulator
 import com.xemantic.ai.golem.server.script.Files
 import com.xemantic.ai.golem.server.script.GOLEM_SCRIPT_API
 import com.xemantic.ai.golem.server.script.GOLEM_SCRIPT_SYSTEM_PROMPT
-import com.xemantic.ai.golem.server.script.GolemScript
+import com.xemantic.ai.golem.server.script.ExecuteGolemScript
 import com.xemantic.ai.golem.server.script.GolemScriptExecutor
 import com.xemantic.ai.golem.server.script.Memory
 import com.xemantic.ai.golem.server.script.WebBrowser
-import com.xemantic.ai.golem.server.script.extractGolemScripts
 import com.xemantic.ai.golem.server.script.service.DefaultFiles
 import com.xemantic.ai.golem.server.script.service.DefaultMemory
 import com.xemantic.ai.golem.server.script.service.DefaultWebBrowser
@@ -39,17 +36,12 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.FlowCollector
-import kotlinx.coroutines.flow.filterIsInstance
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.neo4j.driver.AuthTokens
 import org.neo4j.driver.GraphDatabase
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.collections.set
 import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
@@ -68,15 +60,17 @@ inline fun <reified T : Any> service(
     value
 )
 
-interface Context {
+interface CognitiveWorkspace {
 
-    val id: Uuid
+    val id: String
 
-    val info: ContextInfo
+    suspend fun structure(
+        phenomena: List<Phenomenon>
+    ): Expression
 
-    suspend fun createMessage(prompt: Prompt): Message
-
-    suspend fun send(message: Message)
+    suspend fun integrate(
+        expression: Expression
+    )
 
 }
 
@@ -86,13 +80,11 @@ class Golem(
 
     private val logger = KotlinLogging.logger {}
 
-    private val contextMap = ConcurrentHashMap<Uuid, Context>()
+    private val workspaceMap = ConcurrentHashMap<String, CognitiveWorkspace>()
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     private val scriptExecutor = GolemScriptExecutor()
-
-    private val neo4JProvider = Neo4JProvider()
 
     private val playwright = Playwright.create()
 
@@ -104,17 +96,18 @@ class Golem(
 
     val neo4j = GraphDatabase.driver("bolt://localhost:7687", AuthTokens.basic("neo4j", "neo4jneo4j"))
 
-    inner class DefaultContext(
-        override val id: Uuid = Uuid.random(),
+    inner class DefaultCognitiveWorkspace(
+        override val id: String = Uuid.random().toString(),
         private val systemPrompt: String,
         private val environmentSystemPrompt: String? = null,
         private val golemScriptApi: String? = null,
         private val hasGolemScriptApi: Boolean = true,
         private val creationDate: Instant = Clock.System.now()
-    ) : Context {
+    ) : CognitiveWorkspace {
 
         val golemSystem = buildList {
-            val coreSystem = systemPrompt + if (golemScriptApi != null) GOLEM_SCRIPT_SYSTEM_PROMPT else ""
+            //val coreSystem = systemPrompt + if (golemScriptApi != null) GOLEM_SCRIPT_SYSTEM_PROMPT else ""
+            val coreSystem = systemPrompt
             add(coreSystem) // TODO cach
             if (environmentSystemPrompt != null) {
                 add(environmentSystemPrompt)
@@ -124,13 +117,13 @@ class Golem(
 //            }
         }
 
-        override val info: ContextInfo get() = ContextInfo(
-            id = id,
-            title = "Untitled",
-            creationDate = Clock.System.now()
-        )
+//        override val info: CognitiveWorkspaceInfo get() = CognitiveWorkspaceInfo(
+//            id = id,
+//            title = "Untitled",
+//            creationDate = Clock.System.now()
+//        )
 
-        val conversation = mutableListOf<Message>()
+        val phenomenalFlow = mutableListOf<Expression>()
 
 //        val kotlinScriptTool = Tool<KotlinScript>(name = "kotlin_script") {
 //            //golemScriptExecutor.execute(script)
@@ -141,7 +134,7 @@ class Golem(
 
 
         val dependencies = listOf(
-            service<com.xemantic.ai.golem.server.script.Context>("context", com.xemantic.ai.golem.server.script.service.DefaultContext(scope, outputs)),
+//            service<com.xemantic.ai.golem.server.script.Context>("phenomena", com.xemantic.ai.golem.server.script.service.DefaultContext(scope, outputs)),
             service<Files>("files", DefaultFiles()),
             service<WebBrowser>("browser", DefaultWebBrowser(browser)),
             service<Memory>("memory", DefaultMemory(neo4j))
@@ -149,137 +142,235 @@ class Golem(
 ////                    service<StringEditorService>("stringEditorService", stringEditorService())
         )
 
-        override suspend fun createMessage(
-            prompt: Prompt
-        ) = Message(
-            id = Uuid.random(),
-            contextId = id,
-            content = prompt.content
+        val tool = Tool<ExecuteGolemScript> {
+            logger.debug { "Context[$id]/GolemScript, purpose: ${this.purpose}" }
+            scriptExecutor.execute(script = code)
+        }
+
+        val tools = listOf(tool)
+
+        val userAgent = Agent(
+            id = "user",
+            description = "The user",
+            category = Agent.Category.HUMAN
         )
 
-        override suspend fun send(message: Message) {
-            logger.debug { "Context[$id]/Message[${message.id}: Sending" }
-            conversation += message
+        val agent = Agent(
+            id = "golem",
+            description = "The agent",
+            category = Agent.Category.SELF,
+            model = "N/A", // TODO should be provided by cognizer
+            vendor = "N/A"
+        )
+
+        override suspend fun structure(
+            phenomena: List<Phenomenon>
+        ): Expression {
+            val now = Clock.System.now()
+            return Expression(
+                id = Uuid.random().toString(),
+                agent = userAgent,
+                phenomena = phenomena,
+                initiationMoment = now,
+                culminationMoment = now
+            )
+        }
+
+        override suspend fun integrate(
+            expression: Expression
+        ) {
+            logger.debug { "Workspace[$id]/Expression[${expression.id}: Integrating" }
+            phenomenalFlow += expression
+
+            emit(expression)
+
             scope.launch {
-                logger.debug { "Context[$id]: Reasoning" }
+                logger.debug { "Workspace[$id]: Reasoning" }
 
                 do {
 
-                    val accumulator = MessageAccumulator(contextId = id)
+                    val accumulator = ExpressionAccumulator(workspaceId = id)
 
-                    var responseMessageId: Uuid? = null
+                    val cognizer = cognizer(tools) // TODO select based on hints
 
-                    val cognizer = cognizer() // TODO select based on hints
-                    val golemScriptResults = cognizer.reason(
+                    cognizer.reason(
                         golemSystem,
-                        conversation,
+                        phenomenalFlow,
                         hints = emptyMap()
-                    ).onEach {
-                        val reasoning = GolemOutput.Reasoning(
-                            contextId = id,
-                            event = it
-                        )
-                        accumulator += it
-                        outputs.emit(reasoning)
-                    }.filterIsInstance<ReasoningEvent.TextContentDelta>(
-                    ).map {
-                        it.delta
-                    }.extractGolemScripts(
-                    ).map { script ->
-                        scope.async {
-                            runScript(message.id, script)
-                        }
-                    }.toList().awaitEach {
-
-                        if (responseMessageId == null) {
-                            responseMessageId = Uuid.random()
-                            outputs.emitReasoningEvent(
-                                ReasoningEvent.MessageStart(
-                                    messageId = responseMessageId,
-                                    role = Message.Role.USER
-                                )
-                            )
-                        }
-
-                        it?.forEach {
-                            outputs.emitReasoningEvent(
-                                ReasoningEvent.TextContentStart(responseMessageId)
-                            )
-                            outputs.emitReasoningEvent(
-                                ReasoningEvent.TextContentDelta(responseMessageId, (it as Text).text)
-                            )
-                            outputs.emitReasoningEvent(
-                                ReasoningEvent.TextContentStop(responseMessageId)
-                            )
-                        }
-                    }.filterNotNull().flatten()
-
-                    val message = accumulator.build()
-
-                    if (responseMessageId != null) {
-                        outputs.emitReasoningEvent(
-                            ReasoningEvent.MessageStop(responseMessageId)
-                        )
+                    ).collect { event ->
+                        accumulator += event
+                        emit(event)
                     }
 
-                    conversation += message
+                    val expression = accumulator.build()
 
-                    if (responseMessageId != null) {
-                        conversation += Message(
-                            id = responseMessageId,
-                            contextId = id,
-                            content = golemScriptResults
+                    phenomenalFlow += expression
+
+                    val intents = expression.phenomena.filterIsInstance<Phenomenon.Intent>()
+
+                    if (intents.isNotEmpty()) {
+
+                        val initiationMoment = Clock.System.now()
+
+                        val actualizationId = Uuid.random().toString()
+                        val agent = Agent(
+                            id = "computer",
+                            description = "user's computer",
+                            category = Agent.Category.OTHER_MACHINE
                         )
+
+                        emit(
+                            CognitionEvent.ExpressionInitiation(
+                                expressionId = actualizationId,
+                                agent = agent,
+                                moment = initiationMoment
+                            )
+                        )
+
+                        val intent = intents.first()
+
+                        emit(
+                            CognitionEvent.FulfillmentInitiation(
+                                expressionId = actualizationId,
+                            )
+                        )
+
+                        // TODO why we need this async?
+                        val deferred = scope.async {
+                            actualize(actualizationId, intent)
+                        }.await()!!
+
+                        emit(
+                            CognitionEvent.FulfillmentUnfolding(
+                                expressionId = actualizationId,
+                                designation = deferred.toString()
+                            )
+                        )
+
+                        emit(
+                            CognitionEvent.FulfillmentCulmination(
+                                expressionId = actualizationId
+                            )
+                        )
+
+                        val culminationMoment = Clock.System.now()
+
+                        val expression = Expression(
+                            id = actualizationId,
+                            agent = agent,
+                            phenomena = deferred,
+                            initiationMoment = initiationMoment,
+                            culminationMoment = culminationMoment
+                        )
+
+                        phenomenalFlow += expression
+
+                        emit(
+                            CognitionEvent.ExpressionCulmination(
+                                expressionId = actualizationId,
+                                moment = culminationMoment
+                            )
+                        )
+
                     }
 
-                } while (golemScriptResults.isNotEmpty())
+                } while (intents.isNotEmpty())
             }
         }
 
-        private suspend fun runScript(
-            messageId: Uuid,
-            script: GolemScript
-        ): List<Content>? {
+
+
+        private suspend fun actualize(
+            actualizationId: String,
+            intent: Phenomenon.Intent,
+        ): List<Phenomenon>? {
+
             logger.debug {
-                "Context[$id]/Message[${messageId}: Running GolemScript, purpose: ${script.purpose}, code: ${script.code}"
+                "Workspace[$id]/Expression[${actualizationId}: " +
+                        "Actualizing intent, purpose: ${intent.purpose}, code: ${intent.code}"
             }
+
             val result = scriptExecutor.execute(
-                script = script.code,
+                script = intent.code,
                 dependencies = dependencies
             )
-            val content = when (result) {
-                is GolemScript.Result.Value -> when(result.value) {
-                    is String -> listOf(Text(result.value))
+
+            val phenomena = when (result) {
+                is ExecuteGolemScript.Result.Value -> when(result.value) {
+                    is String -> listOf(
+                        Phenomenon.Fulfillment(
+                            id = Uuid.random().toString(),
+                            intentId = intent.id,
+                            intentSystemId = intent.systemId,
+                            result = result.value
+                        )
+                    )
                     is Unit -> null
-                    else -> listOf(Text(result.value.toString()))
+                    else -> listOf(
+                        Phenomenon.Text(
+                            id = Uuid.random().toString(),
+                            text = result.value.toString()
+                        )
+                    )
                 }
-                is GolemScript.Result.Error -> listOf(Text(
-                    "<golem-script-error>${result.message}</golem-script-error>"
+                is ExecuteGolemScript.Result.Error -> listOf(Phenomenon.Impediment(
+                    id = Uuid.random().toString(),
+                    intentId = intent.id,
+                    intentSystemId = intent.systemId,
+                    reason = result.message
                 ))
             }
-            return content
+
+            return phenomena
         }
 
-        private suspend fun FlowCollector<GolemOutput>.emitReasoningEvent(
-            event: ReasoningEvent
+        private suspend fun emit(event: CognitionEvent) {
+            outputs.emit(GolemOutput.Cognition(workspaceId = id, event))
+        }
+
+        // used to send back initial expression via websocket
+        internal suspend fun emit(
+            expression: Expression
         ) {
-            emit(GolemOutput.Reasoning(contextId = id, event))
+            emit(
+                CognitionEvent.ExpressionInitiation(
+                    expressionId = expression.id,
+                    agent = userAgent,
+                    expression.initiationMoment
+                )
+            )
+            expression.phenomena.forEach {
+                when (it) {
+                    is Phenomenon.Text -> {
+                        emit(CognitionEvent.TextInitiation(expression.id))
+                        emit(CognitionEvent.TextUnfolding(expression.id, it.text))
+                        emit(CognitionEvent.TextCulmination(expression.id))
+                    }
+                    else -> throw IllegalStateException("Unsupported content type: $it")
+                }
+            }
+            emit(
+                CognitionEvent.ExpressionCulmination(
+                    expressionId = expression.id,
+                    moment = expression.culminationMoment!!,
+                )
+            )
         }
 
     }
 
-    fun newContext(): Context {
-        val context = DefaultContext(
+    fun newCognitiveWorkspace(): CognitiveWorkspace {
+        val context = DefaultCognitiveWorkspace(
             systemPrompt = SYSTEM_PROMPT,
             environmentSystemPrompt = environmentContext(),
             golemScriptApi = GOLEM_SCRIPT_API
         )
-        contextMap[context.id] = context
+        workspaceMap[context.id] = context
         logger.debug { "Context[${context.id}]: created" }
         return context
     }
 
-    fun getContext(id: Uuid): Context? = contextMap[id]
+    fun getCognitiveWorkspace(id: String): CognitiveWorkspace? = workspaceMap[id]
 
     override fun close() {
 
@@ -305,58 +396,5 @@ class Golem(
         logger.debug { "Golem XIV closed" }
 
     }
-
-}
-
-internal suspend fun FlowCollector<GolemOutput>.emit(
-    contextId: Uuid,
-    message: Message
-) {
-    suspend fun emit(event: ReasoningEvent) {
-        emit(GolemOutput.Reasoning(contextId, event))
-    }
-    emit(ReasoningEvent.MessageStart(message.id, role = Message.Role.USER))
-    message.content.forEach {
-        when (it) {
-            is Text -> {
-                emit(ReasoningEvent.TextContentStart(message.id))
-                emit(ReasoningEvent.TextContentDelta(message.id, it.text))
-                emit(ReasoningEvent.TextContentStop(message.id))
-            }
-            else -> throw IllegalStateException("Unsupported content type: $it")
-        }
-    }
-    emit(ReasoningEvent.MessageStop(message.id))
-}
-
-class MessageAccumulator(
-    private val contextId: Uuid
-) {
-
-    private val textBuilder = StringBuilder()
-
-    private val content = mutableListOf<Content>()
-
-    private var id: Uuid? = null
-
-    operator fun plusAssign(event: ReasoningEvent) {
-        when (event) {
-            is ReasoningEvent.MessageStart -> id = event.messageId
-            is ReasoningEvent.TextContentStart -> {}
-            is ReasoningEvent.TextContentDelta -> { textBuilder.append(event.delta) }
-            is ReasoningEvent.TextContentStop -> {
-                content += Text(textBuilder.toString())
-                textBuilder.clear()
-            }
-            is ReasoningEvent.MessageStop -> {}
-            else -> {}
-        }
-    }
-
-    fun build() = Message(
-        id = id!!,
-        contextId = contextId,
-        content = content
-    )
 
 }

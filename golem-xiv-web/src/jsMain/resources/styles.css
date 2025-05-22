@@ -1,4 +1,4 @@
-@import url("context/context.css");
+@import url("workspace/workspace.css");
 @import url("navigation/header.css");
 @import url("navigation/sidebar.css");
 
@@ -24,14 +24,14 @@
     --primary-color: #a88bfa; /* Obsidian purple in dark mode */
     --primary-hover: #c4adff; /* Lighter shade for hover */
     --text-color: #dcddde;
-    --bg-color: #191919; /* Obsidian dark background */
+    --bg-color: rgba(25, 25, 25, .7); /* Obsidian dark background */
     --secondary-bg: #252525; /* Obsidian secondary background */
     --border-color: #333;
     --shadow-color: rgba(0, 0, 0, 0.3);
-    --user-msg-bg: #3b3654; /* Darker purple tint for user messages */
-    --ai-msg-bg: #2a2a2a;
+    --user-msg-bg: rgba(59, 54, 84, .7); /* Darker purple tint for user messages */
+    --ai-msg-bg: rgba(42, 42, 42, .7);
     --hover-color: #303030;
-    --input-bg: #252525;
+    --input-bg: rgba(37, 37, 37, .7);
     --disabled-color: #606060;
 }
 

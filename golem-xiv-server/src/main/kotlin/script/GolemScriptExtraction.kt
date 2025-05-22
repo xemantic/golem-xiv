@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.flow
  *
  * @return A Flow of GolemScript objects containing the purpose and content of each script tag found
  */
-fun Flow<String>.extractGolemScripts(): Flow<GolemScript> = flow {
+fun Flow<String>.extractGolemScripts(): Flow<ExecuteGolemScript> = flow {
     val buffer = StringBuilder()
     collect { chunk ->
         buffer.append(chunk)
@@ -29,7 +29,7 @@ fun Flow<String>.extractGolemScripts(): Flow<GolemScript> = flow {
  */
 private suspend fun extractScripts(
     buffer: StringBuilder,
-    emitter: FlowCollector<GolemScript>
+    emitter: FlowCollector<ExecuteGolemScript>
 ) {
     while (true) {
         // Try to find a complete script block
@@ -58,7 +58,7 @@ private suspend fun extractScripts(
 
         val content = buffer.substring(contentStart, endTagIndex).trim()
 
-        emitter.emit(GolemScript(purpose, content))
+        emitter.emit(ExecuteGolemScript(purpose, content))
 
         // Remove the processed part from the buffer
         buffer.delete(0, endTagIndex + endTag.length)

@@ -10,11 +10,10 @@ package com.xemantic.ai.golem.api
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonClassDiscriminator
-import kotlin.uuid.Uuid
 
-interface WithContextId {
+interface WithWorkspaceId {
 
-    val contextId: Uuid
+    val workspaceId: String
 
 }
 
@@ -31,42 +30,42 @@ sealed class GolemOutput {
     @Serializable
     @SerialName("message")
     data class Message (
-        override val contextId: Uuid,
-        val message: com.xemantic.ai.golem.api.Message
-    ): GolemOutput(), WithContextId
+        override val workspaceId: String,
+        val expression: Expression
+    ): GolemOutput(), WithWorkspaceId
 
     @Serializable
     @SerialName("textDelta")
     data class TextDelta (
-        override val contextId: Uuid,
+        override val workspaceId: String,
         val delta: String
-    ): GolemOutput(), WithContextId
+    ): GolemOutput(), WithWorkspaceId
 
     @Serializable
     @SerialName("osProcess")
     data class OsProcess(
-        override val contextId: Uuid,
+        override val workspaceId: String,
         val event: OsProcessEvent
-    ) : GolemOutput(), WithContextId
+    ) : GolemOutput(), WithWorkspaceId
 
     @Serializable
-    @SerialName("contextAdded")
-    data class ContextAdded(
-        override val contextId: Uuid
-    ) : GolemOutput(), WithContextId
+    @SerialName("workspaceAdded")
+    data class WorkspaceAdded(
+        override val workspaceId: String
+    ) : GolemOutput(), WithWorkspaceId
 
     @Serializable
-    @SerialName("contextUpdated")
-    data class ContextUpdated(
-        override val contextId: Uuid,
-        val info: ContextInfo
-    ) : GolemOutput(), WithContextId
+    @SerialName("workspaceUpdated")
+    data class WorkspaceUpdated(
+        override val workspaceId: String,
+//        val info: CognitiveWorkspaceInfo
+    ) : GolemOutput(), WithWorkspaceId
 
     @Serializable
     @SerialName("reasoning")
-    data class Reasoning(
-        override val contextId: Uuid,
-        val event: ReasoningEvent
-    ) : GolemOutput(), WithContextId
+    data class Cognition( // TODO cognizing?
+        override val workspaceId: String,
+        val event: CognitionEvent
+    ) : GolemOutput(), WithWorkspaceId
 
 }
