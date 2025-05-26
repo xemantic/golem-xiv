@@ -1,11 +1,13 @@
 @file:OptIn(ExperimentalKotlinGradlePluginApi::class)
 
+import com.github.gradle.node.yarn.task.YarnTask
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlin.plugin.serialization)
     alias(libs.plugins.kotlin.plugin.power.assert)
+    alias(libs.plugins.node.gradle)
 }
 
 kotlin {
@@ -56,4 +58,44 @@ powerAssert {
         "com.xemantic.kotlin.test.assert",
         "com.xemantic.kotlin.test.have"
     )
+}
+
+node {
+    download = true
+    nodeProjectDir = file("build/neo4j-browser")
+}
+
+val neo4jBrowserVersion: String = libs.versions.neo4jBrowser.get()
+
+tasks.register<Exec>("cloneNeo4JBrowser") {
+    group = "neo4j browser"
+    description = "Clones neo4j-browser repository, builds it, and copies the build to jsMain resources"
+    val cloneDir = project.layout.buildDirectory.get().asFile
+    File(cloneDir, "neo4j-browser").deleteRecursively()
+    cloneDir.mkdirs()
+    workingDir = project.layout.buildDirectory.get().asFile
+    commandLine = "git -c advice.detachedHead=false clone --branch $neo4jBrowserVersion --depth 1 https://github.com/neo4j/neo4j-browser.git".split(' ')
+}
+
+tasks.register<YarnTask>("neo4JBrowserYarnInstall") {
+    group = "neo4j browser"
+    dependsOn("cloneNeo4JBrowser")
+    args.set(listOf("install"))
+}
+
+tasks.register<YarnTask>("neo4JBrowserYarnBuild") {
+    group = "neo4j browser"
+    dependsOn("neo4JBrowserYarnInstall")
+    environment = mapOf("NODE_OPTIONS" to "--openssl-legacy-provider")
+    args.set(listOf("build"))
+}
+
+tasks.register("installNeo4JBrowser") {
+    group = "neo4j browser"
+    dependsOn("neo4JBrowserYarnBuild")
+    file("src/jsMain/resources/neo4j-browser").deleteRecursively()
+    copy {
+        from("build/neo4j-browser/dist")
+        into("src/jsMain/resources/neo4j-browser")
+    }
 }

@@ -2,7 +2,7 @@
 kotlinTarget = "2.1"
 javaTarget = "17"
 
-kotlin = "2.1.20"
+kotlin = "2.1.21"
 kotlinxSerialization = "1.8.1"
 kotlinxCoroutines = "1.10.2"
 kotlinxHtml = "0.12.0"
@@ -16,6 +16,7 @@ ktor = "3.1.3"
 playwright = "1.51.0"
 dashscope = "2.19.5"
 neo4j = "2025.04.0"
+neo4jBrowser = "2025.2.0"
 neo4jDriver = "5.28.5"
 
 log4j = "2.24.1"
@@ -26,6 +27,7 @@ dokkaPlugin = "2.0.0"
 jreleaserPlugin = "1.16.0"
 binaryCompatibilityValidatorPlugin = "0.17.0"
 xemanticConventionsPlugin = "0.3.1"
+nodeGradle = "7.1.0"
 
 
 [libraries]
@@ -51,7 +53,7 @@ dashscope = { module = "com.alibaba:dashscope-sdk-java", version.ref = "dashscop
 
 neo4j = { module = "org.neo4j:neo4j", version.ref = "neo4j" }
 neo4j-java-driver = { module = "org.neo4j.driver:neo4j-java-driver", version.ref = "neo4jDriver" }
-neo4j-test-harness = { module = "org.neo4j.test:neo4j-harness", version.ref = "neo4j" }
+neo4j-harness = { module = "org.neo4j.test:neo4j-harness", version.ref = "neo4j" }
 
 ktor-websockets = { module = "io.ktor:ktor-websockets", version.ref = "ktor" }
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
@@ -86,6 +88,7 @@ jreleaser = { id = "org.jreleaser", version.ref = "jreleaserPlugin" }
 xemantic-conventions = { id = "com.xemantic.gradle.xemantic-conventions", version.ref = "xemanticConventionsPlugin" }
 kotlin-plugin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ktor-plugin = { id = "io.ktor.plugin", version.ref = "ktor" }
+node-gradle = { id = "com.github.node-gradle.node", version.ref = "nodeGradle" }
 
 # Plugins defined by this project
 golem-jvm-library = { id = "golem.jvm.library" }
