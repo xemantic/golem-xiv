@@ -1,5 +1,6 @@
 @file:OptIn(ExperimentalKotlinGradlePluginApi::class)
 
+import groovy.json.StringEscapeUtils
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 
 plugins {
@@ -87,7 +88,7 @@ dependencies {
     testImplementation(libs.kotlin.test)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.xemantic.kotlin.test)
-    testImplementation(libs.neo4j.test.harness)
+    testImplementation(libs.neo4j.harness)
 
     implementation("com.vladsch.flexmark:flexmark:0.64.8")
     implementation("com.vladsch.flexmark:flexmark-html2md-converter:0.64.8")
@@ -117,12 +118,10 @@ tasks.register("generateGolemScriptApi") {
         generatedSourcesDir.get().asFile.mkdirs()
 
         // Read the source file
-        val sourceContent = file(sourceFile).readText()
-            .substringAfter("*/")
-            .replace("\"", "\\\"") // Escape quotes
-            .replace("\n", "\\n") // Handle newlines
+        val sourceInput = file(sourceFile).readText().substringAfter("*/")
+        val sourceContent: String = StringEscapeUtils.escapeJava(sourceInput).replace("$", "${'$'}{'${'$'}'}")
 
-        // Generate Kotlin file with the source as a string constant
+        // Generate the Kotlin file with the source as a string constant
         file("${generatedSourcesDir.get()}/GeneratedGolemServiceApi.kt").writeText("""
             package $packageName
 

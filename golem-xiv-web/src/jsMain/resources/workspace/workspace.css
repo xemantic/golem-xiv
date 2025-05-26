@@ -1,4 +1,14 @@
 .workspace {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    max-width: 1000px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 2rem;
+    /* Changed from overflow-y: auto to overflow-y: visible to use body's scroll */
+    overflow-y: visible;
+    position: relative;
     display: flex;
     flex-direction: column;
     flex: 1;

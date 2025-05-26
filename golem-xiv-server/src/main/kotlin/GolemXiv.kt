@@ -21,13 +21,12 @@ import com.xemantic.ai.golem.server.os.operatingSystemName
 import com.xemantic.ai.golem.server.phenomena.ExpressionAccumulator
 import com.xemantic.ai.golem.server.script.Files
 import com.xemantic.ai.golem.server.script.GOLEM_SCRIPT_API
-import com.xemantic.ai.golem.server.script.GOLEM_SCRIPT_SYSTEM_PROMPT
 import com.xemantic.ai.golem.server.script.ExecuteGolemScript
 import com.xemantic.ai.golem.server.script.GolemScriptExecutor
 import com.xemantic.ai.golem.server.script.Memory
 import com.xemantic.ai.golem.server.script.WebBrowser
 import com.xemantic.ai.golem.server.script.service.DefaultFiles
-import com.xemantic.ai.golem.server.script.service.DefaultMemory
+import com.xemantic.ai.golem.server.memory.DefaultMemory
 import com.xemantic.ai.golem.server.script.service.DefaultWebBrowser
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CoroutineScope
@@ -94,7 +93,8 @@ class Golem(
         )!!
     }
 
-    val neo4j = GraphDatabase.driver("bolt://localhost:7687", AuthTokens.basic("neo4j", "neo4jneo4j"))
+    // TODO conditional config here
+    val neo4j = GraphDatabase.driver("bolt://localhost:7687", AuthTokens.none())
 
     inner class DefaultCognitiveWorkspace(
         override val id: String = Uuid.random().toString(),
@@ -142,6 +142,7 @@ class Golem(
 ////                    service<StringEditorService>("stringEditorService", stringEditorService())
         )
 
+        // TODO it can be done once
         val tool = Tool<ExecuteGolemScript> {
             logger.debug { "Context[$id]/GolemScript, purpose: ${this.purpose}" }
             scriptExecutor.execute(script = code)

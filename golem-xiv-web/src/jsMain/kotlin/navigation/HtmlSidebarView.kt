@@ -10,6 +10,7 @@ package com.xemantic.ai.golem.web.navigation
 import com.xemantic.ai.golem.presenter.Theme
 import com.xemantic.ai.golem.presenter.navigation.SidebarView
 import com.xemantic.ai.golem.presenter.util.Action
+import com.xemantic.ai.golem.web.js.actions
 import com.xemantic.ai.golem.web.js.ariaLabel
 import com.xemantic.ai.golem.web.js.clicks
 import com.xemantic.ai.golem.web.js.icon
@@ -48,19 +49,26 @@ class HtmlSidebarView() : SidebarView, HtmlView {
         )
     }
 
-    override val element = html.aside("sidebar") {
+    private val knowledgeGraphButton = html.button(classes = "new-chat-btn") {
+        icon("database"); +" Knowledge Graph"
+    }
+
+    override val element = html.aside("sidebar sidebar-hidden") {
         div("sidebar-header") {
             h2("Conversation")
             button(classes = "new-chat-btn") {
-                icon("plus"); +" New Chat"
+                icon("plus"); +" New Cognitive Workspace"
             }
         }
         div("sidebar-content")
         div("sidebar-footer")
     }.inject(
+        knowledgeGraphButton to ".sidebar-header",
         conversationList to ".sidebar-content",
         toggleThemeButton to ".sidebar-footer"
     )
+
+    override val memoryActions: Flow<Action> = knowledgeGraphButton.actions()
 
     override var opened: Boolean = false
         get() = field

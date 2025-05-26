@@ -13,6 +13,7 @@ import com.xemantic.ai.golem.api.GolemOutput
 import com.xemantic.ai.golem.api.CognitionEvent
 import com.xemantic.ai.golem.api.Phenomenon
 import com.xemantic.ai.golem.api.service.CognitiveWorkspaceService
+import com.xemantic.ai.golem.presenter.ScreenView
 import com.xemantic.ai.golem.presenter.util.Action
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CoroutineDispatcher
@@ -44,7 +45,7 @@ interface IntentAppender {
 
 }
 
-interface WorkspaceView {
+interface WorkspaceView : ScreenView {
 
     fun addExpression(expression: Expression)
 

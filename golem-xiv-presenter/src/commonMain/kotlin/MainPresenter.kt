@@ -11,13 +11,16 @@ import com.xemantic.ai.golem.api.GolemInput
 import com.xemantic.ai.golem.api.GolemOutput
 import com.xemantic.ai.golem.api.service.ClientCognitiveWorkspaceService
 import com.xemantic.ai.golem.api.service.ClientPingService
+import com.xemantic.ai.golem.presenter.memory.MemoryView
 import com.xemantic.ai.golem.presenter.navigation.HeaderPresenter
 import com.xemantic.ai.golem.presenter.navigation.HeaderView
+import com.xemantic.ai.golem.presenter.navigation.Navigation
 import com.xemantic.ai.golem.presenter.navigation.SidebarPresenter
 import com.xemantic.ai.golem.presenter.navigation.SidebarView
 import com.xemantic.ai.golem.presenter.phenomena.WorkspacePresenter
 import com.xemantic.ai.golem.presenter.phenomena.WorkspaceView
 import com.xemantic.ai.golem.presenter.util.Action
+import com.xemantic.ai.golem.presenter.util.listen
 import com.xemantic.ai.golem.presenter.websocket.sendToGolem
 import com.xemantic.ai.golem.presenter.websocket.collectGolemOutput
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -29,6 +32,7 @@ import io.ktor.client.plugins.websocket.webSocket
 import io.ktor.http.URLProtocol
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.websocket.WebSocketSession
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.Flow
@@ -40,9 +44,9 @@ interface MainView {
 
     fun theme(theme: Theme)
 
-    fun workspaceView(): WorkspaceView
+    fun workspaceView(): WorkspaceView // TODO maybe factory should be outside?
 
-    fun displayWorkspace(view: WorkspaceView)
+    fun display(view: ScreenView)
 
     val resizes: Flow<Action>
 
@@ -50,11 +54,16 @@ interface MainView {
 
 }
 
+interface ScreenView
+
 class MainPresenter(
     private val config: Config,
     private val view: MainView,
     headerView: HeaderView,
     private val sidebarView: SidebarView,
+    private val navigation: Navigation,
+    private val navigationTargets: Flow<Navigation.Target>,
+    private val memoryViewProvider: () -> MemoryView
 ) {
 
     private val logger = KotlinLogging.logger {}
@@ -67,6 +76,16 @@ class MainPresenter(
     )
 
     private val scope = MainScope()
+
+    fun <T> Flow<T>.listen(
+        block: suspend CoroutineScope.(T) -> Unit
+    ) {
+        scope.launch {
+            collect {
+                block(it)
+            }
+        }
+    }
 
     private val apiClient = HttpClient {
         install(WebSockets)
@@ -84,6 +103,8 @@ class MainPresenter(
 
     private val toggleFlow = MutableSharedFlow<Action>()
 
+    private val memoryView by lazy { memoryViewProvider() }
+
     val headerPresenter = HeaderPresenter(
         scope,
         headerView,
@@ -93,7 +114,8 @@ class MainPresenter(
     val sidebarPresenter = SidebarPresenter(
         scope,
         sidebarView,
-        toggles = toggleFlow
+        toggles = toggleFlow,
+        navigation
     )
 
     private val golemInput = MutableSharedFlow<GolemInput>()
@@ -107,11 +129,19 @@ class MainPresenter(
     private lateinit var workspaceView: WorkspaceView
 
     init {
-
-        scope.launch {
-            sidebarView.themeChanges.collect {
-                view.theme(it)
+        navigationTargets.listen(scope) {
+            when (it) {
+                is Navigation.Target.KnowledgeGraph -> {
+                    view.display(memoryView)
+                }
+                is Navigation.Target.CognitiveWorkspace -> {
+                }
             }
+            sidebarView.opened = false
+        }
+
+        sidebarView.themeChanges.listen {
+            view.theme(it)
         }
 
         scope.launch {
@@ -161,7 +191,7 @@ class MainPresenter(
             workspaceView,
             golemOutputs
         )
-        view.displayWorkspace(workspaceView)
+        view.display(workspaceView)
     }
 
     fun onContextSelected() {

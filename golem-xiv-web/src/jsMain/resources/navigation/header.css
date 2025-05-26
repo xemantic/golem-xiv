@@ -1,20 +1,22 @@
 /* Navigation bar - Updated for centered title */
 header {
+    display: flex;
+    align-items: center;
+    height: var(--header-height);
     background-color: var(--bg-color);
     border-bottom: 1px solid var(--border-color);
-    padding: 1rem 2rem;
+    padding: var(--inset-padding);
     box-shadow: 0 2px 5px var(--shadow-color);
     position: sticky; /* Make header sticky */
     top: 0; /* Stick to the top */
     z-index: 10; /* Ensure it's above other content */
-    backdrop-filter: blur(6px);
+    backdrop-filter: blur(var(--blur-scale));
 }
 
 nav {
     display: grid;
     grid-template-columns: 1fr auto 1fr;
     align-items: center;
-    max-width: 1200px;
     margin: 0 auto;
     width: 100%;
 }
