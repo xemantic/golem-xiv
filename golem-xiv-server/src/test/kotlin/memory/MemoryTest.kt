@@ -5,7 +5,7 @@
  * Unauthorized reproduction or distribution is prohibited.
  */
 
-package com.xemantic.ai.golem.server.script.service
+package com.xemantic.ai.golem.server.memory
 
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -23,21 +23,26 @@ class MemoryTest {
     fun rememberFact(neo4j: Neo4j) = testWithNeo4jDriver(neo4j) { driver ->
         val memory = DefaultMemory(driver)
         memory.remember {
-            subject {
+            val john = node {
                 type = "Person"
                 properties(
                     "name" to "John Smith"
                 )
             }
-            predicate = "worksAt"
-            target {
+            val acme = node {
                 type = "Organization"
                 properties(
                     "name" to "Acme"
                 )
             }
-            properties("foo" to "bar")
-            source = "Context[123]/Message[456]"
+            val worksAt = relationship {
+                subject = john
+                predicate = "worksAt"
+                target = acme
+                source = "Conversation with John"
+                confidence = 1.0
+            }
+            "john: $john, acme: $acme, worksAt: $worksAt"
         }
 
         memory.query("""

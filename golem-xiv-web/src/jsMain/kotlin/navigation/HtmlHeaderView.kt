@@ -20,13 +20,15 @@ import kotlinx.html.js.header
 
 class HtmlHeaderView() : HeaderView, HtmlView {
 
-    private val themeIcon = html.button(classes = "menu-toggle") {
+    private val menuButton = html.button(classes = "menu-toggle") {
         ariaLabel = "Toggle sidebar menu"
         icon("bars")
     }
 
     override val element = html.header {
         nav {
+            role = "navigation"
+            ariaLabel = "Main navigation"
             div("nav-left")
             div("nav-center") {
                 div("logo") {
@@ -38,9 +40,9 @@ class HtmlHeaderView() : HeaderView, HtmlView {
             }
         }
     }.inject(
-        themeIcon to ".nav-left"
+        menuButton to ".nav-left"
     )
 
-    override val toggleMenuClicks: Flow<Action> = themeIcon.actions()
+    override val toggleMenuClicks: Flow<Action> = menuButton.actions()
 
 }

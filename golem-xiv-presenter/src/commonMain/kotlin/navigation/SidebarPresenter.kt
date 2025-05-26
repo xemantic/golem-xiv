@@ -9,13 +9,15 @@ package com.xemantic.ai.golem.presenter.navigation
 
 import com.xemantic.ai.golem.presenter.Theme
 import com.xemantic.ai.golem.presenter.util.Action
+import com.xemantic.ai.golem.presenter.util.ScopedPresenter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.launch
 
 interface SidebarView {
 
     val themeChanges: Flow<Theme>
+
+    val memoryActions: Flow<Action>
 
     val resizes: Flow<Action>
 
@@ -28,29 +30,26 @@ interface SidebarView {
 class SidebarPresenter(
     scope: CoroutineScope,
     view: SidebarView,
-    toggles: Flow<Action>
-) {
+    toggles: Flow<Action>,
+    navigation: Navigation
+) : ScopedPresenter(scope) {
 
     var opened: Boolean = false
 
     init {
-        scope.launch {
-            toggles.collect {
-                println("toggle collected1")
-                opened = !opened
-                view.opened = opened
-            }
+        toggles.listen {
+            opened = !opened
+            view.opened = opened
         }
-        scope.launch {
-            view.resizes.collect {
-                opened = false
-                view.opened = opened
-            }
+        view.resizes.listen {
+            opened = false
+            view.opened = opened
         }
-        scope.launch {
-            view.themeChanges.collect {
-                view.theme(it)
-            }
+        view.themeChanges.listen {
+            view.theme(it)
+        }
+        view.memoryActions.listen {
+            navigation.navigate(Navigation.Target.KnowledgeGraph)
         }
     }
 

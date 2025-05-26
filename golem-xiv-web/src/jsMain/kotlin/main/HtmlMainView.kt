@@ -8,6 +8,7 @@
 package com.xemantic.ai.golem.web.main
 
 import com.xemantic.ai.golem.presenter.MainView
+import com.xemantic.ai.golem.presenter.ScreenView
 import com.xemantic.ai.golem.presenter.Theme
 import com.xemantic.ai.golem.presenter.phenomena.WorkspaceView
 import com.xemantic.ai.golem.presenter.util.Action
@@ -29,24 +30,18 @@ import org.w3c.dom.events.Event
 class HtmlMainView(
     private val body: HTMLElement,
     headerView: HtmlHeaderView,
-    sidebarView: HtmlSidebarView,
+    private val sidebarView: HtmlSidebarView,
 ): MainView {
-
-    private val sidebarView = HtmlSidebarView()
 
     private val mainElement = document.create.main()
 
     private val overlayElement = document.create.div("overlay")
 
     init {
-        val mainContainer = document.create.div("main-container")
-        mainContainer.append(
-            headerView.element,
-            mainElement
-        )
         body.append(
+            headerView.element,
             sidebarView.element,
-            mainContainer,
+            mainElement,
             overlayElement
         )
         val savedTheme = localStorage.getItem("theme")?.let {
@@ -69,9 +64,9 @@ class HtmlMainView(
         sidebarView.theme(theme)
     }
 
-    override fun workspaceView(): WorkspaceView = HtmlWorkspaceView()
+    override fun workspaceView(): WorkspaceView = HtmlWorkspaceView() // TODO move the factory outside
 
-    override fun displayWorkspace(view: WorkspaceView) {
+    override fun display(view: ScreenView) {
         mainElement.innerHTML = ""
         mainElement.append((view as HtmlView).element)
     }

@@ -5,19 +5,18 @@
  * Unauthorized reproduction or distribution is prohibited.
  */
 
-// TODO count how much comment, to preserve lines in case of errors here
 package com.xemantic.ai.golem.server.script
 
 import kotlinx.serialization.Serializable
 import org.neo4j.driver.Result
 
-///** The context window. */
-//interface Context {
-//    var title: String
-////    val startDate: Instant
-////    val updateDate: Instant
-//    //var replaceThisAssistantMessageWith: String
-//}
+/** The context window. */
+interface Context {
+    var title: String
+//    val startDate: Instant
+//    val updateDate: Instant
+    //var replaceThisAssistantMessageWith: String
+}
 
 /** Note: create functions will also mkdirs parents. */
 interface Files {
@@ -39,45 +38,78 @@ interface WebBrowser {
 
 interface Memory {
     /**
-     * Example usage:
+     * Remembers facts.
      *
+     * Example usage:
      * ```
      * memory.remember {
-     *     subject {
+     *     val john = node {
      *         type = "Person"
      *         properties(
      *             "name" to "John Smith"
+     *             "email" to "john@exemaple.com"
      *         )
      *     }
-     *     predicate = "worksAt"
-     *     target {
+     *     val acme = node {
      *         type = "Organization"
      *         properties(
      *             "name" to "Acme",
-     *             "hq" to "Berlin"
+     *             "foundingDate" to LocalDate.of(1987, 4, 1)
      *         )
      *     }
+     *     val worksFor = relationship {
+     *         subject = john
+     *         predicate = "worksFor"
+     *         target = acme
+     *         source = "Conversation with John"
+     *     }
+     *     // return ids, so they can be referenced when storing next facts or updating
+     *     "john: $john, acme: $acme, worksFor: $worksFor"
      * }
      * ```
+     *
+     * @param block the memory builder DSL.
+     * @return the final String expression of the DSL.
      */
-    fun remember(block: FactBuilder.() -> Unit)
+    fun remember(block: MemoryBuilder.() -> String): String
     fun <T: Any?> query(cypher: String, block: (Result) -> T): T
+    fun <T: Any?> modify(cypher: String, block: (Result) -> T): T
 }
 
-interface FactBuilder {
-    fun subject(block: NodeBuilder.() -> Unit)
-    /** Naming according to schema.org, e.g. worksFor, memberOf, sameAs */
-    var predicate: String?
-    fun target(block: NodeBuilder.() -> Unit)
+interface MemoryBuilder {
+    /**
+     * Creates a node.
+     *
+     * @return node id.
+     */
+    fun node(block: NodeBuilder.() -> Unit): Long
+    /**
+     * Creates a relationship.
+     *
+     * @return relationship id.
+     */
+    fun relationship(block: RelationshipBuilder.() -> Unit): Long
+}
+
+interface WithProperties {
     fun properties(vararg props: Pair<String, Any>)
+}
+
+interface NodeBuilder : WithProperties {
+    var type: String?
+    val additionalTypes: MutableList<String>
+}
+
+/** All parameters are required, unless stated otherwise. */
+interface RelationshipBuilder : WithProperties {
+    /** Subject node id. */
+    var subject: Long?
+    /** Naming according to schema.org, e.g., worksFor, memberOf, sameAs */
+    var predicate: String?
+    /** Target node id. */
+    var target: Long?
     /** The sources of the fact */
     var source: String?
     /** Optional confidence level in the 0-1 range, defaults to 1 if not specified */
-    var confidence: Double
-}
-
-interface NodeBuilder {
-    var type: String?
-    val additionalTypes: MutableList<String>
-    fun properties(vararg props: Pair<String, Any>)
+    var confidence: Double?
 }
