@@ -1,9 +1,12 @@
 @import url("workspace/workspace.css");
 @import url("navigation/header.css");
 @import url("navigation/sidebar.css");
+@import url("memory/memory.css");
 
 /* Base styles and variables - Updated with Obsidian-inspired purple accents */
 :root {
+    --header-height: 3rem;
+    --inset-padding: .1rem;
     --primary-color: #9b8aff; /* Obsidian purple accent */
     --primary-hover: #b5a5ff; /* Lighter purple for hover states */
     --text-color: #333;
@@ -17,6 +20,7 @@
     --input-bg: #fff;
     --sidebar-width: 280px;
     --disabled-color: #c0c0c0;
+    --blur-scale: .3rem;
 }
 
 /* Dark theme - Obsidian inspired */
@@ -92,16 +96,8 @@ body {
 
 /* Main chat area */
 main {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    max-width: 1000px;
-    width: 100%;
-    margin: 0 auto;
-    padding: 2rem;
-    /* Changed from overflow-y: auto to overflow-y: visible to use body's scroll */
-    overflow-y: visible;
-    position: relative;
+    height: 100%;
+    overflow: hidden;
 }
 
 @keyframes fadeIn {
