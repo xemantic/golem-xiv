@@ -11,66 +11,57 @@ import com.xemantic.ai.golem.presenter.Theme
 import com.xemantic.ai.golem.presenter.navigation.SidebarView
 import com.xemantic.ai.golem.presenter.util.Action
 import com.xemantic.ai.golem.web.js.actions
-import com.xemantic.ai.golem.web.js.ariaLabel
-import com.xemantic.ai.golem.web.js.clicks
-import com.xemantic.ai.golem.web.js.icon
+import com.xemantic.ai.golem.web.ui.button
+import com.xemantic.ai.golem.web.ui.link
 import com.xemantic.ai.golem.web.js.resizes
 import com.xemantic.ai.golem.web.util.inject
-import com.xemantic.ai.golem.web.view.HtmlView
+import com.xemantic.ai.golem.web.view.HasRootHtmlElement
+import kotlinx.browser.document
 import kotlinx.browser.window
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.html.*
+import kotlinx.html.dom.create
 
-class HtmlSidebarView() : SidebarView, HtmlView {
+class HtmlSidebarView() : SidebarView, HasRootHtmlElement {
 
     private var theme: Theme = Theme.LIGHT
 
-    private val conversationList = html.ul("conversation-list") {
-        li("no-conversations") {
+    private val conversationList = document.create.ul("workspace-list") {
+        li("no-cognitions") {
             +"No cognitions initiated"
         }
     }
 
-    private val themeIcon = html.i("fas fa-moon")
 
-    private val themeLabel = html.span {
-        +"Toggle Theme"
-    }
+    private val initiateCognitionButton = button(
+        label = "Initiate cognition",
+        icon = "network_intel_node",
+        ariaLabel = "Initiate cognitive process"
+    )
 
-    private val toggleThemeButton = html.button(
-        classes = "theme-toggle"
-    ) {
-        ariaLabel = "Toggle dark/light theme"
-    }.apply {
-        append(
-            themeIcon,
-            themeLabel
-        )
-    }
+    private val memoryLink = link(
+        label = "Memory",
+        icon = "graph_3",
+        ariaLabel = "Open memory graph"
+    )
 
-    private val knowledgeGraphButton = html.button(classes = "new-chat-btn") {
-        icon("database"); +" Memory"
-    }
+    private val themeSwitcher = ThemeSwitcher()
 
-    private val newCognitionButton = html.button(classes = "new-chat-btn") {
-        icon("plus"); +" Initiate cognition"
-    }
-
-    override val element = html.aside("sidebar sidebar-hidden") {
+    override val element = document.create.aside("sidebar sidebar-hidden") {
         div("sidebar-header") {
             h2("Conversation")
         }
         div("sidebar-content")
         div("sidebar-footer")
     }.inject(
-        newCognitionButton to ".sidebar-header",
-        knowledgeGraphButton to ".sidebar-header",
+        initiateCognitionButton to ".sidebar-header",
+        memoryLink to ".sidebar-header",
         conversationList to ".sidebar-content",
-        toggleThemeButton to ".sidebar-footer"
+        themeSwitcher.element to ".sidebar-footer"
     )
 
-    override val memoryActions: Flow<Action> = knowledgeGraphButton.actions()
+    override val memoryActions: Flow<Action> = memoryLink.actions()
 
     override var opened: Boolean = false
         get() = field
@@ -79,17 +70,9 @@ class HtmlSidebarView() : SidebarView, HtmlView {
             updateVisibility()
         }
 
+    // TODO should be a separate component
     override fun theme(theme: Theme) {
-        when (theme) {
-            Theme.LIGHT -> {
-                themeIcon.className = "fas fa-sun"
-                themeLabel.textContent = "Light Mode"
-            }
-            Theme.DARK -> {
-                themeIcon.className = "fas fa-moon"
-                themeLabel.textContent = "Dark Mode"
-            }
-        }
+        themeSwitcher.theme = theme
         this.theme = theme
     }
 
@@ -103,7 +86,7 @@ class HtmlSidebarView() : SidebarView, HtmlView {
         )
     }
 
-    override val themeChanges: Flow<Theme> = toggleThemeButton.clicks().map {
+    override val themeChanges: Flow<Theme> = themeSwitcher.actions.map {
         when (theme) {
             Theme.LIGHT -> Theme.DARK
             Theme.DARK -> Theme.LIGHT

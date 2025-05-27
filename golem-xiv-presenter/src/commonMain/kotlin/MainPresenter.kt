@@ -18,7 +18,7 @@ import com.xemantic.ai.golem.presenter.navigation.Navigation
 import com.xemantic.ai.golem.presenter.navigation.SidebarPresenter
 import com.xemantic.ai.golem.presenter.navigation.SidebarView
 import com.xemantic.ai.golem.presenter.phenomena.WorkspacePresenter
-import com.xemantic.ai.golem.presenter.phenomena.WorkspaceView
+import com.xemantic.ai.golem.presenter.phenomena.CognitiveWorkspaceView
 import com.xemantic.ai.golem.presenter.util.Action
 import com.xemantic.ai.golem.presenter.util.listen
 import com.xemantic.ai.golem.presenter.websocket.sendToGolem
@@ -44,7 +44,7 @@ interface MainView {
 
     fun theme(theme: Theme)
 
-    fun workspaceView(): WorkspaceView // TODO maybe factory should be outside?
+    fun workspaceView(): CognitiveWorkspaceView // TODO maybe factory should be outside?
 
     fun display(view: ScreenView)
 
@@ -126,7 +126,7 @@ class MainPresenter(
     private val workspaceService = ClientCognitiveWorkspaceService(apiClient)
 
     private lateinit var workspacePresenter: WorkspacePresenter
-    private lateinit var workspaceView: WorkspaceView
+    private lateinit var cognitiveWorkspaceView: CognitiveWorkspaceView
 
     init {
         navigationTargets.listen(scope) {
@@ -183,15 +183,15 @@ class MainPresenter(
         if (::workspacePresenter.isInitialized) {
             workspacePresenter.dispose()
         }
-        workspaceView = view.workspaceView()
+        cognitiveWorkspaceView = view.workspaceView()
         workspacePresenter = WorkspacePresenter(
             scope,
             Dispatchers.Default,
             workspaceService,
-            workspaceView,
+            cognitiveWorkspaceView,
             golemOutputs
         )
-        view.display(workspaceView)
+        view.display(cognitiveWorkspaceView)
     }
 
     fun onContextSelected() {

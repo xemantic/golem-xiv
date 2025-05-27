@@ -1,17 +1,27 @@
-@import url("workspace/workspace.css");
-@import url("navigation/header.css");
-@import url("navigation/sidebar.css");
-@import url("memory/memory.css");
+/*
+TODO this should be locally served in the future, possibly constructed only out of the icons in use
 
-/* Base styles and variables - Updated with Obsidian-inspired purple accents */
+https://developers.google.com/fonts/docs/material_symbols
+
+*/
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined');
+@import url("ui/ActionButton.css");
+@import url("ui/IconButton.css");
+@import url("ui/NavigationLink.css");
+@import url("ui/Scrollbar.css");
+@import url("navigation/Header.css");
+@import url("navigation/Sidebar.css");
+@import url("workspace/CognitiveWorkspace.css");
+@import url("memory/Memory.css");
+
 :root {
     --header-height: 3rem;
+    --main-height: calc(100vh - var(--header-height));
     --inset-padding: .1rem;
     --primary-color: #9b8aff; /* Obsidian purple accent */
     --primary-hover: #b5a5ff; /* Lighter purple for hover states */
     --text-color: #333;
     --bg-color: #ffffff;
-    --secondary-bg: #f5f5f5;
     --border-color: #e0e0e0;
     --shadow-color: rgba(0, 0, 0, 0.1);
     --user-msg-bg: #e8e8fd;
@@ -21,6 +31,7 @@
     --sidebar-width: 280px;
     --disabled-color: #c0c0c0;
     --blur-scale: .3rem;
+    --cognitive-workspace-width: 50rem;
 }
 
 /* Dark theme - Obsidian inspired */
@@ -29,7 +40,6 @@
     --primary-hover: #c4adff; /* Lighter shade for hover */
     --text-color: #dcddde;
     --bg-color: rgba(25, 25, 25, .7); /* Obsidian dark background */
-    --secondary-bg: #252525; /* Obsidian secondary background */
     --border-color: #333;
     --shadow-color: rgba(0, 0, 0, 0.3);
     --user-msg-bg: rgba(59, 54, 84, .7); /* Darker purple tint for user messages */
@@ -52,41 +62,8 @@ body {
     color: var(--text-color);
     line-height: 1.6;
     height: 100vh;
-    display: flex;
-    flex-direction: column;
     overflow-x: hidden; /* Changed from hidden to auto to allow vertical scroll */
-    position: relative; /* Ensure body is a positioning context */
-    overflow-y: auto; /* Enabling vertical scroll */
-}
-
-
-
-/* Overlay for when sidebar is open on mobile */
-.overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 999;
-    display: none;
-}
-
-.overlay-visible {
-    display: block;
-}
-
-/* Main container */
-.main-container {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    height: 100vh;
-    position: relative;
-    transition: margin-left 0.3s ease;
-    margin-left: 0; /* Default state */
-    overflow-x: hidden; /* Prevent horizontal overflow */
+    overflow-y: hidden; /* Enabling vertical scroll */
 }
 
 /* Main container with sidebar open (desktop) */
@@ -94,10 +71,8 @@ body {
     margin-left: var(--sidebar-width);
 }
 
-/* Main chat area */
 main {
     height: 100%;
-    overflow: hidden;
 }
 
 @keyframes fadeIn {
@@ -137,31 +112,4 @@ main {
         transform: translateX(-100%);
     }
 
-}
-
-button:disabled {
-    color: var(--disabled-color) !important;
-    cursor: not-allowed !important;
-}
-
-/* Light theme scrollbars */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: var(--primary-color) transparent;
-}
-
-/* WebKit/Blink browsers */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background-color: var(--primary-color);
-  border-radius: 6px;
-  border: 2px solid  transparent;
 }

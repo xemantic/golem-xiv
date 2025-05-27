@@ -2,9 +2,8 @@
 .sidebar {
     width: var(--sidebar-width);
     top: var(--header-height);
-    height: calc(100vh - var(--header-height));
-    height: 100vh;
-    background-color: var(--secondary-bg);
+    height: var(--main-height);
+    background-color: var(--bg-color);
     border-right: 1px solid var(--border-color);
     position: fixed;
     left: 0;
@@ -38,26 +37,6 @@
 .sidebar-header h2 {
     font-size: 1.25rem;
     font-weight: 600;
-}
-
-.new-chat-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    background-color: var(--primary-color);
-    color: white;
-    border: none;
-    border-radius: 4px;
-    padding: 0.75rem;
-    cursor: pointer;
-    width: 100%;
-    font-size: 0.9rem;
-}
-
-.new-chat-btn:hover {
-    background-color: var(--primary-hover);
-    opacity: 0.9;
 }
 
 /* Added sidebar footer for theme toggle */
@@ -97,7 +76,7 @@
     overflow-y: auto;
 }
 
-#conversation-list {
+#workspace-list {
     list-style: none;
 }
 
@@ -111,38 +90,7 @@
     font-size: 0.9rem;
 }
 
-#conversation-list li:hover {
-    background-color: var(--hover-color);
-}
-
-#conversation-list li.active {
-    border-left-color: var(--primary-color);
-    background-color: var(--hover-color);
-    font-weight: 500;
-}
-
-#conversation-list li .conversation-title {
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-#conversation-list li .delete-conversation {
-    color: var(--text-color);
-    opacity: 0.5;
-    display: none;
-}
-
-#conversation-list li:hover .delete-conversation {
-    display: block;
-}
-
-#conversation-list li .delete-conversation:hover {
-    opacity: 1;
-}
-
-.no-conversations {
+.no-cognitions {
     color: var(--text-color);
     opacity: 0.6;
     font-style: italic;
