@@ -45,7 +45,7 @@ interface IntentAppender {
 
 }
 
-interface WorkspaceView : ScreenView {
+interface CognitiveWorkspaceView : ScreenView {
 
     fun addExpression(expression: Expression)
 
@@ -77,7 +77,7 @@ class WorkspacePresenter(
     mainScope: CoroutineScope,
     private val ioDispatcher: CoroutineDispatcher,
     private val cognitiveWorkspaceService: CognitiveWorkspaceService,
-    private val view: WorkspaceView,
+    private val view: CognitiveWorkspaceView,
     private val golemOutputs: Flow<GolemOutput>
 ) {
 

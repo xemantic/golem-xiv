@@ -8,13 +8,15 @@
 package com.xemantic.ai.golem.web.memory
 
 import com.xemantic.ai.golem.presenter.memory.MemoryView
-import com.xemantic.ai.golem.web.view.HtmlView
+import com.xemantic.ai.golem.web.view.HasRootHtmlElement
+import kotlinx.browser.document
+import kotlinx.html.dom.create
 import kotlinx.html.js.iframe
 import org.w3c.dom.HTMLElement
 
-class HtmlMemoryView() : MemoryView, HtmlView {
+class HtmlMemoryView() : MemoryView, HasRootHtmlElement {
 
-    override val element: HTMLElement = html.iframe(classes = "memory") {
+    override val element: HTMLElement = document.create.iframe(classes = "memory") {
         src = "neo4j-browser/"
     }
 

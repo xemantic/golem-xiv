@@ -10,13 +10,13 @@ package com.xemantic.ai.golem.web.main
 import com.xemantic.ai.golem.presenter.MainView
 import com.xemantic.ai.golem.presenter.ScreenView
 import com.xemantic.ai.golem.presenter.Theme
-import com.xemantic.ai.golem.presenter.phenomena.WorkspaceView
+import com.xemantic.ai.golem.presenter.phenomena.CognitiveWorkspaceView
 import com.xemantic.ai.golem.presenter.util.Action
 import com.xemantic.ai.golem.web.js.eventFlow
 import com.xemantic.ai.golem.web.navigation.HtmlHeaderView
 import com.xemantic.ai.golem.web.navigation.HtmlSidebarView
-import com.xemantic.ai.golem.web.phenomena.HtmlWorkspaceView
-import com.xemantic.ai.golem.web.view.HtmlView
+import com.xemantic.ai.golem.web.workspace.HtmlCognitiveWorkspaceView
+import com.xemantic.ai.golem.web.view.HasRootHtmlElement
 import kotlinx.browser.document
 import kotlinx.browser.localStorage
 import kotlinx.browser.window
@@ -64,11 +64,11 @@ class HtmlMainView(
         sidebarView.theme(theme)
     }
 
-    override fun workspaceView(): WorkspaceView = HtmlWorkspaceView() // TODO move the factory outside
+    override fun workspaceView(): CognitiveWorkspaceView = HtmlCognitiveWorkspaceView() // TODO move the factory outside
 
     override fun display(view: ScreenView) {
         mainElement.innerHTML = ""
-        mainElement.append((view as HtmlView).element)
+        mainElement.append((view as HasRootHtmlElement).element)
     }
 
     override val workspaceSelection: Flow<String> = window.eventFlow<Event>(

@@ -11,21 +11,23 @@ import com.xemantic.ai.golem.presenter.navigation.HeaderView
 import com.xemantic.ai.golem.presenter.util.Action
 import com.xemantic.ai.golem.web.js.actions
 import com.xemantic.ai.golem.web.js.ariaLabel
-import com.xemantic.ai.golem.web.js.icon
+import com.xemantic.ai.golem.web.ui.iconButton
 import com.xemantic.ai.golem.web.util.inject
-import com.xemantic.ai.golem.web.view.HtmlView
+import com.xemantic.ai.golem.web.view.HasRootHtmlElement
+import kotlinx.browser.document
 import kotlinx.coroutines.flow.Flow
 import kotlinx.html.*
+import kotlinx.html.dom.create
 import kotlinx.html.js.header
 
-class HtmlHeaderView() : HeaderView, HtmlView {
+class HtmlHeaderView() : HeaderView, HasRootHtmlElement {
 
-    private val menuButton = html.button(classes = "menu-toggle") {
+    private val menuButton = iconButton(
+        icon = "menu",
         ariaLabel = "Toggle sidebar menu"
-        icon("bars")
-    }
+    )
 
-    override val element = html.header {
+    override val element = document.create.header {
         nav {
             role = "navigation"
             ariaLabel = "Main navigation"

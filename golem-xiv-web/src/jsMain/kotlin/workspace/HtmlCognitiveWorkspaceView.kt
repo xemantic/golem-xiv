@@ -5,7 +5,7 @@
  * Unauthorized reproduction or distribution is prohibited.
  */
 
-package com.xemantic.ai.golem.web.phenomena
+package com.xemantic.ai.golem.web.workspace
 
 import com.xemantic.ai.golem.api.Agent
 import com.xemantic.ai.golem.api.Expression
@@ -13,56 +13,53 @@ import com.xemantic.ai.golem.api.Phenomenon
 import com.xemantic.ai.golem.presenter.phenomena.ExpressionAppender
 import com.xemantic.ai.golem.presenter.phenomena.IntentAppender
 import com.xemantic.ai.golem.presenter.phenomena.TextAppender
-import com.xemantic.ai.golem.presenter.phenomena.WorkspaceView
+import com.xemantic.ai.golem.presenter.phenomena.CognitiveWorkspaceView
 import com.xemantic.ai.golem.web.js.actions
-import com.xemantic.ai.golem.web.js.ariaLabel
-import com.xemantic.ai.golem.web.view.HtmlView
+import com.xemantic.ai.golem.web.ui.div
 import com.xemantic.ai.golem.web.js.eventFlow
-import com.xemantic.ai.golem.web.js.icon
+import com.xemantic.ai.golem.web.ui.iconButton
 import com.xemantic.ai.golem.web.util.appendTo
 import com.xemantic.ai.golem.web.util.children
+import com.xemantic.ai.golem.web.view.HasRootHtmlElement
+import kotlinx.browser.document
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
-import kotlinx.dom.appendText
 import kotlinx.html.div
 import kotlinx.html.dom.append
-import kotlinx.html.id
-import kotlinx.html.js.button
+import kotlinx.html.dom.create
 import kotlinx.html.js.div
 import kotlinx.html.js.textArea
 import org.w3c.dom.HTMLTextAreaElement
 import org.w3c.dom.events.InputEvent
 import org.w3c.dom.events.KeyboardEvent
 
-class HtmlWorkspaceView : WorkspaceView, HtmlView {
+class HtmlCognitiveWorkspaceView : CognitiveWorkspaceView, HasRootHtmlElement {
 
-    private val messagesDiv = html.div("messages")
+    private val phenomenaDiv = div("phenomena")
 
-    private val micButton = html.button {
-        id = "mic-button"
+    private val micButton = iconButton(
+        icon = "mic",
         ariaLabel = "Start voice input"
-        icon("microphone")
-    }
+    )
 
-    private val sendButton = html.button {
-        id = "send-button"
-        ariaLabel = "Send message"
-        icon("paper-plane")
-    }
+    private val expressButton = iconButton(
+        icon = "send",
+        ariaLabel = "Express your intent"
+    )
 
-    private val promptInput = html.textArea {
+    private val promptInput = document.create.textArea {
         placeholder = "Ask me anything..."
     }
 
-    private val promptDiv = html.div("prompt").children(
+    private val promptDiv = div("prompt").children(
         promptInput,
-        html.div("prompt-controls") {
+        document.create.div("prompt-controls") {
             div("prompt-options")
             div("prompt-actions")
         }.appendTo(
             ".prompt-actions",
             micButton,
-            sendButton
+            expressButton
         )
 
 //                children(
@@ -71,8 +68,8 @@ class HtmlWorkspaceView : WorkspaceView, HtmlView {
 //        )
     )
 
-    override val element = html.div("workspace").children(
-        messagesDiv,
+    override val element = div("cognitive-workspace").children(
+        phenomenaDiv,
         promptDiv
     )
 
@@ -85,31 +82,31 @@ class HtmlWorkspaceView : WorkspaceView, HtmlView {
         }
 
         // TODO this should be changed a lot
-        val messageDiv = html.div("message $role")
-        messagesDiv.append(messageDiv)
+        val messageDiv = div("expression $role")
+        phenomenaDiv.append(messageDiv)
         return object : ExpressionAppender {
 
             override fun textAppender(): TextAppender {
-                val textDiv = html.div("text")
+                val textDiv = div("text")
                 messageDiv.append(textDiv)
                 return  { textDiv.append(it) }
             }
 
             override fun intentAppender(): IntentAppender {
 
-                val intentDiv = html.div("intent")
+                val intentDiv = div("intent")
                 messageDiv.append(intentDiv)
 
                 return object : IntentAppender {
 
                     override fun purposeAppender(): TextAppender {
-                        val purposeDiv = html.div("purpose")
+                        val purposeDiv = div("purpose")
                         intentDiv.append(purposeDiv)
                         return { purposeDiv.append(it) }
                     }
 
                     override fun codeAppender(): TextAppender {
-                        val codeDiv = html.div("code")
+                        val codeDiv = div("code")
                         intentDiv.append(codeDiv)
                         return { codeDiv.append(it) }
                     }
@@ -124,7 +121,7 @@ class HtmlWorkspaceView : WorkspaceView, HtmlView {
 
     override fun addExpression(expression: Expression) {
         println("adding expression: $expression")
-        messagesDiv.append {
+        phenomenaDiv.append {
             val role = if (expression.agent.category == Agent.Category.SELF) {
                 "assistant"
             } else {
@@ -157,7 +154,7 @@ class HtmlWorkspaceView : WorkspaceView, HtmlView {
         promptInput.adjustHeight()
     }
 
-    override val sendActions = sendButton.actions()
+    override val sendActions = expressButton.actions()
 
     override var promptInputDisabled: Boolean
         get() = promptInput.disabled
@@ -170,9 +167,9 @@ class HtmlWorkspaceView : WorkspaceView, HtmlView {
     }
 
     override var sendDisabled: Boolean
-        get() = sendButton.disabled
+        get() = expressButton.disabled
         set(value) {
-            sendButton.disabled = value
+            expressButton.disabled = value
         }
 
 //    override fun addTextResponse(text: String) {

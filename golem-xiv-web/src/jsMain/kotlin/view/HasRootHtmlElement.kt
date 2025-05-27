@@ -7,14 +7,10 @@
 
 package com.xemantic.ai.golem.web.view
 
-import kotlinx.browser.document
-import kotlinx.html.dom.create
 import org.w3c.dom.HTMLElement
 
-interface HtmlView {
+interface HasRootHtmlElement {
 
     val element: HTMLElement
-
-    val html get() = document.create
 
 }
