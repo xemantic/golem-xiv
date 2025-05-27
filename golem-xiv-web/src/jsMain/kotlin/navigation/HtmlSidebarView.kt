@@ -28,7 +28,7 @@ class HtmlSidebarView() : SidebarView, HtmlView {
 
     private val conversationList = html.ul("conversation-list") {
         li("no-conversations") {
-            +"No conversations yet"
+            +"No cognitions initiated"
         }
     }
 
@@ -50,19 +50,21 @@ class HtmlSidebarView() : SidebarView, HtmlView {
     }
 
     private val knowledgeGraphButton = html.button(classes = "new-chat-btn") {
-        icon("database"); +" Knowledge Graph"
+        icon("database"); +" Memory"
+    }
+
+    private val newCognitionButton = html.button(classes = "new-chat-btn") {
+        icon("plus"); +" Initiate cognition"
     }
 
     override val element = html.aside("sidebar sidebar-hidden") {
         div("sidebar-header") {
             h2("Conversation")
-            button(classes = "new-chat-btn") {
-                icon("plus"); +" New Cognitive Workspace"
-            }
         }
         div("sidebar-content")
         div("sidebar-footer")
     }.inject(
+        newCognitionButton to ".sidebar-header",
         knowledgeGraphButton to ".sidebar-header",
         conversationList to ".sidebar-content",
         toggleThemeButton to ".sidebar-footer"
