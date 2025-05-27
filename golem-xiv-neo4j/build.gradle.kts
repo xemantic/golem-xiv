@@ -18,7 +18,7 @@ dependencies {
     implementation(libs.neo4j)
 }
 
-tasks.register<JavaExec>("startNeo4j") {
+tasks.register<JavaExec>("runNeo4J") {
     description = "Start Neo4j embedded database with optimized JVM settings"
     group = "neo4j"
 
