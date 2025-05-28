@@ -7,6 +7,7 @@
 
 package com.xemantic.ai.golem.server.kotlin
 
+import com.xemantic.ai.golem.server.Golem
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -56,3 +57,9 @@ suspend fun <T> Collection<Deferred<T>>.awaitEach(
     // Await all the processed deferreds and sort the results by index
     processed.awaitAll().sortedBy { it.first }.map { it.second }
 }
+
+
+@Suppress("RECEIVER_NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
+fun getClasspathResource(
+    name: String
+) = Golem::class.java.getResource(name).readText()

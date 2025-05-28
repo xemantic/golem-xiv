@@ -1,50 +1,42 @@
 .cognitive-workspace {
+    display: flex;
+    flex-direction: column;
     height: var(--main-height);
-    max-width: var(--cognitive-workspace-width);
-    width: 100%;
-    margin: 0 auto;
-    padding: 2rem;
+    width: var(--cognitive-workspace-width);
+    flex-shrink: 0;
+    background-color: var(--bg-color);
 }
 
-/* Chat container in regular conversation mode */
-.chat-conversation-mode {
-    justify-content: space-between;
-    height: 100%;
+.phenomena {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    overflow-y: auto;
 }
 
-/* Centered mode (initial state) */
-.chat-centered-mode {
-    justify-content: center;
-    height: 100%;
+.expression {
+    display: flex;
+    white-space: pre-wrap;
+    flex-direction: column;
+    max-width: 90%;
+    padding: 1rem;
+    border-radius: 8px;
+    animation: fadeIn 0.3s ease-in-out;
+    backdrop-filter: blur(var(--blur-scale));
+    border: 1px solid var(--border-color);
 }
 
-/* Input container in centered mode */
-.chat-centered-mode #input-container {
-    margin-top: 0;
-    transform: scale(1.05);
-    transition: transform 0.3s ease-in-out;
+.expression.user {
+    align-self: flex-end;
+    background-color: var(--user-msg-bg);
+    border-bottom-right-radius: 0;
 }
 
-/* Prompt box in centered mode */
-.chat-centered-mode #prompt-box {
-    max-width: 700px;
-    margin: 0 auto;
-    box-shadow: 0 5px 15px var(--shadow-color);
-}
-
-/* Welcome text styling */
-.welcome-text {
-    text-align: center;
-    color: var(--text-color);
-    opacity: 0.7;
-    margin-bottom: 1.5rem;
-    font-size: 1.6rem;
-    font-weight: 300;
-    animation: fadeIn 1s ease-in-out;
-}
-
-.welcome-text-hidden {
-    display: none;
+.expression.assistant {
+    align-self: flex-start;
+    background-color: var(--ai-msg-bg);
+    border-bottom-left-radius: 0;
 }
 
 .messages {

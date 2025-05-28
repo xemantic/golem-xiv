@@ -94,7 +94,6 @@ tasks.register("installNeo4JBrowser") {
     group = "neo4j browser"
     dependsOn("neo4JBrowserYarnBuild")
     val destination = file("src/jsMain/resources/neo4j-browser")
-    destination.deleteRecursively()
     destination.mkdirs()
     copy {
         from("build/neo4j-browser/dist")

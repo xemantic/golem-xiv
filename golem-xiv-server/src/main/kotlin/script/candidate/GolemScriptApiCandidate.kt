@@ -7,8 +7,8 @@
 
 package com.xemantic.ai.golem.server.script.candidate
 
-import com.xemantic.ai.golem.server.SYSTEM_PROMPT
 import com.xemantic.ai.golem.server.environmentContext
+import com.xemantic.ai.golem.server.golemSystemPrompt
 
 interface Memory {
     // Entity/fact management
@@ -73,7 +73,7 @@ interface RecursiveContext {
      */
     suspend fun start(
         delay: Long = 0,// milliseconds
-        system: String = SYSTEM_PROMPT,
+        system: String = golemSystemPrompt,
         environmentContext: String = environmentContext(),
 //        kotlinScriptServiceApi: String? = GOLEM_SCRIPT_SERVICE_API,
         additionalSystemPrompt: String? = null,

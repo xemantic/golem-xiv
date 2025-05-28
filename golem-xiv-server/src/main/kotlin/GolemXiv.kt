@@ -17,6 +17,7 @@ import com.xemantic.ai.golem.api.Expression
 import com.xemantic.ai.golem.api.CognitionEvent
 import com.xemantic.ai.golem.server.cognition.cognizer
 import com.xemantic.ai.golem.server.kotlin.describeCurrentMoment
+import com.xemantic.ai.golem.server.kotlin.getClasspathResource
 import com.xemantic.ai.golem.server.os.operatingSystemName
 import com.xemantic.ai.golem.server.phenomena.ExpressionAccumulator
 import com.xemantic.ai.golem.server.script.Files
@@ -72,6 +73,8 @@ interface CognitiveWorkspace {
     )
 
 }
+
+val golemSystemPrompt = getClasspathResource("/prompts/GolemXIVSystemPrompt.md")
 
 class Golem(
     private val outputs: FlowCollector<GolemOutput>
@@ -131,12 +134,10 @@ class Golem(
 
 //        val golemTools = listOf(kotlinScriptTool)
 
-
-
         val dependencies = listOf(
 //            service<com.xemantic.ai.golem.server.script.Context>("phenomena", com.xemantic.ai.golem.server.script.service.DefaultContext(scope, outputs)),
             service<Files>("files", DefaultFiles()),
-            service<WebBrowser>("browser", DefaultWebBrowser(browser)),
+            //service<WebBrowser>("browser", DefaultWebBrowser(browser)),
             service<Memory>("memory", DefaultMemory(neo4j))
 ////            service<WebBrowserService>("webBrowserService", DefaultWebBrowserService())
 ////                    service<StringEditorService>("stringEditorService", stringEditorService())
@@ -362,7 +363,7 @@ class Golem(
 
     fun newCognitiveWorkspace(): CognitiveWorkspace {
         val context = DefaultCognitiveWorkspace(
-            systemPrompt = SYSTEM_PROMPT,
+            systemPrompt = golemSystemPrompt,
             environmentSystemPrompt = environmentContext(),
             golemScriptApi = GOLEM_SCRIPT_API
         )
