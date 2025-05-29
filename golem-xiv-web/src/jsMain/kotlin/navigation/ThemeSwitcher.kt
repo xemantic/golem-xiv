@@ -10,29 +10,28 @@ package com.xemantic.ai.golem.web.navigation
 import com.xemantic.ai.golem.presenter.Theme
 import com.xemantic.ai.golem.presenter.util.Action
 import com.xemantic.ai.golem.web.js.actions
-import com.xemantic.ai.golem.web.ui.icon
-import com.xemantic.ai.golem.web.util.children
+import com.xemantic.ai.golem.web.js.dom
+import com.xemantic.ai.golem.web.js.inject
+import com.xemantic.ai.golem.web.ui.Icon
 import com.xemantic.ai.golem.web.view.HasRootHtmlElement
-import kotlinx.browser.document
 import kotlinx.coroutines.flow.Flow
-import kotlinx.html.dom.create
-import kotlinx.html.js.button
 import kotlinx.html.role
 import kotlinx.html.span
 import org.w3c.dom.HTMLElement
 
 class ThemeSwitcher : HasRootHtmlElement {
 
-    private val themeIcon = icon("dark_mode")
+    private val themeIcon = Icon("dark_mode")
 
-    private val themeLabel = document.create.span()
+    private val themeLabel = dom.span()
 
-    override val element: HTMLElement = document.create.span(classes = "navigation-link") {
+    override val element: HTMLElement = dom.span(classes = "navigation-link") {
         role = "button"
-    }.children(
-        themeIcon,
-        themeLabel
-    )
+        inject(
+            themeIcon,
+            themeLabel
+        )
+    }
 
     var theme: Theme = Theme.LIGHT
         get() = field

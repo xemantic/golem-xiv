@@ -12,18 +12,17 @@ import com.xemantic.ai.golem.presenter.ScreenView
 import com.xemantic.ai.golem.presenter.Theme
 import com.xemantic.ai.golem.presenter.phenomena.CognitiveWorkspaceView
 import com.xemantic.ai.golem.presenter.util.Action
+import com.xemantic.ai.golem.web.js.dom
 import com.xemantic.ai.golem.web.js.eventFlow
 import com.xemantic.ai.golem.web.navigation.HtmlHeaderView
 import com.xemantic.ai.golem.web.navigation.HtmlSidebarView
 import com.xemantic.ai.golem.web.workspace.HtmlCognitiveWorkspaceView
 import com.xemantic.ai.golem.web.view.HasRootHtmlElement
-import kotlinx.browser.document
 import kotlinx.browser.localStorage
 import kotlinx.browser.window
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.html.*
-import kotlinx.html.dom.create
 import org.w3c.dom.HTMLElement
 import org.w3c.dom.events.Event
 
@@ -33,9 +32,9 @@ class HtmlMainView(
     private val sidebarView: HtmlSidebarView,
 ): MainView {
 
-    private val mainElement = document.create.main()
+    private val mainElement = dom.main()
 
-    private val overlayElement = document.create.div("overlay")
+    private val overlayElement = dom.div("overlay")
 
     init {
         body.append(
@@ -44,6 +43,7 @@ class HtmlMainView(
             mainElement,
             overlayElement
         )
+        // TODO this should rather come from the presenter
         val savedTheme = localStorage.getItem("theme")?.let {
             Theme.valueOf(it)
         } ?: Theme.LIGHT
