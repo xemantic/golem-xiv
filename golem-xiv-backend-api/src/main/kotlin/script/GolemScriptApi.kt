@@ -5,18 +5,12 @@
  * Unauthorized reproduction or distribution is prohibited.
  */
 
-package com.xemantic.ai.golem.server.script
+package com.xemantic.ai.golem.backend.api.script
 
+import com.xemantic.ai.golem.api.CognitiveWorkspace
+import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable
 import org.neo4j.driver.Result
-
-/** The context window. */
-interface Context {
-    var title: String
-//    val startDate: Instant
-//    val updateDate: Instant
-    //var replaceThisAssistantMessageWith: String
-}
 
 /** Note: create functions will also mkdirs parents. */
 interface Files {
@@ -76,6 +70,16 @@ interface Memory {
     fun <T: Any?> modify(cypher: String, block: (Result) -> T): T
 }
 
+interface Cognition {
+
+    val current: CognitiveWorkspace
+
+    fun queryCognitiveWorkspaces(
+        cypher: String
+    ): Flow<CognitiveWorkspace>
+
+}
+
 interface MemoryBuilder {
     /**
      * Creates a node.
@@ -113,3 +117,4 @@ interface RelationshipBuilder : WithProperties {
     /** Optional confidence level in the 0-1 range, defaults to 1 if not specified */
     var confidence: Double?
 }
+
