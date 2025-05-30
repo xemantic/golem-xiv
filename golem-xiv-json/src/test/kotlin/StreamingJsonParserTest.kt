@@ -5,9 +5,9 @@
  * Unauthorized reproduction or distribution is prohibited.
  */
 
-package com.xemantic.ai.golem.server.kotlin
+package com.xemantic.ai.golem.json
 
-import com.xemantic.ai.golem.server.kotlin.JsonEvent.*
+import com.xemantic.ai.golem.json.JsonEvent.*
 import com.xemantic.kotlin.test.assert
 import com.xemantic.kotlin.test.have
 import com.xemantic.kotlin.test.should

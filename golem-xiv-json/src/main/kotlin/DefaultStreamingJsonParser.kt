@@ -5,7 +5,9 @@
  * Unauthorized reproduction or distribution is prohibited.
  */
 
-package com.xemantic.ai.golem.server.kotlin
+package com.xemantic.ai.golem.json
+
+import kotlin.text.iterator
 
 internal fun Char.isHexDigit(): Boolean {
     return this in '0'..'9' ||

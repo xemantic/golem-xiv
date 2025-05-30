@@ -5,7 +5,7 @@
  * Unauthorized reproduction or distribution is prohibited.
  */
 
-package com.xemantic.ai.golem.server.kotlin
+package com.xemantic.ai.golem.json
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.transform

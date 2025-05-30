@@ -5,7 +5,7 @@
  * Unauthorized reproduction or distribution is prohibited.
  */
 
-package com.xemantic.ai.golem.server.kotlin
+package com.xemantic.ai.golem.json
 
 class JsonStringParser {
     // Parser state
