@@ -5,11 +5,10 @@
  * Unauthorized reproduction or distribution is prohibited.
  */
 
-package com.xemantic.ai.golem.backend.api.util
+package com.xemantic.ai.golem.api.backend.util
 
 import com.xemantic.ai.golem.api.CognitionEvent
-import com.xemantic.ai.golem.backend.api.CognitiveWorkspaceRepository
-import com.xemantic.ai.golem.backend.api.Cognizer
+import com.xemantic.ai.golem.api.backend.CognitiveWorkspaceRepository
 import com.xemantic.ai.golem.json.DefaultStreamingJsonParser
 import com.xemantic.ai.golem.json.JsonEvent
 

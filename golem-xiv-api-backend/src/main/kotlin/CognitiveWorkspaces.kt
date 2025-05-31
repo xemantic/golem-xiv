@@ -5,7 +5,7 @@
  * Unauthorized reproduction or distribution is prohibited.
  */
 
-package com.xemantic.ai.golem.backend.api
+package com.xemantic.ai.golem.api.backend
 
 import com.xemantic.ai.golem.api.CognitiveWorkspace
 import com.xemantic.ai.golem.api.EpistemicAgent

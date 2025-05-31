@@ -1,3 +1,5 @@
+import groovy.json.StringEscapeUtils
+
 plugins {
     alias(libs.plugins.kotlin.jvm)
     id("golem.convention")
@@ -31,7 +33,7 @@ dependencies {
 tasks.register("generateGolemScriptApi") {
 
     val sourceFile = "src/main/kotlin/script/GolemScriptApi.kt"
-    val packageName = "com.xemantic.ai.golem.backend.api.script"
+    val packageName = "com.xemantic.ai.golem.api.backend.script"
 
     inputs.file(sourceFile)
     outputs.dir(generatedSourcesDir)
@@ -41,7 +43,7 @@ tasks.register("generateGolemScriptApi") {
 
         // Read the source file
         val sourceInput = file(sourceFile).readText().substringAfter("*/")
-        val sourceContent: String = com.github.javaparser.utils.StringEscapeUtils.escapeJava(
+        val sourceContent: String = StringEscapeUtils.escapeJava(
             sourceInput
         ).replace("$", "${'$'}{'$'}")
 

@@ -5,7 +5,7 @@
  * Unauthorized reproduction or distribution is prohibited.
  */
 
-package com.xemantic.ai.golem.backend.api.script
+package com.xemantic.ai.golem.api.backend.script
 
 import com.xemantic.ai.golem.api.CognitiveWorkspace
 import kotlinx.coroutines.flow.Flow

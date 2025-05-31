@@ -5,7 +5,7 @@
  * Unauthorized reproduction or distribution is prohibited.
  */
 
-package com.xemantic.ai.golem.backend.api.script
+package com.xemantic.ai.golem.api.backend.script
 
 import com.xemantic.ai.tool.schema.meta.Description
 import kotlinx.serialization.SerialName
