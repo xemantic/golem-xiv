@@ -5,12 +5,12 @@
  * Unauthorized reproduction or distribution is prohibited.
  */
 
-package com.xemantic.ai.golem.server.memory
+package com.xemantic.ai.golem.neo4j
 
-import com.xemantic.ai.golem.server.script.Memory
-import com.xemantic.ai.golem.server.script.MemoryBuilder
-import com.xemantic.ai.golem.server.script.NodeBuilder
-import com.xemantic.ai.golem.server.script.RelationshipBuilder
+import com.xemantic.ai.golem.api.backend.script.Memory
+import com.xemantic.ai.golem.api.backend.script.MemoryBuilder
+import com.xemantic.ai.golem.api.backend.script.NodeBuilder
+import com.xemantic.ai.golem.api.backend.script.RelationshipBuilder
 import org.neo4j.driver.Driver
 import org.neo4j.driver.Result
 import org.neo4j.driver.TransactionContext
