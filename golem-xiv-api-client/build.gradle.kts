@@ -17,10 +17,13 @@ kotlin {
 
         commonMain {
             dependencies {
-                implementation(project(":golem-xiv-api")) // TODO should not be needed with kotlin 2.2
-                implementation(libs.kotlinx.serialization.json)
-                implementation(libs.ktor.websockets)
-                implementation(libs.ktor.client.core)
+                api(project(":golem-xiv-api"))
+                api(libs.kotlinx.serialization.json)
+                api(libs.kotlinx.coroutines.core)
+                api(libs.ktor.websockets)
+                api(libs.ktor.client.core)
+
+                implementation(libs.kotlin.logging)
             }
         }
 
