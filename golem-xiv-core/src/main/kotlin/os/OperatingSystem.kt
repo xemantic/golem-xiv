@@ -7,13 +7,9 @@
 
 package com.xemantic.ai.golem.core.os
 
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
 import java.awt.Desktop
-import java.io.BufferedReader
 import java.net.URI
 import java.io.IOException
-import java.io.InputStreamReader
 
 fun operatingSystemName(): String = System.getProperty("os.name")!!
 
