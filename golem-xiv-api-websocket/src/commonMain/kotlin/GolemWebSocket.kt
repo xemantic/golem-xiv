@@ -5,9 +5,9 @@
  * Unauthorized reproduction or distribution is prohibited.
  */
 
-package com.xemantic.ai.golem.api.client.websocket
+package com.xemantic.ai.golem.api.client.http
 
-import com.xemantic.ai.golem.api.client.golemJson
+import com.xemantic.ai.golem.api.golemJson
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.websocket.Frame
 import io.ktor.websocket.WebSocketSession

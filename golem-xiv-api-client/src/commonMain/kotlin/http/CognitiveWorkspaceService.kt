@@ -23,7 +23,7 @@ class HttpClientCognitiveWorkspaceService(
     )
 
     override suspend fun integrate(
-        workspaceId: String,
+        workspaceId: Long,
         phenomena: List<Phenomenon>
     ) {
         client.servicePatch(

@@ -18,10 +18,11 @@ kotlin {
         commonMain {
             dependencies {
                 api(project(":golem-xiv-api"))
-                api(libs.kotlinx.serialization.json)
-                api(libs.ktor.client.core)
+                api(libs.kotlinx.coroutines.core)
+                api(libs.ktor.websockets)
 
                 implementation(libs.kotlin.logging)
+                implementation(libs.kotlinx.serialization.json)
             }
         }
 
