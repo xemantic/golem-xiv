@@ -5,10 +5,8 @@
  * Unauthorized reproduction or distribution is prohibited.
  */
 
-package com.xemantic.ai.golem.api.client
+package com.xemantic.ai.golem.api
 
-import com.xemantic.ai.golem.api.CognitionEvent
-import com.xemantic.ai.golem.api.PhenomenalExpression
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
