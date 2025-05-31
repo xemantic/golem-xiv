@@ -5,8 +5,7 @@
  * Unauthorized reproduction or distribution is prohibited.
  */
 
-package com.xemantic.ai.golem.server.memory
-
+import com.xemantic.ai.golem.neo4j.Neo4jMemory
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.neo4j.driver.AuthTokens
@@ -17,11 +16,11 @@ import org.neo4j.harness.junit.extension.Neo4jExtension
 import kotlin.use
 
 @ExtendWith(Neo4jExtension::class)
-class MemoryTest {
+class Neo4jMemoryTest {
 
     @Test
     fun rememberFact(neo4j: Neo4j) = testWithNeo4jDriver(neo4j) { driver ->
-        val memory = DefaultMemory(driver)
+        val memory = Neo4jMemory(driver)
         memory.remember {
             val john = node {
                 type = "Person"

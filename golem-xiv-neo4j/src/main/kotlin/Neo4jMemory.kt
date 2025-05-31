@@ -16,7 +16,7 @@ import org.neo4j.driver.Result
 import org.neo4j.driver.TransactionContext
 import org.neo4j.driver.Values
 
-class DefaultMemory(
+class Neo4jMemory(
     private val driver: Driver
 ) : Memory {
 
