@@ -5,13 +5,9 @@
  * Unauthorized reproduction or distribution is prohibited.
  */
 
-package com.xemantic.ai.golem.server.script.service
+package com.xemantic.ai.golem.core.script.service
 
-import com.xemantic.ai.golem.api.GolemOutput
 //import com.xemantic.ai.golem.server.script.Context
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.FlowCollector
-import kotlinx.coroutines.launch
 
 //class DefaultContext(
 //    private val scope: CoroutineScope,

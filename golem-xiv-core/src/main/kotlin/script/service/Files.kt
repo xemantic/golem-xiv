@@ -5,12 +5,12 @@
  * Unauthorized reproduction or distribution is prohibited.
  */
 
-package com.xemantic.ai.golem.server.script.service
+package com.xemantic.ai.golem.core.script.service
 
-import com.xemantic.ai.golem.server.script.FileEntry
-import com.xemantic.ai.golem.server.script.Files
-import kotlinx.io.IOException
+import com.xemantic.ai.golem.api.backend.script.FileEntry
+import com.xemantic.ai.golem.api.backend.script.Files
 import java.io.File
+import java.io.IOException
 import java.nio.file.FileSystems
 import java.nio.file.Path
 import java.nio.file.PathMatcher
