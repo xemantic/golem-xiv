@@ -5,9 +5,10 @@
  * Unauthorized reproduction or distribution is prohibited.
  */
 
-package com.xemantic.ai.golem.server.script
+package com.xemantic.ai.golem.core.script
 
-import com.xemantic.ai.golem.server.kotlin.startsWithAnyOf
+import com.xemantic.ai.golem.api.backend.script.ExecuteGolemScript
+import com.xemantic.ai.golem.core.kotlin.startsWithAnyOf
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred

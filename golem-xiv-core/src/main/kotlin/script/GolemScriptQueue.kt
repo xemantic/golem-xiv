@@ -5,4 +5,11 @@
  * Unauthorized reproduction or distribution is prohibited.
  */
 
-package com.xemantic.ai.golem.server.cognition
+package com.xemantic.ai.golem.core.script
+
+interface GolemScriptQueue {
+
+
+
+
+}
