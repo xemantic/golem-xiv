@@ -23,6 +23,7 @@ import com.xemantic.ai.golem.api.CognitionEvent
 import com.xemantic.ai.golem.api.EpistemicAgent
 import com.xemantic.ai.golem.api.backend.CognitiveWorkspaceRepository
 import com.xemantic.ai.golem.api.backend.Cognizer
+import com.xemantic.ai.golem.api.backend.script.ExecuteGolemScript
 import com.xemantic.ai.golem.api.backend.util.IntentCognizer
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.flow.Flow
@@ -35,11 +36,12 @@ import kotlinx.serialization.json.buildJsonObject
 class AnthropicToolUseCognizer(
     private val anthropic: Anthropic,
     private val golemSelfId: Long,
-    private val golemTools: List<Tool>,
     private val repository: CognitiveWorkspaceRepository
 ) : Cognizer {
 
     private val logger = KotlinLogging.logger {}
+
+    private val golemTools = listOf(Tool<ExecuteGolemScript>())
 
     override fun reason(
         conditioning: List<String>,
