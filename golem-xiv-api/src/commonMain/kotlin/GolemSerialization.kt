@@ -5,7 +5,7 @@
  * Unauthorized reproduction or distribution is prohibited.
  */
 
-package com.xemantic.ai.golem.api.client
+package com.xemantic.ai.golem.api
 
 import kotlinx.serialization.json.Json
 

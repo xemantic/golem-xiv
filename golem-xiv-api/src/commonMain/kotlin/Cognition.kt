@@ -5,6 +5,7 @@
  * Unauthorized reproduction or distribution is prohibited.
  */
 
+// TODO remove with kotlin 2.2
 @file:UseSerializers(InstantSerializer::class)
 
 package com.xemantic.ai.golem.api
@@ -34,8 +35,8 @@ sealed interface EpistemicAgent {
     @Serializable
     data class AI(
         override val id: Long,
-        val model: String? = null,
-        val vendor: String? = null
+        val model: String,
+        val vendor: String
     ) : EpistemicAgent
 
     @Serializable
