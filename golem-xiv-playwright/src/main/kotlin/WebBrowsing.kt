@@ -5,14 +5,12 @@
  * Unauthorized reproduction or distribution is prohibited.
  */
 
-package com.xemantic.ai.golem.server.script.service
-
 import com.microsoft.playwright.Browser
 import com.microsoft.playwright.Page
 import com.microsoft.playwright.options.WaitUntilState
 import com.vladsch.flexmark.html2md.converter.FlexmarkHtmlConverter
 import com.vladsch.flexmark.util.data.MutableDataSet
-import com.xemantic.ai.golem.server.script.WebBrowser
+import com.xemantic.ai.golem.api.backend.script.WebBrowser
 
 class DefaultWebBrowser(
     val browser: Browser
