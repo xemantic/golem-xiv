@@ -30,7 +30,7 @@ interface CognitiveWorkspaceRepository {
         parentId: Long? = null
     ): CognitiveWorkspaceInfo
 
-    fun appendToWorkspace(
+    suspend fun appendToWorkspace(
         workspaceId: Long,
         agent: EpistemicAgent,
         phenomena: List<Phenomenon>
@@ -91,38 +91,47 @@ interface CognitiveWorkspaceRepository {
 
 interface CognitiveWorkspaceMemory {
 
-    fun createWorkspace(
+    suspend fun createWorkspace(
         parentId: Long? = null
     ): CognitiveWorkspaceInfo
 
-    fun createExpression(
+    suspend fun createExpression(
+        workspaceId: Long,
         agentId: Long
-    ): Long
+    ): PhenomenalExpressionInfo
 
-    fun createPhenomenon(
+    suspend fun createPhenomenon(
         expressionId: Long
     ): Long
+
+    suspend fun updateWorkspace(
+        workspaceId: Long,
+        title: String?,
+        summary: String?
+    )
 
 }
 
 interface CognitiveWorkspaceStorage {
 
-    fun createWorkspace(
+    suspend fun createWorkspace(
         workspaceId: Long,
         conditioning: List<String>
     )
 
-    fun addExpression(
+    suspend fun addExpression(
         workspaceId: Long,
         expressionId: Long,
         phenomena: List<Phenomenon>
     )
 
-    fun append(
+    suspend fun append(
         phenomena: List<Phenomenon>
     )
 
-    fun commit(
+    // TODO append delta
+
+    suspend fun commit(
         workspaceId: Long,
         expressionId: Long
     )
