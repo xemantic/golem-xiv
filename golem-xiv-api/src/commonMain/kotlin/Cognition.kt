@@ -5,79 +5,91 @@
  * Unauthorized reproduction or distribution is prohibited.
  */
 
-@file:UseSerializers(InstantIso8601Serializer::class)
+@file:UseSerializers(InstantSerializer::class)
 
 package com.xemantic.ai.golem.api
 
+import com.xemantic.ai.golem.serialization.time.InstantSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
 import kotlin.time.Instant
 
-/** Cognitive workspace */
 interface CognitiveWorkspace {
-    val id: String
-    val title: String
-    val expressions: List<Expression>
-    val creationDate: Instant
-    val updateDate: Instant
+    val id: Long
+    var title: String
+    var summary: String
+    val expressions: List<PhenomenalExpression>
+    val initiationMoment: Instant
+    val latestUpdateMoment: Instant
+    val active: Boolean
     val parentId: String?
 }
 
-/** Cognitive agent */
 @Serializable
-data class Agent(
-    val id: String,
-    val description: String,
-    val category: Category,
-    val model: String? = null,
-    val vendor: String? = null
-) {
+sealed interface EpistemicAgent {
 
-    enum class Category {
-        SELF, // it is you!
-        HUMAN,
-        OTHER_MACHINE
-    }
+    val id: Long
+
+    @Serializable
+    data class AI(
+        override val id: Long,
+        val model: String? = null,
+        val vendor: String? = null
+    ) : EpistemicAgent
+
+    @Serializable
+    data class Human(
+        override val id: Long
+    ) : EpistemicAgent
+
+    @Serializable
+    data class Computer(
+        override val id: Long,
+        val belongsToAgentId: Long
+    ) : EpistemicAgent
 
 }
 
-/** Phenomenal Expression */
 @Serializable
-data class Expression(
-    val id: String,
-    val agent: Agent,
+data class PhenomenalExpression(
+    val id: Long,
+    val agent: EpistemicAgent,
     val phenomena: List<Phenomenon>,
     val initiationMoment: Instant,
-    val culminationMoment: Instant? = null // TODO should it be non-null and the whole expression only accessible once it is finished?
+    val culminationMoment: Instant? = null
 )
 
 @Serializable
 sealed interface Phenomenon {
 
+    val id: Long
+
     @Serializable
     @SerialName("text")
     data class Text(
-        val id: String,
+        override val id: Long,
         val text: String
     ) : Phenomenon
 
     @Serializable
     @SerialName("image")
     data class Image(
-        val id: String
+        override val id: Long,
+        val uri: String
     ) : Phenomenon
 
     @Serializable
     @SerialName("document")
     data class Document(
-        val id: String
+        override val id: Long,
+        val uri: String
     ) : Phenomenon
 
     @Serializable
     @SerialName("intent")
     data class Intent(
-        val id: String,
+        override val id: Long,
         val systemId: String,
         val purpose: String,
         val code: String
@@ -86,7 +98,7 @@ sealed interface Phenomenon {
     @Serializable
     @SerialName("fulfillment")
     data class Fulfillment(
-        val id: String,
+        override val id: Long,
         val intentId: String,
         val intentSystemId: String,
         val result: String
@@ -95,11 +107,10 @@ sealed interface Phenomenon {
     @Serializable
     @SerialName("impediment")
     data class Impediment(
-        val id: String,
+        override val id: Long,
         val intentId: String,  // Reference to the original intent
         val intentSystemId: String,
         val reason: String,    // Why the intent failed
     ) : Phenomenon
 
 }
-
