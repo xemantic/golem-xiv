@@ -49,7 +49,7 @@ interface CognitiveWorkspaceService {
      */
     // TODO implement these
     suspend fun integrate(
-        workspaceId: String,
+        workspaceId: Long,
         phenomena: List<Phenomenon>
     )
 
