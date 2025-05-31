@@ -5,7 +5,7 @@
  * Unauthorized reproduction or distribution is prohibited.
  */
 
-package com.xemantic.ai.golem.dashscope
+package com.xemantic.ai.golem.cognizer.dashscope
 
 import com.alibaba.dashscope.aigc.generation.Generation
 import com.alibaba.dashscope.aigc.generation.GenerationParam
