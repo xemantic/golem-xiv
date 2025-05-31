@@ -5,20 +5,19 @@
  * Unauthorized reproduction or distribution is prohibited.
  */
 
-package com.xemantic.ai.golem.api.service
+package com.xemantic.ai.golem.api.client.http
 
 import com.xemantic.ai.golem.api.Phenomenon
-import com.xemantic.ai.golem.api.servicePatch
-import com.xemantic.ai.golem.api.servicePut
+import com.xemantic.ai.golem.api.client.CognitiveWorkspaceService
 import io.ktor.client.HttpClient
 
-class ClientCognitiveWorkspaceService(
+class HttpClientCognitiveWorkspaceService(
     private val client: HttpClient
 ) : CognitiveWorkspaceService {
 
     override suspend fun initiate(
         phenomena: List<Phenomenon>
-    ): String = client.servicePut(
+    ): Long = client.servicePut(
         uri = "/api/workspaces",
         value = phenomena
     )
