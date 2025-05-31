@@ -5,9 +5,8 @@
  * Unauthorized reproduction or distribution is prohibited.
  */
 
-package com.xemantic.ai.golem.server.os
+package com.xemantic.ai.golem.core.os
 
-import com.xemantic.ai.golem.api.OsProcessEvent
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import java.awt.Desktop
@@ -52,26 +51,25 @@ fun openBrowser(url: String) {
     }
 }
 
-
-fun executeProcess(command: List<String>): Flow<OsProcessEvent> = flow {
-    val processBuilder = ProcessBuilder(command)
-
-    // Redirect stderr to stdout
-    processBuilder.redirectErrorStream(true)
-
-    val process = processBuilder.start()
-
-    // Read the output line by line
-    BufferedReader(InputStreamReader(process.inputStream)).use { reader ->
-        var line: String?
-        while (reader.readLine().also { line = it } != null) {
-            line?.let {
-                emit(OsProcessEvent.Output(it))
-            }
-        }
-    }
-
-    // Wait for the process to complete and get the exit code
-    val exitCode = process.waitFor()
-    emit(OsProcessEvent.Exit(exitCode))
-} //.flowOn(Dispatchers.IO)
+//fun executeProcess(command: List<String>): Flow<OsProcessEvent> = flow {
+//    val processBuilder = ProcessBuilder(command)
+//
+//    // Redirect stderr to stdout
+//    processBuilder.redirectErrorStream(true)
+//
+//    val process = processBuilder.start()
+//
+//    // Read the output line by line
+//    BufferedReader(InputStreamReader(process.inputStream)).use { reader ->
+//        var line: String?
+//        while (reader.readLine().also { line = it } != null) {
+//            line?.let {
+//                emit(OsProcessEvent.Output(it))
+//            }
+//        }
+//    }
+//
+//    // Wait for the process to complete and get the exit code
+//    val exitCode = process.waitFor()
+//    emit(OsProcessEvent.Exit(exitCode))
+//} //.flowOn(Dispatchers.IO)
