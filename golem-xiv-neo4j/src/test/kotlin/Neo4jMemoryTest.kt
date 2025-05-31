@@ -21,7 +21,7 @@ class Neo4jMemoryTest {
     @Test
     fun rememberFact(neo4j: Neo4j) = testWithNeo4jDriver(neo4j) { driver ->
         val memory = Neo4jMemory(driver)
-        memory.remember {
+        val output = memory.remember {
             val john = node {
                 type = "Person"
                 properties(
@@ -43,8 +43,9 @@ class Neo4jMemoryTest {
             }
             "john: $john, acme: $acme, worksAt: $worksAt"
         }
+        println(output)
 
-        memory.query("""
+        val output2 = memory.query("""
             MATCH (subject)-[predicate]->(target) 
             RETURN predicate, subject, target
         """.trimIndent()) { result ->
@@ -53,7 +54,9 @@ class Neo4jMemoryTest {
             val relationship = record["predicate"].asRelationship()
             val subject = record["subject"].asNode()
             val target = record["target"].asNode()
+            Triple(subject, relationship, target)
         }
+        println(output2)
     }
 
 }
