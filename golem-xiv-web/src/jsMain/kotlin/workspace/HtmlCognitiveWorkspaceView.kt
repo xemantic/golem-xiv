@@ -7,8 +7,8 @@
 
 package com.xemantic.ai.golem.web.workspace
 
-import com.xemantic.ai.golem.api.Agent
-import com.xemantic.ai.golem.api.Expression
+import com.xemantic.ai.golem.api.EpistemicAgent
+import com.xemantic.ai.golem.api.PhenomenalExpression
 import com.xemantic.ai.golem.api.Phenomenon
 import com.xemantic.ai.golem.presenter.phenomena.ExpressionAppender
 import com.xemantic.ai.golem.presenter.phenomena.IntentAppender
@@ -72,9 +72,11 @@ class HtmlCognitiveWorkspaceView(
         )
     }
 
-    override fun starExpression(agent: Agent): ExpressionAppender {
+    override fun starExpression(
+        agent: EpistemicAgent
+    ): ExpressionAppender {
 
-        val role = if (agent.category == Agent.Category.SELF) {
+        val role = if (agent is EpistemicAgent.AI) {
             "assistant"
         } else {
             "user"
@@ -118,10 +120,10 @@ class HtmlCognitiveWorkspaceView(
 
     }
 
-    override fun addExpression(expression: Expression) {
+    override fun addExpression(expression: PhenomenalExpression) {
         println("adding expression: $expression")
         phenomenaDiv.append {
-            val role = if (expression.agent.category == Agent.Category.SELF) {
+            val role = if (expression.agent is EpistemicAgent.AI) {
                 "assistant"
             } else {
                 "user"
