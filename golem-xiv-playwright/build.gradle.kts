@@ -5,7 +5,7 @@ plugins {
 dependencies {
     implementation(project(":golem-xiv-api-backend"))
 
-    implementation(libs.playwright)
+    api(libs.playwright)
 
     // TODO flexmark is suboptimal
     implementation("com.vladsch.flexmark:flexmark:0.64.8")
