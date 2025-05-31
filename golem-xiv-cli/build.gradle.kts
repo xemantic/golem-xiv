@@ -1,17 +1,17 @@
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
-    //alias(libs.plugins.versions)
+    id("golem.convention")
 }
 
 kotlin {
 
     jvm()
 
-    macosArm64 {
-        binaries {
-
-        }
-    }
+//    macosArm64 {
+//        binaries {
+//
+//        }
+//    }
 
     sourceSets {
 
