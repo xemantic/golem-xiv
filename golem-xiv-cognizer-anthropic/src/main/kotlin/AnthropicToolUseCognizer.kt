@@ -5,7 +5,7 @@
  * Unauthorized reproduction or distribution is prohibited.
  */
 
-package com.xemantic.ai.golem.server.cognition.anthropic
+package com.xemantic.ai.golem.cognizer.anthropic
 
 import com.xemantic.ai.anthropic.Anthropic
 import com.xemantic.ai.anthropic.content.Text
@@ -17,12 +17,13 @@ import com.xemantic.ai.anthropic.message.Role
 import com.xemantic.ai.anthropic.message.System
 import com.xemantic.ai.anthropic.message.addCacheBreakpoint
 import com.xemantic.ai.anthropic.tool.Tool
-import com.xemantic.ai.golem.api.Agent
 import com.xemantic.ai.golem.api.Phenomenon
-import com.xemantic.ai.golem.api.Expression
+import com.xemantic.ai.golem.api.PhenomenalExpression
 import com.xemantic.ai.golem.api.CognitionEvent
-import com.xemantic.ai.golem.server.cognition.Cognizer
-import com.xemantic.ai.golem.server.cognition.IntentBroadcaster
+import com.xemantic.ai.golem.api.EpistemicAgent
+import com.xemantic.ai.golem.api.backend.CognitiveWorkspaceRepository
+import com.xemantic.ai.golem.api.backend.Cognizer
+import com.xemantic.ai.golem.api.backend.util.IntentCognizer
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.onCompletion
@@ -30,27 +31,30 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.transform
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
-import kotlin.time.Clock
-import kotlin.uuid.Uuid
 
-class AnthropicCognizer(
+class AnthropicToolUseCognizer(
     private val anthropic: Anthropic,
-    private val golemTools: List<Tool>
+    private val golemSelfId: Long,
+    private val golemTools: List<Tool>,
+    private val repository: CognitiveWorkspaceRepository
 ) : Cognizer {
 
     private val logger = KotlinLogging.logger {}
 
     override fun reason(
-        system: List<String>,
-        phenomenalFlow: List<Expression>,
+        conditioning: List<String>,
+        workspaceId: Long,
+        phenomenalFlow: List<PhenomenalExpression>,
         hints: Map<String, String>
     ): Flow<CognitionEvent> {
 
         logger.debug { "Reasoning" }
 
-        val expressionId = Uuid.random().toString()
+        var expressionId: Long? = null
 
-        val intentBroadcaster = IntentBroadcaster(expressionId)
+        var phenomenonId: Long? = null
+
+        var intentCognizer: IntentCognizer? = null
 
         var processedContentType: ProcessedContentType? = null
 
@@ -63,75 +67,160 @@ class AnthropicCognizer(
         }
 
         val flow = anthropic.messages.stream {
-            this.system = system.toAnthropicSystem()
+            system = conditioning.toAnthropicSystem()
             messages = messageFlow
             tools = golemTools
         }.transform { event ->
             when (event) {
+
                 is Event.MessageStart -> {
+
+                    val agent = EpistemicAgent.AI(
+                        id = golemSelfId,
+                        model = event.message.model,
+                        vendor = "Anthropic"
+                    )
+
+                    val info = repository.initiateExpression(workspaceId, agent)
+                    expressionId = info.id
+
                     emit(
                         CognitionEvent.ExpressionInitiation(
-                            expressionId,
-                            agent = Agent( // TODO better agent description and model spec
-                                id = "golem",
-                                description = "The agent",
-                                category = Agent.Category.SELF
+                            expressionId = info.id,
+                            agent = EpistemicAgent.AI(
+                                id = golemSelfId,
+                                model = event.message.model,
+                                vendor = "Anthropic"
                             ),
-                            moment = Clock.System.now()
+                            moment = info.initiationMoment
                         )
                     )
                 }
+
                 is Event.ContentBlockStart -> {
+
                     when (event.contentBlock) {
+
                         is Event.ContentBlockStart.ContentBlock.Text -> {
+
                             processedContentType = ProcessedContentType.TEXT
-                            emit(CognitionEvent.TextInitiation(expressionId))
+
+                            val id = repository.initiateTextPhenomenon(
+                                workspaceId = workspaceId,
+                                expressionId = expressionId!!,
+                            )
+
+                            phenomenonId = id
+
+                            emit(CognitionEvent.TextInitiation(
+                                id = id,
+                                expressionId = expressionId
+                            ))
                         }
+
                         is Event.ContentBlockStart.ContentBlock.ToolUse -> {
+
                             processedContentType = ProcessedContentType.TOOL
                             toolUseId = (event.contentBlock as Event.ContentBlockStart.ContentBlock.ToolUse).id
-                            emit(CognitionEvent.IntentInitiation(expressionId, systemId = toolUseId))
+
+                            val id = repository.initiateIntentPhenomenon(
+                                workspaceId = workspaceId,
+                                expressionId = expressionId!!,
+                                systemId = toolUseId
+                            )
+
+                            phenomenonId = id
+
+                            intentCognizer = IntentCognizer(
+                                workspaceId = workspaceId,
+                                expressionId = expressionId,
+                                phenomenonId = id,
+                                repository = repository
+                            )
+
+
+                            emit(CognitionEvent.IntentInitiation(
+                                id = id,
+                                expressionId = expressionId,
+                                systemId = toolUseId
+                            ))
                             // we have only one tool, so we don't even check the name
                             // no emission
                         }
+
                     }
                 }
+
                 is Event.ContentBlockDelta -> {
+
                     when (event.delta) {
+
                         is Event.ContentBlockDelta.Delta.TextDelta -> {
+
                             val textDelta = (event.delta as Event.ContentBlockDelta.Delta.TextDelta).text
+
+                            repository.appendText(
+                                workspaceId = workspaceId,
+                                expressionId = expressionId!!,
+                                phenomenonId = phenomenonId!!,
+                                textDelta = textDelta
+                            )
+
                             emit(
                                 CognitionEvent.TextUnfolding(
-                                    expressionId,
-                                    textDelta
+                                    id = phenomenonId!!,
+                                    expressionId = expressionId,
+                                    textDelta = textDelta
                                 )
                             )
+
                         }
+
                         is Event.ContentBlockDelta.Delta.InputJsonDelta -> {
                             val jsonDelta = (event.delta as Event.ContentBlockDelta.Delta.InputJsonDelta).partialJson
-                            intentBroadcaster.add(jsonDelta).forEach { result ->
+                            intentCognizer!!.add(jsonDelta).forEach { result ->
                                 emit(result)
                             }
                         }
+
                     }
                 }
+
                 is Event.ContentBlockStop -> {
                     when (processedContentType!!) {
                         ProcessedContentType.TEXT -> {
-                            emit(CognitionEvent.TextCulmination(expressionId))
+                            emit(CognitionEvent.TextCulmination(
+                                id = phenomenonId!!,
+                                expressionId = expressionId!!
+                            ))
                         }
                         ProcessedContentType.TOOL -> {
-                            emit(CognitionEvent.IntentCulmination(expressionId))
+                            emit(CognitionEvent.IntentCulmination(
+                                id = phenomenonId!!,
+                                expressionId = expressionId!!
+                            ))
                         }
                     }
                     processedContentType = null
+                    phenomenonId = null
+                    intentCognizer = null
                 }
-                is Event.MessageStop -> emit(
-                    CognitionEvent.ExpressionCulmination(
-                        expressionId,
-                        moment = Clock.System.now()
+
+                is Event.MessageStop -> {
+
+                    val moment = repository.culminateExpression(
+                        workspaceId = workspaceId,
+                        expressionId = expressionId!!
                     )
-                )
+
+                    emit(
+                        CognitionEvent.ExpressionCulmination(
+                            expressionId = expressionId,
+                            moment = moment
+                        )
+                    )
+                }
+
                 else -> null
             }
         }.onStart {
@@ -174,17 +263,17 @@ private fun Phenomenon.toAnthropicContent() = when (this) {
 
 private fun List<Phenomenon>.toAnthropicContent() = map { it.toAnthropicContent() }
 
-private fun Expression.toAnthropicMessage() = Message {
+private fun PhenomenalExpression.toAnthropicMessage() = Message {
     role = agent.toAnthropicRole()
     content = phenomena.toAnthropicContent()
 }
 
-private fun Agent.toAnthropicRole() = when (this.category) {
-    Agent.Category.SELF -> Role.ASSISTANT
+private fun EpistemicAgent.toAnthropicRole() = when (this) {
+    is EpistemicAgent.AI -> Role.ASSISTANT
     else -> Role.USER
 }
 
-private fun List<Expression>.toAnthropicMessages() = map {
+private fun List<PhenomenalExpression>.toAnthropicMessages() = map {
     it.toAnthropicMessage()
 }
 
