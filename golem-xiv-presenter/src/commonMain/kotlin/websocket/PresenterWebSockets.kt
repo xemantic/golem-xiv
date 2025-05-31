@@ -8,7 +8,7 @@
 package com.xemantic.ai.golem.presenter.websocket
 
 import com.xemantic.ai.golem.api.GolemOutput
-import com.xemantic.ai.golem.api.client.websocket.collectGolemData
+import com.xemantic.ai.golem.api.client.http.collectGolemData
 import io.ktor.websocket.WebSocketSession
 
 //suspend fun WebSocketSession.sendToGolem(
