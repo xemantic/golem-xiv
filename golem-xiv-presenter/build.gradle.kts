@@ -5,21 +5,7 @@ plugins {
 
 kotlin {
 
-    compilerOptions {
-        //apiVersion = KotlinVersion.fromVersion(libs.versions.kotlinTarget.get())
-        //languageVersion = kotlinTarget
-        freeCompilerArgs.addAll(
-//            "-Xmulti-dollar-interpolation",
-            "-opt-in=kotlin.uuid.ExperimentalUuidApi",
-  //          "-opt-in=kotlinx.serialization.ExperimentalSerializationApi",
-  //          "-opt-in=kotlin.time.ExperimentalTime"
-        )
-        extraWarnings = true
-        progressiveMode = true
-    }
-
-    jvm {
-    }
+    jvm()
 
     js {
         browser()
@@ -30,7 +16,10 @@ kotlin {
 
         commonMain {
             dependencies {
-                implementation(project(":golem-xiv-api"))
+                api(project(":golem-xiv-api"))
+                api(project(":golem-xiv-api-client"))
+                api(libs.kotlinx.coroutines.core)
+
                 implementation(libs.kotlinx.serialization.json)
                 implementation(libs.ktor.websockets)
                 implementation(libs.ktor.client.core)

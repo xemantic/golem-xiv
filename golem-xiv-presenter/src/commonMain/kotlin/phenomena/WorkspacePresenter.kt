@@ -7,12 +7,12 @@
 
 package com.xemantic.ai.golem.presenter.phenomena // TODO maybe it should be rather workspace?
 
-import com.xemantic.ai.golem.api.Agent
-import com.xemantic.ai.golem.api.Expression
+import com.xemantic.ai.golem.api.PhenomenalExpression
 import com.xemantic.ai.golem.api.GolemOutput
 import com.xemantic.ai.golem.api.CognitionEvent
+import com.xemantic.ai.golem.api.EpistemicAgent
 import com.xemantic.ai.golem.api.Phenomenon
-import com.xemantic.ai.golem.api.service.CognitiveWorkspaceService
+import com.xemantic.ai.golem.api.client.CognitiveWorkspaceService
 import com.xemantic.ai.golem.presenter.ScreenView
 import com.xemantic.ai.golem.presenter.util.Action
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -47,9 +47,9 @@ interface IntentAppender {
 
 interface CognitiveWorkspaceView : ScreenView {
 
-    fun addExpression(expression: Expression)
+    fun addExpression(expression: PhenomenalExpression)
 
-    fun starExpression(agent: Agent): ExpressionAppender
+    fun starExpression(agent: EpistemicAgent): ExpressionAppender
 
     val promptChanges: Flow<String>
 
@@ -90,9 +90,9 @@ class WorkspacePresenter(
 
     private var currentPrompt: String = ""
 
-    private var workspaceId: String? = null
+    private var workspaceId: Long? = null
 
-    private val expressionAppenderMap = mutableMapOf<String, ExpressionAppender>()
+    private val expressionAppenderMap = mutableMapOf<Long, ExpressionAppender>()
 
     init {
 
@@ -192,16 +192,16 @@ class WorkspacePresenter(
         }
     }
 
-    private suspend fun initiateWorkspace(): String = withContext(ioDispatcher) {
+    private suspend fun initiateWorkspace(): Long = withContext(ioDispatcher) {
         cognitiveWorkspaceService.initiate(
-            phenomena = listOf(Phenomenon.Text(id = "N/A", currentPrompt))
+            phenomena = listOf(Phenomenon.Text(id = -1, currentPrompt))
         )
     }
 
     private suspend fun integrateWithWorkspace() = withContext(ioDispatcher) {
         cognitiveWorkspaceService.integrate(
             workspaceId = workspaceId!!,
-            phenomena = listOf(Phenomenon.Text(id = "N/A", currentPrompt))
+            phenomena = listOf(Phenomenon.Text(id = -1, currentPrompt))
         )
     }
 

@@ -7,10 +7,9 @@
 
 package com.xemantic.ai.golem.presenter
 
-import com.xemantic.ai.golem.api.GolemInput
 import com.xemantic.ai.golem.api.GolemOutput
-import com.xemantic.ai.golem.api.service.ClientCognitiveWorkspaceService
-import com.xemantic.ai.golem.api.service.ClientPingService
+import com.xemantic.ai.golem.api.client.http.HttpClientCognitiveWorkspaceService
+import com.xemantic.ai.golem.api.client.http.HttpClientPingService
 import com.xemantic.ai.golem.presenter.memory.MemoryView
 import com.xemantic.ai.golem.presenter.navigation.HeaderPresenter
 import com.xemantic.ai.golem.presenter.navigation.HeaderView
@@ -21,7 +20,6 @@ import com.xemantic.ai.golem.presenter.phenomena.WorkspacePresenter
 import com.xemantic.ai.golem.presenter.phenomena.CognitiveWorkspaceView
 import com.xemantic.ai.golem.presenter.util.Action
 import com.xemantic.ai.golem.presenter.util.listen
-import com.xemantic.ai.golem.presenter.websocket.sendToGolem
 import com.xemantic.ai.golem.presenter.websocket.collectGolemOutput
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
@@ -118,15 +116,15 @@ class MainPresenter(
         navigation
     )
 
-    private val golemInput = MutableSharedFlow<GolemInput>()
+//    private val golemInput = MutableSharedFlow<GolemInput>()
 
     private val golemOutputs = MutableSharedFlow<GolemOutput>()
 
-    private val pingService = ClientPingService(apiClient)
-    private val workspaceService = ClientCognitiveWorkspaceService(apiClient)
+    private val pingService = HttpClientPingService(apiClient)
+    private val workspaceService = HttpClientCognitiveWorkspaceService(apiClient)
 
     private lateinit var workspacePresenter: WorkspacePresenter
-    private lateinit var cognitiveWorkspaceView: CognitiveWorkspaceView
+    private lateinit var workspaceView: CognitiveWorkspaceView
 
     init {
         navigationTargets.listen(scope) {
@@ -170,7 +168,8 @@ class MainPresenter(
                 path = "/ws"
             ) {
                 launch {
-                    golemInput.collect { sendToGolem(it) }
+                    // nothing to send at the moment
+                    //golemInput.collect { sendToGolem(it) }
                 }
                 collectGolemOutput { handle(it) }
             }
@@ -183,15 +182,15 @@ class MainPresenter(
         if (::workspacePresenter.isInitialized) {
             workspacePresenter.dispose()
         }
-        cognitiveWorkspaceView = view.workspaceView()
+        workspaceView = view.workspaceView()
         workspacePresenter = WorkspacePresenter(
             scope,
             Dispatchers.Default,
             workspaceService,
-            cognitiveWorkspaceView,
+            workspaceView,
             golemOutputs
         )
-        view.display(cognitiveWorkspaceView)
+        view.display(workspaceView)
     }
 
     fun onContextSelected() {
