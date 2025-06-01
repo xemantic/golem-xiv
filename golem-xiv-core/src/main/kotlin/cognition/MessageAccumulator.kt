@@ -5,25 +5,25 @@
  * Unauthorized reproduction or distribution is prohibited.
  */
 
-package com.xemantic.ai.golem.server.phenomena
+package com.xemantic.ai.golem.core.cognition
 
-import com.xemantic.ai.golem.api.Agent
 import com.xemantic.ai.golem.api.CognitionEvent
 import com.xemantic.ai.golem.api.CognitionEvent.*
+import com.xemantic.ai.golem.api.EpistemicAgent
 import com.xemantic.ai.golem.api.Phenomenon
-import com.xemantic.ai.golem.api.Expression
+import com.xemantic.ai.golem.api.PhenomenalExpression
 import kotlin.time.Clock
 import kotlin.time.Instant
 
+// TODO should it be part of the backend API?
 class ExpressionAccumulator(
-    private val workspaceId: String // TODO why it is not being used?
+    private val workspaceId: Long,
+    private val expressionId: Long
 ) {
 
     private val textBuilder = StringBuilder()
 
     private val phenomena = mutableListOf<Phenomenon>()
-
-    private var id: String? = null
 
     private var initiationMoment: Instant? = null
 
@@ -37,12 +37,12 @@ class ExpressionAccumulator(
         event.process()
     }
 
-    fun build() = Expression(
-        id = id!!,
-        agent = Agent( // TODO we need a better way of assigning it in the future.
-            id = "golem",
-            description = "The agent",
-            category = Agent.Category.SELF
+    fun build() = PhenomenalExpression(
+        id = expressionId,
+        agent = EpistemicAgent.AI( // TODO we need a better way of assigning it in the future.
+            id = -1,
+            model = "",
+            vendor = ""
         ),
         phenomena = phenomena,
         initiationMoment = initiationMoment!!,
@@ -51,7 +51,6 @@ class ExpressionAccumulator(
 
     private fun CognitionEvent.process() = when (this) {
         is ExpressionInitiation -> {
-            id = expressionId
             initiationMoment = Clock.System.now()
         }
         is TextInitiation -> { /* nothing to do */ }

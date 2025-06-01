@@ -52,6 +52,12 @@ interface CognitiveWorkspaceRepository {
         systemId: String
     ): Long
 
+    suspend fun initiateFulfilmentPhenomenon(
+        workspaceId: Long,
+        expressionId: Long,
+        systemId: String
+    ): Long
+
     suspend fun appendText(
         workspaceId: Long,
         expressionId: Long,

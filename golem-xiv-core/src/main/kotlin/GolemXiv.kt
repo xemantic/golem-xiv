@@ -8,16 +8,12 @@
 package com.xemantic.ai.golem.core
 
 import com.xemantic.ai.golem.api.Phenomenon
-import com.xemantic.ai.golem.api.PhenomenalExpression
 import com.xemantic.ai.golem.api.CognitionEvent
 import com.xemantic.ai.golem.api.EpistemicAgent
 import com.xemantic.ai.golem.api.GolemOutput
 import com.xemantic.ai.golem.api.backend.CognitiveWorkspaceRepository
 import com.xemantic.ai.golem.api.backend.Cognizer
 import com.xemantic.ai.golem.api.backend.Identity
-import com.xemantic.ai.golem.api.backend.script.ExecuteGolemScript
-import com.xemantic.ai.golem.api.backend.script.Files
-import com.xemantic.ai.golem.api.backend.script.WebBrowser
 import com.xemantic.ai.golem.core.kotlin.getClasspathResource
 import com.xemantic.ai.golem.core.script.GolemScriptExecutor
 import com.xemantic.ai.golem.core.kotlin.describeCurrentMoment
@@ -27,18 +23,14 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.collections.plusAssign
-import kotlin.time.Clock
-import kotlin.uuid.Uuid
 
-fun environmentContext(): String = """
+fun environmentalContext(): String = """
 Host OS: ${operatingSystemName()}
 Current time: ${describeCurrentMoment()}
 """.trimIndent()
@@ -52,14 +44,13 @@ inline fun <reified T : Any> service(
     value
 )
 
-val golemSystemPrompt = getClasspathResource("/prompts/GolemXIVSystemPrompt.md")
+val golemMainConditioning = getClasspathResource("/conditioning/GolemXIVConditioning.md")
 
 class Golem(
     private val identity: Identity,
     private val repository: CognitiveWorkspaceRepository,
-    webBrowserProvider: () -> WebBrowser,
-    private val cognizerSelector: (hints: Map<String, String>) -> Cognizer,
-    private val files: Files,
+    private val cognizer: Cognizer,
+    private val golemScriptDependencies: List<GolemScriptExecutor.Dependency<*>>,
     private val outputs: FlowCollector<GolemOutput>
 ) : AutoCloseable {
 
@@ -76,9 +67,8 @@ class Golem(
 
     val golemConditioning = buildList {
         //val coreSystem = systemPrompt + if (golemScriptApi != null) GOLEM_SCRIPT_SYSTEM_PROMPT else ""
-        val coreSystem = golemSystemPrompt
-        add(coreSystem)
-        add(environmentContext())
+        add(golemMainConditioning)
+        add(environmentalContext())
 //            if (additionalSystemPrompt != null) {
 //                add(System(text = additionalSystemPrompt)) // TODO cache control
 //            }
@@ -109,151 +99,76 @@ class Golem(
 
 //        val golemTools = listOf(kotlinScriptTool)
 
-        val dependencies = listOf(
-//            service<com.xemantic.ai.golem.server.script.Context>("phenomena", com.xemantic.ai.golem.server.script.service.DefaultContext(scope, outputs)),
-            service<Files>("files", files),
-            //service<WebBrowser>("browser", DefaultWebBrowser(browser)),
-            service<Memory>("memory", DefaultMemory(neo4j))
-////            service<WebBrowserService>("webBrowserService", DefaultWebBrowserService())
-////                    service<StringEditorService>("stringEditorService", stringEditorService())
-        )
-
-        // TODO it can be done once
-        val tool = Tool<ExecuteGolemScript> {
-            logger.debug { "Workspace[$id]/GolemScript, purpose: ${this.purpose}" }
-            scriptExecutor.execute(script = code)
-        }
-
-        val tools = listOf(tool)
-
         // TODO this should come from the outside
-        val human = EpistemicAgent.Human(
-            id = 42
-        )
+//        val human = EpistemicAgent.Human(
+//            id = 42
+//        )
 
-        fun structure(
-            phenomena: List<Phenomenon>
-        ): PhenomenalExpression {
-
-            val info = repository.create(
-                conditioning = listOf(systemPrompt) // TODO is it correct?
-            )
-
-            return PhenomenalExpression(
-                id = info.id,
-                agent = EpistemicAgent.Human(
-                    id = -2L // TODO where is this id?
-                ),
-                phenomena = phenomena,
-                initiationMoment = info.initiationMoment
-            )
-        }
-
-        private suspend fun actualize(
-            actualizationId: String,
-            intent: Phenomenon.Intent,
-        ): List<Phenomenon>? {
-
-            logger.debug {
-                "Workspace[$id]/Expression[${actualizationId}: " +
-                        "Actualizing intent, purpose: ${intent.purpose}, code: ${intent.code}"
-            }
-
-            val result = scriptExecutor.execute(
-                script = intent.code,
-                dependencies = dependencies
-            )
-
-            val phenomena = when (result) {
-                is ExecuteGolemScript.Result.Value -> when(result.value) {
-                    is String -> listOf(
-                        Phenomenon.Fulfillment(
-                            id = Uuid.random().toString(),
-                            intentId = intent.id,
-                            intentSystemId = intent.systemId,
-                            result = result.value
-                        )
-                    )
-                    is Unit -> null
-                    else -> listOf(
-                        Phenomenon.Text(
-                            id = Uuid.random().toString(),
-                            text = result.value.toString()
-                        )
-                    )
-                }
-                is ExecuteGolemScript.Result.Error -> listOf(Phenomenon.Impediment(
-                    id = Uuid.random().toString(),
-                    intentId = intent.id,
-                    intentSystemId = intent.systemId,
-                    reason = result.message
-                ))
-            }
-
-            return phenomena
-        }
-
-        private suspend fun emit(event: CognitionEvent) {
-            outputs.emit(GolemOutput.Cognition(workspaceId = id, event))
-        }
-
-        // used to send back initial expression via websocket
-        internal suspend fun emit(
-            expression: PhenomenalExpression
-        ) {
-            emit(
-                CognitionEvent.ExpressionInitiation(
-                    expressionId = expression.id,
-                    agent = userAgent,
-                    expression.initiationMoment
-                )
-            )
-            expression.phenomena.forEach {
-                when (it) {
-                    is Phenomenon.Text -> {
-                        emit(CognitionEvent.TextInitiation(expression.id))
-                        emit(CognitionEvent.TextUnfolding(expression.id, it.text))
-                        emit(CognitionEvent.TextCulmination(expression.id))
-                    }
-                    else -> throw IllegalStateException("Unsupported content type: $it")
-                }
-            }
-            emit(
-                CognitionEvent.ExpressionCulmination(
-                    expressionId = expression.id,
-                    moment = expression.culminationMoment!!,
-                )
-            )
-        }
+//        private suspend fun actualize(
+//            actualizationId: String,
+//            intent: Phenomenon.Intent,
+//        ): List<Phenomenon>? {
+//
+//            logger.debug {
+//                "Workspace[$id]/Expression[${actualizationId}: " +
+//                        "Actualizing intent, purpose: ${intent.purpose}, code: ${intent.code}"
+//            }
+//
+//            val result = scriptExecutor.execute(
+//                script = intent.code,
+//                dependencies = dependencies
+//            )
+//
+//            val phenomena = when (result) {
+//                is ExecuteGolemScript.Result.Value -> when(result.value) {
+//                    is String -> listOf(
+//                        Phenomenon.Fulfillment(
+//                            id = Uuid.random().toString(),
+//                            intentId = intent.id,
+//                            intentSystemId = intent.systemId,
+//                            result = result.value
+//                        )
+//                    )
+//                    is Unit -> null
+//                    else -> listOf(
+//                        Phenomenon.Text(
+//                            id = Uuid.random().toString(),
+//                            text = result.value.toString()
+//                        )
+//                    )
+//                }
+//                is ExecuteGolemScript.Result.Error -> listOf(Phenomenon.Impediment(
+//                    id = Uuid.random().toString(),
+//                    intentId = intent.id,
+//                    intentSystemId = intent.systemId,
+//                    reason = result.message
+//                ))
+//            }
+//
+//            return phenomena
+//        }
 
     }
 
-    suspend fun initiateCognitiveWorkspace(): Long {
+    suspend fun initiateCognition(): Long {
         val info = repository.initiateWorkspace(
-            conditioning = golemConditioning()
+            conditioning = golemConditioning
         )
-        val cognition = ActiveCognition(
-            systemPrompt = golemSystemPrompt,
-            environmentSystemPrompt = environmentContext(),
-            golemScriptApi = GOLEM_SCRIPT_API
-        )
-        activeCognitionMap[info.id] = cognition
-        logger.debug { "Workspace[${info.id}]: created" }
         return info.id
     }
 
-    suspend fun integrateWithCognitiveWorkspace(
+    /**
+     * @throws com.xemantic.ai.golem.api.backend.GolemException
+     */
+    suspend fun perceive(
         workspaceId: Long,
         phenomena: List<Phenomenon>
     ) {
 
-        logger.debug { "Workspace[$workspaceId]: Integrating phenomena" }
+        // TODO check if cognition is active
+        logger.debug { "Workspace[$workspaceId]: perceiving phenomena" }
 
-        suspend fun emit(event: CognitionEvent) {
-            outputs.emit(GolemOutput.Cognition(workspaceId, event))
-        }
-
-        repository.appendToWorkspace(
+        val phenomenalExpression = repository.appendToWorkspace(
             workspaceId = workspaceId,
             agent = EpistemicAgent.Human(
                 id = identity.userId("foo") // TODO where to keep this mapping?
@@ -261,101 +176,100 @@ class Golem(
             phenomena = phenomena
         )
 
-        // TODO broadcast
-        val workspace = repository.getWorkspace(workspaceId)
+        val cognitionBroadcaster = outputs.cognitionBroadcaster(workspaceId)
 
-//        phenomenalFlow += expression
-//
-//        emit(expression)
+        cognitionBroadcaster.emit(phenomenalExpression)
 
         activeCognitionMap[workspaceId] = scope.launch {
 
-            logger.debug { "Workspace[$workspaceId]: Reasoning" }
+            logger.debug { "Workspace[$workspaceId]: Initiating cognition" }
 
             do {
 
-                val cognizer = cognizerSelector(emptyMap()) // TODO select based on hints
+                val workspace = repository.getWorkspace(workspaceId)
 
                 cognizer.reason(
                     conditioning = golemConditioning,
                     workspaceId = workspaceId,
-                    workspace.,
+                    phenomenalFlow = workspace.expressions,
                     hints = emptyMap()
                 ).collect { event ->
-                    emit(event)
+                    cognitionBroadcaster.emit(event)
                 }
 
-                val workspace = repository.getWorkspace(workspaceId)
+                val updatedWorkspace = repository.getWorkspace(workspaceId)
 
-                val intents = workspace.expressions.last().phenomena.filterIsInstance<Phenomenon.Intent>()
+                val intents = updatedWorkspace.expressions.last().phenomena.filterIsInstance<Phenomenon.Intent>()
 
                 if (intents.isNotEmpty()) {
 
-                    val initiationMoment = Clock.System.now()
-
-                    val actualizationId = Uuid.random().toString()
                     val agent = EpistemicAgent.Computer(
                         id = -1,
                         belongsToAgentId = -2
                     )
 
-                    emit(
-                        CognitionEvent.ExpressionInitiation(
-                            expressionId = actualizationId,
-                            agent = agent,
-                            moment = initiationMoment
-                        )
+                    val expressionInfo = repository.initiateExpression(
+                        workspaceId = workspaceId,
+                        agent = agent
                     )
+
+                    cognitionBroadcaster.emit(CognitionEvent.ExpressionInitiation(
+                        expressionId = expressionInfo.id,
+                        agent = agent,
+                        moment = expressionInfo.initiationMoment
+                    ))
 
                     val intent = intents.first()
 
-                    emit(
-                        CognitionEvent.FulfillmentInitiation(
-                            expressionId = actualizationId,
-                        )
+                    val fulfilmentId = repository.initiateFulfilmentPhenomenon(
+                        workspaceId = workspaceId,
+                        expressionId = expressionInfo.id,
+                        systemId = intent.systemId
                     )
+
+                    cognitionBroadcaster.emit(CognitionEvent.FulfillmentInitiation(
+                        id = fulfilmentId,
+                        expressionId = expressionInfo.id
+                    ))
 
                     // TODO why we need this async?
-                    val deferred = scope.async {
-                        actualize(actualizationId, intent)
-                    }.await()!!
+//                    val deferred = scope.async {
+//                        actualize(actualizationId, intent)
+//                    }.await()!!
 
-                    emit(
-                        CognitionEvent.FulfillmentUnfolding(
-                            expressionId = actualizationId,
-                            designation = deferred.toString()
-                        )
+                    cognitionBroadcaster.emit(CognitionEvent.FulfillmentUnfolding(
+                        id = fulfilmentId,
+                        expressionId = expressionInfo.id,
+                        designation = "mock"
+                    ))
+
+                    // TODO append to fulfilment
+                    //repository.append
+
+                    cognitionBroadcaster.emit(CognitionEvent.FulfillmentCulmination(
+                        id = fulfilmentId,
+                        expressionId = expressionInfo.id
+                    ))
+
+                    val moment = repository.culminateExpression(
+                        workspaceId = workspaceId,
+                        expressionId = expressionInfo.id
                     )
 
-                    emit(
-                        CognitionEvent.FulfillmentCulmination(
-                            expressionId = actualizationId
-                        )
-                    )
-
-                    val culminationMoment = Clock.System.now()
-
-                    val expression = PhenomenalExpression(
-                        id = actualizationId,
-                        agent = agent,
-                        phenomena = deferred,
-                        initiationMoment = initiationMoment,
-                        culminationMoment = culminationMoment
-                    )
-
-                    phenomenalFlow += expression
-
-                    emit(
-                        CognitionEvent.ExpressionCulmination(
-                            expressionId = actualizationId,
-                            moment = culminationMoment
-                        )
-                    )
+                    cognitionBroadcaster.emit(CognitionEvent.ExpressionCulmination(
+                        expressionId = expressionInfo.id,
+                        moment = moment
+                    ))
 
                 }
 
             } while (intents.isNotEmpty())
         }
+    }
+
+    fun interruptCognition(workspaceId: Long) {
+        // TODO better implementation, should join, send Interrupted event and remove from activeCognitionMap
+        activeCognitionMap[workspaceId]!!.cancel()
     }
 
     override fun close() {
@@ -379,5 +293,7 @@ class Golem(
         logger.debug { "Golem XIV closed" }
 
     }
+
+    // used to send back initial expression via websocket
 
 }

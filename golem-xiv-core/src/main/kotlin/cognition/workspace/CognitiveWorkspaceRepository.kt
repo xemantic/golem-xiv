@@ -93,6 +93,10 @@ class DefaultCognitiveWorkspaceRepository(
         TODO("Not yet implemented")
     }
 
+    override suspend fun initiateFulfilmentPhenomenon(workspaceId: Long, expressionId: Long, systemId: String): Long {
+        TODO("Not yet implemented")
+    }
+
     override suspend fun appendText(
         workspaceId: Long,
         expressionId: Long,

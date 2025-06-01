@@ -140,6 +140,7 @@ sealed interface CognitionEvent {
         val id: Long,
         val expressionId: Long
     ) : CognitionEvent
+    // TODO here we need impediment indication
 
     @Serializable
     @SerialName("recursiveFulfillmentUnfolding")
