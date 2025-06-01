@@ -1,56 +1,24 @@
-@file:OptIn(ExperimentalKotlinGradlePluginApi::class)
-
-import groovy.json.StringEscapeUtils
-import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
-
 plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.ktor.plugin)
-    alias(libs.plugins.kotlin.plugin.serialization)
-    alias(libs.plugins.kotlin.plugin.power.assert)
+    //alias(libs.plugins.kotlin.plugin.serialization)
+    id("golem.convention")
 }
-
-//    jvm {
-//        // set up according to https://jakewharton.com/gradle-toolchains-are-rarely-a-good-idea/
-////        compilerOptions {
-////            apiVersion = kotlinTarget
-////            languageVersion = kotlinTarget
-////            jvmTarget = JvmTarget.fromTarget(javaTarget)
-////            freeCompilerArgs.add("-Xjdk-release=$javaTarget")
-////            progressiveMode = true
-////        }
-//    }
-
-val generatedSourcesDir = layout.buildDirectory.dir("generated/source/main/kotlin")
 
 application {
     mainClass = "com.xemantic.ai.golem.server.GolemServerKt"
 }
 
-kotlin {
-
-    compilerOptions {
-        //apiVersion = KotlinVersion.fromVersion(libs.versions.kotlinTarget.get())
-        //languageVersion = kotlinTarget
-        freeCompilerArgs.addAll(
-            "-Xmulti-dollar-interpolation",
-            "-opt-in=kotlin.uuid.ExperimentalUuidApi",
-            "-opt-in=kotlinx.serialization.ExperimentalSerializationApi",
-            "-opt-in=kotlin.time.ExperimentalTime"
-        )
-        extraWarnings = true
-        progressiveMode = true
-    }
-
-    sourceSets {
-        main {
-            kotlin.srcDir(generatedSourcesDir)
-        }
-    }
-}
-
 dependencies {
     implementation(project(":golem-xiv-api"))
+    implementation(project(":golem-xiv-api-websocket"))
+    implementation(project(":golem-xiv-api-backend"))
+    implementation(project(":golem-xiv-storage-file"))
+    implementation(project(":golem-xiv-neo4j"))
+    implementation(project(":golem-xiv-cognizer-anthropic"))
+    implementation(project(":golem-xiv-playwright"))
+    implementation(project(":golem-xiv-core"))
+
     implementation(libs.kotlinx.serialization.core)
 
     implementation(libs.kotlin.scripting.common)
@@ -59,9 +27,7 @@ dependencies {
 
     implementation(libs.kotlin.logging)
 
-    implementation(libs.anthropic.sdk.kotlin)
     implementation(libs.kotlinx.coroutines.core)
-    implementation(libs.kotlinx.coroutines.rx2) // needed by dashscope cognizer
 
     implementation(libs.ktor.client.java)
     implementation(libs.ktor.server.core)
@@ -70,14 +36,10 @@ dependencies {
     implementation(libs.ktor.server.cors)
     implementation(libs.ktor.server.call.logging)
     implementation(libs.ktor.server.content.negotiation)
+    implementation(libs.ktor.server.status.pages)
     implementation(libs.ktor.serialization.kotlinx.json)
 
-    implementation(libs.playwright)
-    implementation(libs.neo4j.java.driver)
-
-    implementation(libs.dashscope) {
-        exclude(group = "org.slf4j", module = "slf4j-simple")
-    }
+    implementation(libs.anthropic.sdk.kotlin)
 
     implementation(libs.log4j.api)
 
@@ -90,49 +52,7 @@ dependencies {
     testImplementation(libs.xemantic.kotlin.test)
     testImplementation(libs.neo4j.harness)
 
-    implementation("com.vladsch.flexmark:flexmark:0.64.8")
-    implementation("com.vladsch.flexmark:flexmark-html2md-converter:0.64.8")
-}
 
-tasks.test {
-    useJUnitPlatform()
-}
-
-powerAssert {
-    functions = listOf(
-        "com.xemantic.kotlin.test.assert",
-        "com.xemantic.kotlin.test.have"
-    )
-}
-
-// Define the task to generate the Kotlin source
-tasks.register("generateGolemScriptApi") {
-    val sourceFile = "src/main/kotlin/script/GolemScriptApi.kt"
-
-    val packageName = "com.xemantic.ai.golem.server.script"
-
-    inputs.file(sourceFile)
-    outputs.dir(generatedSourcesDir)
-
-    doLast {
-        generatedSourcesDir.get().asFile.mkdirs()
-
-        // Read the source file
-        val sourceInput = file(sourceFile).readText().substringAfter("*/")
-        val sourceContent: String = StringEscapeUtils.escapeJava(sourceInput).replace("$", "${'$'}{'${'$'}'}")
-
-        // Generate the Kotlin file with the source as a string constant
-        file("${generatedSourcesDir.get()}/GeneratedGolemServiceApi.kt").writeText("""
-            package $packageName
-
-            const val GOLEM_SCRIPT_API = "$sourceContent"
-        """.trimIndent())
-    }
-}
-
-// Make sure the source is generated before compilation
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-    dependsOn("generateGolemScriptApi")
 }
 
 tasks.register<Copy>("copyWebResources") {

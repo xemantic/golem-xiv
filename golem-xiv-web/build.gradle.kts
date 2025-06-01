@@ -1,31 +1,16 @@
-@file:OptIn(ExperimentalKotlinGradlePluginApi::class)
-
 import com.github.gradle.node.yarn.task.YarnTask
-import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlin.plugin.serialization)
-    alias(libs.plugins.kotlin.plugin.power.assert)
     alias(libs.plugins.node.gradle)
+    id("golem.convention")
 }
 
 kotlin {
 
-    compilerOptions {
-        //apiVersion = KotlinVersion.fromVersion(libs.versions.kotlinTarget.get())
-        //languageVersion = kotlinTarget
-        freeCompilerArgs.addAll(
-            "-Xmulti-dollar-interpolation",
-            "-opt-in=kotlin.uuid.ExperimentalUuidApi"
-        )
-        extraWarnings = true
-        progressiveMode = true
-    }
-
     js {
-        browser {
-        }
+        browser()
         binaries.executable()
     }
 
@@ -51,13 +36,6 @@ kotlin {
 
     }
 
-}
-
-powerAssert {
-    functions = listOf(
-        "com.xemantic.kotlin.test.assert",
-        "com.xemantic.kotlin.test.have"
-    )
 }
 
 node {
