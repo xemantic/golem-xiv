@@ -19,4 +19,16 @@ sealed interface GolemError {
         val workspaceId: Long
     ) : GolemError
 
+    @Serializable
+    @SerialName("badRequest")
+    data class BadRequest(
+        val message: String
+    ) : GolemError
+
+    @Serializable
+    @SerialName("unexpected")
+    data class Unexpected(
+        val message: String
+    ) : GolemError
+
 }
