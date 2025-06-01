@@ -17,49 +17,57 @@ class Neo4jIdentity(
 
     private val logger = KotlinLogging.logger {}
 
-    override fun selfId(): Long {
+    override val selfId: Long by lazy {
 
         val id = driver.session().use { session ->
 
-            val result = session.executeRead { tx ->
-                tx.run("""
+            val maybeId = session.executeRead { tx ->
+
+                val result = tx.run("""
                     MATCH (self:Self:Agent:AI)
-                    RETURN self.id as id
+                    RETURN id(self) as id
                 """.trimIndent())
+
+                if (result.hasNext()) {
+                    result.single()["id"].asLong()
+                } else {
+                    null
+
+
+                }
             }
 
-            if (result.hasNext()) {
-                result.single()["id"].asLong()
+            if (maybeId != null) {
+                maybeId
             } else {
 
                 logger.info {
                     "No self-identity node detected, creating"
                 }
 
-                val writeResult = session.executeWrite { tx ->
-                    tx.run("""
-                        CREATE (self:Self:Agent:AI) {
+                session.executeWrite { tx ->
+                    val result = tx.run("""
+                        CREATE (self:Self:Agent:AI {
                             initiationMoment: datetime()
                         })
-                        RETURN self.id as id
+                        RETURN id(self) as id
                     """.trimIndent())
+                    result.single()["id"].asLong()
                 }
 
-                writeResult.single()["id"].asLong()
             }
+
         }
 
         logger.info {
             "Self-identity node id: $id"
         }
 
-        return id
+        id
     }
 
-    override fun userId(
+    override suspend fun userId(
         login: String
-    ): Long {
-        TODO()
-    }
+    ): Long = -1 // TODO we need to think it through
 
 }

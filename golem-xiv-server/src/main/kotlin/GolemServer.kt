@@ -92,7 +92,7 @@ fun Application.module() {
 
     val anthropicCognizer = AnthropicToolUseCognizer(
         anthropic = anthropic,
-        golemSelfId = identity.selfId(),
+        golemSelfId = identity.selfId,
         repository = repository
     )
 

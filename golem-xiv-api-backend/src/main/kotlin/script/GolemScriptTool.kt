@@ -9,7 +9,6 @@ package com.xemantic.ai.golem.api.backend.script
 
 import com.xemantic.ai.tool.schema.meta.Description
 import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
 
 /**
  * Represents a Golem script with its required attributes and content.
@@ -45,7 +44,6 @@ It the last expression of the script is null, or Unit (e.g. function), no inform
 If the last expression of the script will be send back as a tool result.
 """
 )
-@Serializable
 data class ExecuteGolemScript(
     val purpose: String,
     val code: String

@@ -16,7 +16,7 @@ tasks.register<JavaExec>("runNeo4J") {
     errorOutput = System.err
 
     classpath = sourceSets.main.get().runtimeClasspath
-    mainClass.set("com.xemantic.ai.golem.neo4j.GolemNeo4JKt")
+    mainClass.set("com.xemantic.ai.golem.neo4j.starter.GolemNeo4JKt")
 
     jvmArgs("-Xms512m", "-Xmx1g")
 

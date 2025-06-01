@@ -29,21 +29,25 @@ class Neo4jCognitiveWorkspaceMemory(
 
         return driver.session().use { session ->
 
-            val writeResult = session.executeWrite { tx ->
-                tx.run("""
+            session.executeWrite { tx ->
+
+                val result = tx.run("""
                     CREATE (workspace:CognitiveWorkspace {
                         initiationMoment: datetime()
                     })
-                    RETURN workspace.id as id, workspace.initiationMoment as initiationMoment
+                    RETURN id(workspace) as id, workspace.initiationMoment as initiationMoment
                 """.trimIndent())
+
+                val record = result.single()
+
+                CognitiveWorkspaceInfo(
+                    id = record["id"].asLong(),
+                    initiationMoment = record["initiationMoment"].asInstant()
+                )
             }
 
-            val result = writeResult.single()
-            CognitiveWorkspaceInfo(
-                id = result["id"].asLong(),
-                initiationMoment = result["initiationMoment"].asInstant()
-            )
         }
+
     }
 
     override suspend fun createExpression(
@@ -55,21 +59,25 @@ class Neo4jCognitiveWorkspaceMemory(
 
         return driver.session().use { session ->
 
-            val writeResult = session.executeWrite { tx ->
-                tx.run("""
+            session.executeWrite { tx ->
+
+                val result = tx.run("""
                     CREATE (expression:PhenomenalExpression {
                         initiationMoment: datetime()
                     })
-                    RETURN expression.id as id, expression.initiationMoment as initiationMoment
+                    RETURN id(expression) as id, expression.initiationMoment as initiationMoment
                 """.trimIndent())
+
+                val record = result.single()
+
+                PhenomenalExpressionInfo(
+                    id = record["id"].asLong(),
+                    initiationMoment = record["initiationMoment"].asInstant()
+                )
             }
 
-            val result = writeResult.single()
-            PhenomenalExpressionInfo(
-                id = result["id"].asLong(),
-                initiationMoment = result["initiationMoment"].asInstant()
-            )
         }
+
     }
 
     override suspend fun createPhenomenon(
@@ -80,16 +88,20 @@ class Neo4jCognitiveWorkspaceMemory(
 
         return driver.session().use { session ->
 
-            val writeResult = session.executeWrite { tx ->
-                tx.run("""
+            session.executeWrite { tx ->
+
+                val result = tx.run("""
                     CREATE (phenomenon:Phenomenon)
-                    RETURN phenomenon.id as id
+                    RETURN id(phenomenon) as id
                 """.trimIndent())
+
+                val record = result.single()
+
+                record["id"].asLong()
             }
 
-            val result = writeResult.single()
-            result["id"].asLong()
         }
+
     }
 
     override suspend fun updateWorkspace(workspaceId: Long, title: String?, summary: String?) {

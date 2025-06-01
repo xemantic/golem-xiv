@@ -63,8 +63,6 @@ class Golem(
 
     private val scriptExecutor = GolemScriptExecutor()
 
-    private val selfId = identity.selfId()
-
     val golemConditioning = buildList {
         //val coreSystem = systemPrompt + if (golemScriptApi != null) GOLEM_SCRIPT_SYSTEM_PROMPT else ""
         add(golemMainConditioning)

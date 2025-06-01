@@ -9,8 +9,8 @@ package com.xemantic.ai.golem.api.backend
 
 interface Identity {
 
-    fun selfId(): Long
+    val selfId: Long
 
-    fun userId(login: String): Long
+    suspend fun userId(login: String): Long
 
 }
