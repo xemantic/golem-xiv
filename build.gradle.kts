@@ -11,7 +11,7 @@ plugins {
 }
 
 // TODO change the group
-group = "com.xemantic.ai"
+group = "com.xemantic.ai.golem"
 
 //// TODO fill up the details
 //xemantic {
