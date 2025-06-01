@@ -15,14 +15,14 @@ class HttpClientCognitiveWorkspaceService(
     private val client: HttpClient
 ) : CognitiveWorkspaceService {
 
-    override suspend fun initiate(
+    override suspend fun initiateCognition(
         phenomena: List<Phenomenon>
     ): Long = client.servicePut(
         uri = "/api/workspaces",
         value = phenomena
     )
 
-    override suspend fun integrate(
+    override suspend fun continueCognition(
         workspaceId: Long,
         phenomena: List<Phenomenon>
     ) {

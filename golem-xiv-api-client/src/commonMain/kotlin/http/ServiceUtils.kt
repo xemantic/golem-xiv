@@ -7,6 +7,7 @@
 
 package com.xemantic.ai.golem.api.client.http
 
+import com.xemantic.ai.golem.api.GolemError
 import com.xemantic.ai.golem.api.client.GolemServiceException
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -26,7 +27,7 @@ suspend inline fun <reified T> HttpClient.serviceGet(
     } else {
         throw GolemServiceException(
             uri,
-            "${status.value} (${status.description})"
+            error = body<GolemError>()
         )
     }
 }
@@ -43,7 +44,7 @@ suspend inline fun <reified I, reified O> HttpClient.servicePut(
     } else {
         throw GolemServiceException(
             uri,
-            "${status.value} (${status.description})"
+            error = body<GolemError>()
         )
     }
 }
@@ -59,7 +60,7 @@ suspend inline fun <reified I> HttpClient.servicePatch(
         if (!status.isSuccess()) {
             throw GolemServiceException(
                 uri,
-                "${status.value} (${status.description})"
+                error = body<GolemError>()
             )
         }
     }

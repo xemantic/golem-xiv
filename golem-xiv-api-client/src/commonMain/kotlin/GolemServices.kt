@@ -7,6 +7,7 @@
 
 package com.xemantic.ai.golem.api.client
 
+import com.xemantic.ai.golem.api.GolemError
 import com.xemantic.ai.golem.api.Phenomenon
 
 interface PingService {
@@ -29,26 +30,15 @@ interface CognitiveWorkspaceService {
      * @param phenomena the list of phenomena to cognize.
      * @return the id of newly created cognitive workspace.
      */
-    suspend fun initiate(
+    suspend fun initiateCognition(
         phenomena: List<Phenomenon>
     ): Long
 
     /**
-     * Integrates a new expression into an existing cognitive workspace.
      *
-     * This method represents the process of incorporating new cognitive elements (provided as a list of [com.xemantic.ai.golem.api.Phenomenon])
-     * into the active cognitive process. The integration may trigger further cognitive processing, including:
-     *
-     * 1. Recognition and processing of new phenomena within the expression
-     * 2. Formation of connections between existing and new cognitive elements
-     * 3. Possible emergence of new intents, fulfillments, or impediments
-     *
-     * @param workspaceId The identifier of the cognitive workspace to integrate the expression into
-     * @param phenomena The [com.xemantic.ai.golem.api.PhenomenalExpression] to be integrated into the cognitive workspace
-     * @throws GolemServiceException If no cognitive workspace exists with the provided ID
+     * @throws GolemServiceException
      */
-    // TODO implement these
-    suspend fun integrate(
+    suspend fun continueCognition(
         workspaceId: Long,
         phenomena: List<Phenomenon>
     )
@@ -57,5 +47,5 @@ interface CognitiveWorkspaceService {
 
 class GolemServiceException(
     uri: String,
-    message: String
-) : RuntimeException("Golem API error: $uri - $message")
+    error: GolemError
+) : RuntimeException("Golem API error: $uri - $error")
