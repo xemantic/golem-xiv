@@ -5,17 +5,17 @@
  * Unauthorized reproduction or distribution is prohibited.
  */
 
-package com.xemantic.ai.golem.server.kotlin
+package com.xemantic.ai.golem.core.kotlin
 
-import com.xemantic.ai.golem.server.Golem
+import com.xemantic.ai.golem.core.Golem
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import kotlinx.datetime.Clock
-import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+import java.time.format.TextStyle
+import java.util.Locale
 
 fun String.startsWithAnyOf(
     vararg strings: String
@@ -25,20 +25,12 @@ fun String.startsWithAnyOf(
 
 // Might be needed for other agents, so we can move it to a library
 fun describeCurrentMoment(): String {
-    val now = Clock.System.now()
-    val timeZone = TimeZone.currentSystemDefault()
-    val dateTime = now.toLocalDateTime(timeZone)
-    val dayOfWeek = dateTime.dayOfWeek.name.lowercase().replaceFirstChar { it.uppercase() }
-    val month = dateTime.month.name.lowercase().replaceFirstChar { it.uppercase() }
-    return "The current date is $dayOfWeek, $month ${dateTime.dayOfMonth}, ${dateTime.year} " +
-            "at ${dateTime.asOnClock} ${timeZone.id}"
+    val now = ZonedDateTime.now()
+    val dayOfWeek = now.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.ENGLISH)
+    val readable = now.format(DateTimeFormatter.ofPattern("MMMM d, yyyy 'at' HH:mm:ss zzz", Locale.ENGLISH))
+    val iso = now.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+    return "The current date and time is: $iso ($dayOfWeek, $readable)."
 }
-
-private val LocalDateTime.asOnClock
-    get() =
-        "${this.hour.time}:${this.minute.time}:${this.second.time}"
-
-private val Int.time get() = toString().padStart(2, '0')
 
 suspend fun <T> Collection<Deferred<T>>.awaitEach(
     onEach: suspend (T) -> Unit
