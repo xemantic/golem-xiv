@@ -8,7 +8,7 @@
 package com.xemantic.ai.golem.presenter
 
 import com.xemantic.ai.golem.api.GolemOutput
-import com.xemantic.ai.golem.api.client.http.HttpClientCognitiveWorkspaceService
+import com.xemantic.ai.golem.api.client.http.HttpClientCognitionService
 import com.xemantic.ai.golem.api.client.http.HttpClientPingService
 import com.xemantic.ai.golem.presenter.memory.MemoryView
 import com.xemantic.ai.golem.presenter.navigation.HeaderPresenter
@@ -16,7 +16,7 @@ import com.xemantic.ai.golem.presenter.navigation.HeaderView
 import com.xemantic.ai.golem.presenter.navigation.Navigation
 import com.xemantic.ai.golem.presenter.navigation.SidebarPresenter
 import com.xemantic.ai.golem.presenter.navigation.SidebarView
-import com.xemantic.ai.golem.presenter.phenomena.WorkspacePresenter
+import com.xemantic.ai.golem.presenter.phenomena.CognitiveWorkspacePresenter
 import com.xemantic.ai.golem.presenter.phenomena.CognitiveWorkspaceView
 import com.xemantic.ai.golem.presenter.util.Action
 import com.xemantic.ai.golem.presenter.util.listen
@@ -121,9 +121,9 @@ class MainPresenter(
     private val golemOutputs = MutableSharedFlow<GolemOutput>()
 
     private val pingService = HttpClientPingService(apiClient)
-    private val workspaceService = HttpClientCognitiveWorkspaceService(apiClient)
+    private val workspaceService = HttpClientCognitionService(apiClient)
 
-    private lateinit var workspacePresenter: WorkspacePresenter
+    private lateinit var workspacePresenter: CognitiveWorkspacePresenter
     private lateinit var workspaceView: CognitiveWorkspaceView
 
     init {
@@ -183,7 +183,7 @@ class MainPresenter(
             workspacePresenter.dispose()
         }
         workspaceView = view.workspaceView()
-        workspacePresenter = WorkspacePresenter(
+        workspacePresenter = CognitiveWorkspacePresenter(
             scope,
             Dispatchers.Default,
             workspaceService,
