@@ -5,9 +5,8 @@
  * Unauthorized reproduction or distribution is prohibited.
  */
 
-package com.xemantic.ai.golem.server.script.candidate
+package com.xemantic.ai.golem.core.script.candidate
 
-import com.xemantic.ai.golem.server.environmentContext
 import com.xemantic.ai.golem.server.golemSystemPrompt
 
 interface Memory {

@@ -5,7 +5,7 @@
  * Unauthorized reproduction or distribution is prohibited.
  */
 
-package com.xemantic.ai.golem.server.script
+package com.xemantic.ai.golem.core._review
 
 const val GOLEM_SCRIPT_SYSTEM_PROMPT = $$"""
 You have the ability to generate Kotlin script code enclosed in <golem-script></golem-script> tags.
@@ -24,7 +24,6 @@ When responding to queries that would benefit from Kotlin script execution:
 Here is the API you can use when writing the script:
 
 <golem-script-api>
-$$GOLEM_SCRIPT_API
 </golem-script-api>
 
 Here are object instances injected to the script:
