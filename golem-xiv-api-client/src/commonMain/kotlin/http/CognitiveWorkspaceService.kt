@@ -8,12 +8,12 @@
 package com.xemantic.ai.golem.api.client.http
 
 import com.xemantic.ai.golem.api.Phenomenon
-import com.xemantic.ai.golem.api.client.CognitiveWorkspaceService
+import com.xemantic.ai.golem.api.client.CognitionService
 import io.ktor.client.HttpClient
 
-class HttpClientCognitiveWorkspaceService(
+class HttpClientCognitionService(
     private val client: HttpClient
-) : CognitiveWorkspaceService {
+) : CognitionService {
 
     override suspend fun initiateCognition(
         phenomena: List<Phenomenon>

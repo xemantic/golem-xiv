@@ -16,27 +16,14 @@ interface PingService {
 
 }
 
-interface CognitiveWorkspaceService {
+interface CognitionService {
 
-    /**
-     * Initiates the cognition.
-     *
-     * 1. The new [com.xemantic.ai.golem.api.CognitiveWorkspace] will be created.
-     * 2. The stream of [phenomena] will be:
-     *   - turned into [com.xemantic.ai.golem.api.PhenomenalExpression]
-     *   - integrated into the workspace as initial trigger
-     * 3. The cognition will start by handing the [com.xemantic.ai.golem.api.CognitiveWorkspace] to the [Cognizer].
-     *
-     * @param phenomena the list of phenomena to cognize.
-     * @return the id of newly created cognitive workspace.
-     */
     suspend fun initiateCognition(
         phenomena: List<Phenomenon>
     ): Long
 
     /**
-     *
-     * @throws GolemServiceException
+     * @throws GolemServiceException if no such workspace id exists.
      */
     suspend fun continueCognition(
         workspaceId: Long,
