@@ -5,12 +5,10 @@
  * Unauthorized reproduction or distribution is prohibited.
  */
 
-package com.xemantic.ai.golem.server.server
+package com.xemantic.ai.golem.server
 
-import com.xemantic.ai.golem.api.GolemInput
 import com.xemantic.ai.golem.api.GolemOutput
-import com.xemantic.ai.golem.api.collectGolemData
-import com.xemantic.ai.golem.api.sendGolemData
+import com.xemantic.ai.golem.api.client.http.sendGolemData
 import io.ktor.websocket.WebSocketSession
 
 suspend fun WebSocketSession.sendGolemOutput(
@@ -19,8 +17,11 @@ suspend fun WebSocketSession.sendGolemOutput(
     sendGolemData<GolemOutput>(output)
 }
 
-suspend fun WebSocketSession.collectGolemInput(
-    block: suspend (GolemInput) -> Unit
-) {
-    collectGolemData<GolemInput>(block)
-}
+//
+//suspend fun WebSocketSession.collectGolemInput(
+//    block: suspend (GolemInput) -> Unit
+//) {
+//    collectGolemData<GolemInput>(block)
+//}
+
+// TODO is it in use?
