@@ -12,7 +12,7 @@ import com.xemantic.ai.golem.api.GolemOutput
 import com.xemantic.ai.golem.api.CognitionEvent
 import com.xemantic.ai.golem.api.EpistemicAgent
 import com.xemantic.ai.golem.api.Phenomenon
-import com.xemantic.ai.golem.api.client.CognitiveWorkspaceService
+import com.xemantic.ai.golem.api.client.CognitionService
 import com.xemantic.ai.golem.presenter.ScreenView
 import com.xemantic.ai.golem.presenter.util.Action
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -73,10 +73,10 @@ interface CognitiveWorkspaceView : ScreenView {
 
 }
 
-class WorkspacePresenter(
+class CognitiveWorkspacePresenter(
     mainScope: CoroutineScope,
     private val ioDispatcher: CoroutineDispatcher,
-    private val cognitiveWorkspaceService: CognitiveWorkspaceService,
+    private val cognitionService: CognitionService,
     private val view: CognitiveWorkspaceView,
     private val golemOutputs: Flow<GolemOutput>
 ) {
@@ -186,20 +186,20 @@ class WorkspacePresenter(
         view.sendDisabled = true
         view.clearPromptInput()
         if (workspaceId == null) {
-            workspaceId = initiateWorkspace()
+            workspaceId = initiateCognition()
         } else {
-            integrateWithWorkspace()
+            continueCognition()
         }
     }
 
-    private suspend fun initiateWorkspace(): Long = withContext(ioDispatcher) {
-        cognitiveWorkspaceService.initiate(
+    private suspend fun initiateCognition(): Long = withContext(ioDispatcher) {
+        cognitionService.initiateCognition(
             phenomena = listOf(Phenomenon.Text(id = -1, currentPrompt))
         )
     }
 
-    private suspend fun integrateWithWorkspace() = withContext(ioDispatcher) {
-        cognitiveWorkspaceService.integrate(
+    private suspend fun continueCognition() = withContext(ioDispatcher) {
+        cognitionService.continueCognition(
             workspaceId = workspaceId!!,
             phenomena = listOf(Phenomenon.Text(id = -1, currentPrompt))
         )
