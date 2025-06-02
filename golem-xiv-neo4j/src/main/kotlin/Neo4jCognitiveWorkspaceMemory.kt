@@ -7,10 +7,12 @@
 
 package com.xemantic.ai.golem.neo4j
 
+import com.xemantic.ai.golem.api.PhenomenalExpression
 import com.xemantic.ai.golem.api.backend.CognitiveWorkspaceInfo
 import com.xemantic.ai.golem.api.backend.CognitiveWorkspaceMemory
 import com.xemantic.ai.golem.api.backend.PhenomenalExpressionInfo
 import io.github.oshai.kotlinlogging.KotlinLogging
+import kotlinx.coroutines.flow.Flow
 import org.neo4j.driver.Driver
 import org.neo4j.driver.Value
 import kotlin.time.toKotlinInstant
@@ -104,7 +106,47 @@ class Neo4jCognitiveWorkspaceMemory(
 
     }
 
-    override suspend fun updateWorkspace(workspaceId: Long, title: String?, summary: String?) {
+    override suspend fun updateWorkspace(
+        workspaceId: Long,
+        title: String?,
+        summary: String?
+    ) {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun getWorkspaceInfo(
+        workspaceId: Long
+    ): CognitiveWorkspaceInfo {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun getWorkspaceTitle(
+        workspaceId: Long
+    ): String {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun setWorkspaceTitle(
+        workspaceId: Long
+    ) {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun getWorkspaceSummary(
+        workspaceId: Long
+    ): String {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun setWorkspaceSummary(
+        workspaceId: Long
+    ) {
+        TODO("Not yet implemented")
+    }
+
+    override fun expressions(
+        workspaceId: Long
+    ): Flow<PhenomenalExpression> {
         TODO("Not yet implemented")
     }
 
