@@ -19,7 +19,6 @@ import com.xemantic.ai.golem.presenter.navigation.SidebarView
 import com.xemantic.ai.golem.presenter.phenomena.CognitiveWorkspacePresenter
 import com.xemantic.ai.golem.presenter.phenomena.CognitiveWorkspaceView
 import com.xemantic.ai.golem.presenter.util.Action
-import com.xemantic.ai.golem.presenter.util.listen
 import com.xemantic.ai.golem.presenter.websocket.collectGolemOutput
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
@@ -30,11 +29,12 @@ import io.ktor.client.plugins.websocket.webSocket
 import io.ktor.http.URLProtocol
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.websocket.WebSocketSession
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlin.time.ExperimentalTime
 
@@ -74,16 +74,6 @@ class MainPresenter(
     )
 
     private val scope = MainScope()
-
-    fun <T> Flow<T>.listen(
-        block: suspend CoroutineScope.(T) -> Unit
-    ) {
-        scope.launch {
-            collect {
-                block(it)
-            }
-        }
-    }
 
     private val apiClient = HttpClient {
         install(WebSockets)
@@ -127,7 +117,8 @@ class MainPresenter(
     private lateinit var workspaceView: CognitiveWorkspaceView
 
     init {
-        navigationTargets.listen(scope) {
+
+        navigationTargets.onEach {
             when (it) {
                 is Navigation.Target.KnowledgeGraph -> {
                     view.display(memoryView)
@@ -136,11 +127,12 @@ class MainPresenter(
                 }
             }
             sidebarView.opened = false
-        }
+        }.launchIn(scope)
 
-        sidebarView.themeChanges.listen {
+
+        sidebarView.themeChanges.onEach {
             view.theme(it)
-        }
+        }.launchIn(scope)
 
         scope.launch {
             val pong = pingService.ping()
