@@ -11,6 +11,7 @@
 package com.xemantic.ai.golem.api
 
 import com.xemantic.ai.golem.serialization.time.InstantSerializer
+import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
@@ -18,13 +19,13 @@ import kotlin.time.Instant
 
 interface CognitiveWorkspace {
     val id: Long
-    var title: String
-    var summary: String
-    val expressions: List<PhenomenalExpression>
     val initiationMoment: Instant
-    val latestUpdateMoment: Instant
-    val active: Boolean
-    val parentId: String?
+//    val parentId: String?
+    suspend fun getTitle(): String?
+    suspend fun setTitle(title: String?)
+    suspend fun getSummary(): String?
+    suspend fun setSummary(summary: String?)
+    fun expressions(): Flow<PhenomenalExpression>
 }
 
 @Serializable
@@ -44,10 +45,10 @@ sealed interface EpistemicAgent {
         override val id: Long
     ) : EpistemicAgent
 
+    // TODO create connection between human/user and their computer
     @Serializable
     data class Computer(
         override val id: Long,
-        val belongsToAgentId: Long
     ) : EpistemicAgent
 
 }

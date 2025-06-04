@@ -11,6 +11,7 @@ import com.xemantic.ai.golem.api.CognitiveWorkspace
 import com.xemantic.ai.golem.api.EpistemicAgent
 import com.xemantic.ai.golem.api.PhenomenalExpression
 import com.xemantic.ai.golem.api.Phenomenon
+import kotlinx.coroutines.flow.Flow
 import kotlin.time.Instant
 
 data class CognitiveWorkspaceInfo(
@@ -93,6 +94,10 @@ interface CognitiveWorkspaceRepository {
         workspaceId: Long
     ): CognitiveWorkspace
 
+    suspend fun maybeCulminatedWithIntent(
+        workspaceId: Long
+    ): Phenomenon.Intent?
+
 }
 
 interface CognitiveWorkspaceMemory {
@@ -107,16 +112,47 @@ interface CognitiveWorkspaceMemory {
     ): PhenomenalExpressionInfo
 
     suspend fun createPhenomenon(
-        expressionId: Long
+        workspaceId: Long,
+        expressionId: Long,
+        label:String
     ): Long
 
-    suspend fun updateWorkspace(
+    suspend fun getWorkspaceInfo(
+        workspaceId: Long
+    ): CognitiveWorkspaceInfo
+
+    suspend fun getWorkspaceTitle(
+        workspaceId: Long
+    ): String?
+
+    suspend fun setWorkspaceTitle(
         workspaceId: Long,
-        title: String?,
+        title: String?
+    )
+
+    suspend fun getWorkspaceSummary(
+        workspaceId: Long
+    ): String?
+
+    suspend fun setWorkspaceSummary(
+        workspaceId: Long,
         summary: String?
     )
 
+    fun expressions(
+        workspaceId: Long
+    ): Flow<PhenomenalExpression>
+
+    suspend fun maybeCulminatedWithIntent(
+        workspaceId: Long
+    ): CulminatedWithIntent?
+
 }
+
+data class CulminatedWithIntent(
+    val expressionId: Long,
+    val phenomenonId: Long
+)
 
 interface CognitiveWorkspaceStorage {
 
@@ -125,22 +161,44 @@ interface CognitiveWorkspaceStorage {
         conditioning: List<String>
     )
 
-    suspend fun addExpression(
-        workspaceId: Long,
-        expressionId: Long,
-        phenomena: List<Phenomenon>
-    )
-
-    suspend fun append(
-        phenomena: List<Phenomenon>
-    )
-
-    // TODO append delta
-
-    suspend fun commit(
+    suspend fun createExpression(
         workspaceId: Long,
         expressionId: Long
     )
+
+    suspend fun append(
+        workspaceId: Long,
+        expressionId: Long,
+        phenomenonId: Long,
+        textDelta: String,
+        classifier: String = "text"
+    )
+
+    suspend fun readPhenomenon(
+        workspaceId: Long,
+        expressionId: Long,
+        phenomenonId: Long,
+        classifier: String = "text"
+    ): String
+
+    //    // TODO it is not used at the moment
+//    suspend fun addExpression(
+//        workspaceId: Long,
+//        expressionId: Long,
+//        phenomena: List<Phenomenon>
+//    )
+
+//    // TODO it is not used at the moment
+//    suspend fun append(
+//        phenomena: List<Phenomenon>
+//    )
+
+//    // TODO append delta
+//
+//    suspend fun commit(
+//        workspaceId: Long,
+//        expressionId: Long
+//    )
 
 }
 

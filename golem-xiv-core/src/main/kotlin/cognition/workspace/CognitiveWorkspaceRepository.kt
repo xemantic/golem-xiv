@@ -16,6 +16,7 @@ import com.xemantic.ai.golem.api.backend.CognitiveWorkspaceMemory
 import com.xemantic.ai.golem.api.backend.CognitiveWorkspaceRepository
 import com.xemantic.ai.golem.api.backend.CognitiveWorkspaceStorage
 import com.xemantic.ai.golem.api.backend.PhenomenalExpressionInfo
+import kotlinx.coroutines.flow.Flow
 import kotlin.time.Instant
 
 class DefaultCognitiveWorkspaceRepository(
@@ -46,7 +47,11 @@ class DefaultCognitiveWorkspaceRepository(
         val persistedPhenomena = phenomena.map { phenomenon ->
             when (phenomenon) {
                 is Phenomenon.Text -> {
-                    val id = memory.createPhenomenon(expressionId = info.id)
+                    val id = memory.createPhenomenon(
+                        workspaceId = workspaceId,
+                        expressionId = info.id,
+                        label = "Text"
+                    )
                     appendText(
                         workspaceId = workspaceId,
                         expressionId = info.id,
@@ -78,23 +83,60 @@ class DefaultCognitiveWorkspaceRepository(
     ): PhenomenalExpressionInfo = memory.createExpression(
         workspaceId = workspaceId,
         agentId = agent.id
-    )
+    ).also { info ->
+        storage.createExpression(
+            workspaceId,
+            info.id
+        )
+    }
 
     override suspend fun initiateTextPhenomenon(
         workspaceId: Long,
         expressionId: Long
-    ): Long = memory.createPhenomenon(workspaceId)
+    ): Long = memory.createPhenomenon(
+        workspaceId = workspaceId,
+        expressionId = expressionId,
+        label = "Text"
+    )
 
     override suspend fun initiateIntentPhenomenon(
         workspaceId: Long,
         expressionId: Long,
         systemId: String
     ): Long {
-        TODO("Not yet implemented")
+        val phenomenonId = memory.createPhenomenon(
+            workspaceId = workspaceId,
+            expressionId = expressionId,
+            label = "Intent"
+        )
+        storage.append(
+            workspaceId = workspaceId,
+            expressionId = expressionId,
+            phenomenonId = phenomenonId,
+            textDelta = systemId,
+            classifier = "system"
+        )
+        return phenomenonId
     }
 
-    override suspend fun initiateFulfilmentPhenomenon(workspaceId: Long, expressionId: Long, systemId: String): Long {
-        TODO("Not yet implemented")
+    override suspend fun initiateFulfilmentPhenomenon(
+        workspaceId: Long,
+        expressionId: Long,
+        systemId: String
+    ): Long {
+        val phenomenonId = memory.createPhenomenon(
+            workspaceId = workspaceId,
+            expressionId = expressionId,
+            label = "Fulfilment"
+        )
+        storage.append(
+            workspaceId = workspaceId,
+            expressionId = expressionId,
+            phenomenonId = phenomenonId,
+            textDelta = systemId,
+            classifier = "system"
+        )
+        return phenomenonId
     }
 
     override suspend fun appendText(
@@ -103,7 +145,12 @@ class DefaultCognitiveWorkspaceRepository(
         phenomenonId: Long,
         textDelta: String
     ) {
-        TODO("Not yet implemented")
+        storage.append(
+            workspaceId = workspaceId,
+            expressionId = expressionId,
+            phenomenonId = phenomenonId,
+            textDelta = textDelta
+        )
     }
 
     override suspend fun appendIntentPurpose(
@@ -112,7 +159,13 @@ class DefaultCognitiveWorkspaceRepository(
         phenomenonId: Long,
         purposeDelta: String
     ) {
-        TODO("Not yet implemented")
+        storage.append(
+            workspaceId = workspaceId,
+            expressionId = expressionId,
+            phenomenonId = phenomenonId,
+            textDelta = purposeDelta,
+            classifier = "intent-purpose"
+        )
     }
 
     override suspend fun appendIntentCode(
@@ -121,13 +174,20 @@ class DefaultCognitiveWorkspaceRepository(
         phenomenonId: Long,
         codeDelta: String
     ) {
-        TODO("Not yet implemented")
+        storage.append(
+            workspaceId = workspaceId,
+            expressionId = expressionId,
+            phenomenonId = phenomenonId,
+            textDelta = codeDelta,
+            classifier = "intent-code"
+        )
     }
 
     override suspend fun updateSystemPhenomena(
         workspaceId: Long,
         phenomena: List<String>
     ) {
+        // TOOD it seems that only culmination date needs to be added
         TODO("Not yet implemented")
     }
 
@@ -138,8 +198,73 @@ class DefaultCognitiveWorkspaceRepository(
         TODO("Not yet implemented")
     }
 
-    override suspend fun getWorkspace(workspaceId: Long): CognitiveWorkspace {
-        TODO("Not yet implemented")
+    override suspend fun getWorkspace(
+        workspaceId: Long
+    ): CognitiveWorkspace {
+        val info = memory.getWorkspaceInfo(workspaceId)
+
+        return object : CognitiveWorkspace {
+
+            override val id: Long = info.id
+
+            override val initiationMoment: Instant = info.initiationMoment
+
+            override suspend fun getTitle(): String? = memory.getWorkspaceTitle(
+                workspaceId
+            )
+
+            override suspend fun setTitle(
+                title: String?
+            ) = memory.setWorkspaceTitle(
+                workspaceId, title
+            )
+
+            override suspend fun getSummary(): String? = memory.getWorkspaceSummary(
+                workspaceId
+            )
+
+            override suspend fun setSummary(
+                summary: String?
+            ) = memory.setWorkspaceSummary(
+                workspaceId, summary
+            )
+
+            override fun expressions(): Flow<PhenomenalExpression> = memory.expressions(
+                workspaceId
+            )
+
+        }
+
+    }
+
+    override suspend fun maybeCulminatedWithIntent(
+        workspaceId: Long
+    ): Phenomenon.Intent? {
+        val culminatedWithIntent = memory.maybeCulminatedWithIntent(
+            workspaceId = workspaceId
+        )
+        return if (culminatedWithIntent != null) {
+
+            suspend fun read(classifier: String) = storage.readPhenomenon(
+                workspaceId = workspaceId,
+                expressionId = culminatedWithIntent.expressionId,
+                phenomenonId = culminatedWithIntent.phenomenonId,
+                classifier = classifier
+            )
+
+            val systemId = read("systemId")
+            val purpose = read("purpose")
+            val code = read("code")
+
+            Phenomenon.Intent(
+                id = culminatedWithIntent.phenomenonId,
+                systemId = systemId,
+                purpose = purpose,
+                code = code
+            )
+        } else {
+            null
+        }
     }
 
 }

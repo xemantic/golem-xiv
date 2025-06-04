@@ -5,12 +5,4 @@
  * Unauthorized reproduction or distribution is prohibited.
  */
 
-package com.xemantic.ai.golem.api.backend
-
-interface Identity {
-
-    val selfId: Long
-
-    suspend fun userId(login: String): Long
-
-}
+package com.xemantic.ai.golem.core

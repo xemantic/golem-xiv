@@ -5,8 +5,9 @@
  * Unauthorized reproduction or distribution is prohibited.
  */
 
-package com.xemantic.ai.golem.server.script
+package com.xemantic.ai.golem.core.script
 
+import com.xemantic.ai.golem.api.backend.script.ExecuteGolemScript
 import com.xemantic.kotlin.test.be
 import com.xemantic.kotlin.test.have
 import com.xemantic.kotlin.test.should

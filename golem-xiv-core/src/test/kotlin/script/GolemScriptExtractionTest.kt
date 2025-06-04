@@ -5,7 +5,7 @@
  * Unauthorized reproduction or distribution is prohibited.
  */
 
-package com.xemantic.ai.golem.server.script
+package com.xemantic.ai.golem.core.script
 
 import com.xemantic.kotlin.test.assert
 import com.xemantic.kotlin.test.have

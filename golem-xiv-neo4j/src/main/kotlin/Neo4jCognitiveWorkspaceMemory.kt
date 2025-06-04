@@ -7,15 +7,18 @@
 
 package com.xemantic.ai.golem.neo4j
 
+import com.xemantic.ai.golem.api.EpistemicAgent
 import com.xemantic.ai.golem.api.PhenomenalExpression
 import com.xemantic.ai.golem.api.backend.CognitiveWorkspaceInfo
 import com.xemantic.ai.golem.api.backend.CognitiveWorkspaceMemory
+import com.xemantic.ai.golem.api.backend.CulminatedWithIntent
 import com.xemantic.ai.golem.api.backend.PhenomenalExpressionInfo
 import io.github.oshai.kotlinlogging.KotlinLogging
+import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import org.neo4j.driver.Driver
-import org.neo4j.driver.Value
-import kotlin.time.toKotlinInstant
+import org.neo4j.driver.types.Node
 
 class Neo4jCognitiveWorkspaceMemory(
     private val driver: Driver
@@ -27,18 +30,38 @@ class Neo4jCognitiveWorkspaceMemory(
         parentId: Long?
     ): CognitiveWorkspaceInfo {
 
-        logger.debug { "Creating workspace, parent: $parentId" }
+        logger.debug {
+            "Workspace[parentId=$parentId]: creating"
+        }
 
-        return driver.session().use { session ->
+        val workspaceInfo = driver.session().use { session ->
 
             session.executeWrite { tx ->
 
-                val result = tx.run("""
-                    CREATE (workspace:CognitiveWorkspace {
-                        initiationMoment: datetime()
-                    })
-                    RETURN id(workspace) as id, workspace.initiationMoment as initiationMoment
-                """.trimIndent())
+                val result = if (parentId != null) {
+                    tx.run($$"""
+                        MATCH (parent:CognitiveWorkspace) WHERE id(parent) = $parentId
+                        CREATE (workspace:CognitiveWorkspace {
+                            initiationMoment: datetime()
+                        })
+                        CREATE (parent)-[:superEvent]->(workspace)
+                        CREATE (workspace)-[:subEvent]->(parent)
+                        RETURN
+                            id(workspace) as id,
+                            workspace.initiationMoment as initiationMoment
+                    """.trimIndent(), mapOf(
+                        "parentId" to parentId
+                    ))
+                } else {
+                    tx.run("""
+                        CREATE (workspace:CognitiveWorkspace {
+                            initiationMoment: datetime()
+                        })
+                        RETURN
+                            id(workspace) as id,
+                            workspace.initiationMoment as initiationMoment
+                    """.trimIndent())
+                }
 
                 val record = result.single()
 
@@ -50,25 +73,42 @@ class Neo4jCognitiveWorkspaceMemory(
 
         }
 
+        logger.debug {
+            "Workspace[${workspaceInfo.id}}]: created"
+        }
+
+        return workspaceInfo
     }
 
     override suspend fun createExpression(
         workspaceId: Long,
-        agentId: Long
+        agentId: Long,
     ): PhenomenalExpressionInfo {
 
-        logger.debug { "Creating expression, workspaceId: $workspaceId, agentId: $agentId" }
+        logger.debug {
+            "Workspace[$workspaceId]: creating PhenomenalExpression"
+        }
 
-        return driver.session().use { session ->
+        val expressionInfo = driver.session().use { session ->
 
             session.executeWrite { tx ->
 
-                val result = tx.run("""
+                val result = tx.run($$"""
+                    MATCH (workspace:CognitiveWorkspace) WHERE id(workspace) = $workspaceId
+                    MATCH (agent:EpistemicAgent) WHERE id(agent) = $agentId
                     CREATE (expression:PhenomenalExpression {
                         initiationMoment: datetime()
                     })
-                    RETURN id(expression) as id, expression.initiationMoment as initiationMoment
-                """.trimIndent())
+                    CREATE (agent)-[:creator]->(expression)
+                    CREATE (workspace)-[:hasPart]->(expression)
+                    CREATE (expression)-[:isPartOf]->(workspace)
+                    RETURN
+                        id(expression) as id,
+                        expression.initiationMoment as initiationMoment
+                """.trimIndent(), mapOf(
+                    "workspaceId" to workspaceId,
+                    "agentId" to agentId
+                ))
 
                 val record = result.single()
 
@@ -76,26 +116,43 @@ class Neo4jCognitiveWorkspaceMemory(
                     id = record["id"].asLong(),
                     initiationMoment = record["initiationMoment"].asInstant()
                 )
+
             }
 
         }
 
+        logger.debug {
+            "Workspace[$workspaceId]: created PhenomenalExpression[${expressionInfo.id}]"
+        }
+
+        return expressionInfo
     }
 
     override suspend fun createPhenomenon(
-        expressionId: Long
+        workspaceId: Long,
+        expressionId: Long,
+        label: String
     ): Long {
 
-        logger.debug { "Creating phenomenon, expressionId: $expressionId" }
+        logger.debug {
+            "Workspace[$workspaceId]/Expression[$expressionId]: creating Phenomenon[$label]"
+        }
 
-        return driver.session().use { session ->
+        val phenomenonId = driver.session().use { session ->
 
             session.executeWrite { tx ->
 
-                val result = tx.run("""
-                    CREATE (phenomenon:Phenomenon)
-                    RETURN id(phenomenon) as id
-                """.trimIndent())
+                val result = tx.run($$"""
+                    MATCH (expression:PhenomenalExpression) WHERE id(expression) = $expressionId
+                    CREATE (phenomenon:Phenomenon:$$label)
+                    CREATE (expression)-[:hasPart]->(phenomenon)
+                    CREATE (phenomenon)-[:isPartOf]->(expression)
+                    RETURN
+                        id(phenomenon) as id
+                """.trimIndent(), mapOf(
+                    "expressionId" to expressionId,
+                    "label" to label // TODO most likely label needs to be in the query
+                ))
 
                 val record = result.single()
 
@@ -104,53 +161,273 @@ class Neo4jCognitiveWorkspaceMemory(
 
         }
 
-    }
+        logger.debug {
+            "Workspace[$workspaceId]/Expression[$expressionId]/Phenomenon[$phenomenonId]/$label: created"
+        }
 
-    override suspend fun updateWorkspace(
-        workspaceId: Long,
-        title: String?,
-        summary: String?
-    ) {
-        TODO("Not yet implemented")
+        return phenomenonId
     }
 
     override suspend fun getWorkspaceInfo(
         workspaceId: Long
     ): CognitiveWorkspaceInfo {
-        TODO("Not yet implemented")
+
+        logger.debug {
+            "Workspace[$workspaceId]: getting CognitiveWorkspaceInfo"
+        }
+
+        val workspaceInfo = driver.session().use { session ->
+
+            session.executeRead { tx ->
+
+                val result = tx.run($$"""
+                    MATCH (workspace:CognitiveWorkspace) WHERE id(workspace) = $workspaceId
+                    RETURN
+                        id(workspace) as id,
+                        workspace.initiationMoment as initiationMoment
+                """.trimIndent(), mapOf(
+                    "workspaceId" to workspaceId
+                ))
+
+                val record = result.single()
+
+                CognitiveWorkspaceInfo(
+                    id = record["id"].asLong(),
+                    initiationMoment = record["initiationMoment"].asInstant()
+                )
+            }
+
+        }
+
+        logger.debug {
+            "Workspace[$workspaceId]: retrieved CognitiveWorkspaceInfo"
+        }
+
+        return workspaceInfo
     }
 
     override suspend fun getWorkspaceTitle(
         workspaceId: Long
-    ): String {
-        TODO("Not yet implemented")
+    ): String? {
+
+        logger.debug {
+            "Workspace[$workspaceId]: getting title"
+        }
+
+        val title = driver.session().use { session ->
+
+            session.executeRead { tx ->
+
+                val result = tx.run($$"""
+                    MATCH (workspace:CognitiveWorkspace) WHERE id(workspace) = $workspaceId
+                    RETURN
+                        workspace.title as title
+                """.trimIndent(), mapOf(
+                    "workspaceId" to workspaceId
+                ))
+
+                val record = result.single()
+
+                record["title"]?.asString()
+            }
+        }
+
+        logger.debug {
+            "Workspace[$workspaceId]: retrieved title: $title"
+        }
+
+        return title
     }
 
     override suspend fun setWorkspaceTitle(
-        workspaceId: Long
+        workspaceId: Long,
+        title: String?
     ) {
-        TODO("Not yet implemented")
+
+        logger.debug {
+            "Workspace[$workspaceId]: setting title: $title"
+        }
+
+        driver.session().use { session ->
+
+            session.executeWrite { tx ->
+                tx.run($$"""
+                    MATCH (workspace:CognitiveWorkspace) WHERE id(workspace) = $workspaceId
+                    SET workspace.title = $title
+                """.trimIndent(), mapOf(
+                    "workspaceId" to workspaceId,
+                    "title" to title
+                ))
+            }
+
+        }
     }
 
     override suspend fun getWorkspaceSummary(
         workspaceId: Long
-    ): String {
-        TODO("Not yet implemented")
+    ): String? {
+
+        logger.debug {
+            "Workspace[$workspaceId]: getting summary"
+        }
+
+        val summary = driver.session().use { session ->
+
+            session.executeRead { tx ->
+
+                val result = tx.run($$"""
+                    MATCH (workspace:CognitiveWorkspace) WHERE id(workspace) = $workspaceId
+                    RETURN
+                        workspace.summary as summary
+                """.trimIndent(), mapOf(
+                    "workspaceId" to workspaceId
+                ))
+
+                val record = result.single()
+
+                record["summary"]?.asString()
+            }
+        }
+
+        logger.debug {
+            "Workspace[$workspaceId]: retrieved summary: $summary"
+        }
+
+        return summary
     }
 
     override suspend fun setWorkspaceSummary(
-        workspaceId: Long
+        workspaceId: Long,
+        summary: String?
     ) {
-        TODO("Not yet implemented")
+
+        logger.debug {
+            "Workspace[$workspaceId]: setting summary: $summary"
+        }
+
+        driver.session().use { session ->
+
+            session.executeWrite { tx ->
+                tx.run($$"""
+                    MATCH (workspace:CognitiveWorkspace) WHERE id(workspace) = $workspaceId
+                    SET workspace.summary = $summary
+                """.trimIndent(), mapOf(
+                    "workspaceId" to workspaceId,
+                    "summary" to summary
+                ))
+            }
+
+        }
     }
 
     override fun expressions(
         workspaceId: Long
-    ): Flow<PhenomenalExpression> {
-        TODO("Not yet implemented")
+    ): Flow<PhenomenalExpression> = callbackFlow {
+
+        logger.debug {
+            "Workspace[$workspaceId] streaming PhenomenalExpressions"
+        }
+
+        val list = driver.session().use { session ->
+            session.executeRead { tx ->
+                val result = tx.run($$"""
+                    MATCH (workspace:CognitiveWorkspace)-[:hasPart]->(expression:PhenomenalExpression)
+                    MATCH (agent:EpistemicAgent)-[:creator]->(expression)
+                    WHERE id(workspace) = $workspaceId
+                    
+                    OPTIONAL MATCH (expression)-[:hasPart]->(phenomenon:Phenomenon)
+                    
+                    WITH expression, agent, phenomenon
+                    ORDER BY expression.initiationMoment, phenomenon.initiationMoment
+                    
+                    RETURN id(expression) as expressionId,
+                        expression.initiationMoment as initiationMoment,
+                        expression.agentId as agentId,
+                        agent as agent,
+                        labels(agent) as agentLabels,
+                        collect(phenomenon) as phenomena
+                    ORDER BY expression.initiationMoment
+                """.trimIndent(), mapOf(
+                    "workspaceId" to workspaceId
+                ))
+                result.stream().map { record ->
+
+                    val epistemicAgent = toEpistemicAgent(
+                        agent = record["agent"].asNode(),
+                        agentLabels = record["agentLabels"].asList {
+                            it.asString()
+                        }.toSet()
+                    )
+
+                    PhenomenalExpression(
+                        id = record["id"].asLong(),
+                        agent = epistemicAgent,
+                        phenomena = emptyList(),
+                        initiationMoment = record["initiationMoment"].asInstant()
+                    )
+
+                }.toList()
+            }
+        }
+        list.forEach {
+            // TODO it should be done much better
+            trySendBlocking(it)
+        }
+     }
+
+    override suspend fun maybeCulminatedWithIntent(
+        workspaceId: Long
+    ): CulminatedWithIntent? {
+
+        logger.debug {
+            "Workspace[$workspaceId] Checking if culminated with an Intent phenomenon"
+        }
+
+        return driver.session().use { session ->
+            session.executeRead { tx ->
+
+                val result = tx.run($$"""
+                    MATCH (workspace:CognitiveWorkspace)-[:hasPart]->(expression:PhenomenalExpression)-[:hasPart]->(phenomenon:Phenomenon:Intent)
+                    WHERE
+                        id(workspace) = $workspaceId
+                    WITH
+                        expression, phenomenon ORDER BY phenomenon.initiationMoment DESC LIMIT 1
+                    RETURN
+                        id(expression) AS expressionId,
+                        id(phenomenon) AS phenomenonId
+                """.trimIndent(), mapOf(
+                    "workspaceId" to workspaceId
+                ))
+
+                if (result.hasNext()) {
+                    val record = result.single()
+                    CulminatedWithIntent(
+                        expressionId = record["expressionId"].asLong(),
+                        phenomenonId = record["phenomenonId"].asLong()
+                    )
+                } else {
+                    null
+                }
+            }
+        }
     }
 
 }
 
-// TODO move to neo4j common
-fun Value.asInstant() = asZonedDateTime().toInstant().toKotlinInstant()
+private fun toEpistemicAgent(
+    agent: Node,
+    agentLabels: Set<String>
+): EpistemicAgent = when {
+    agentLabels.contains("AI") -> EpistemicAgent.AI(
+        id = agent["agentId"].asLong(),
+        model = agent["model"].asString(),
+        vendor = agent["vendor"].asString(),
+    )
+    agentLabels.contains("Human") -> EpistemicAgent.Human(
+        id = agent["agentId"].asLong()
+    )
+    agentLabels.contains("Computer") -> EpistemicAgent.Computer(
+        id = agent["agentId"].asLong()
+    )
+    else -> throw IllegalStateException("unsupported agent type: $agentLabels")
+}

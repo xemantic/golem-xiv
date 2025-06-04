@@ -13,7 +13,7 @@ import com.xemantic.ai.golem.api.EpistemicAgent
 import com.xemantic.ai.golem.api.GolemOutput
 import com.xemantic.ai.golem.api.backend.CognitiveWorkspaceRepository
 import com.xemantic.ai.golem.api.backend.Cognizer
-import com.xemantic.ai.golem.api.backend.Identity
+import com.xemantic.ai.golem.api.backend.AgentIdentity
 import com.xemantic.ai.golem.core.kotlin.getClasspathResource
 import com.xemantic.ai.golem.core.script.GolemScriptExecutor
 import com.xemantic.ai.golem.core.kotlin.describeCurrentMoment
@@ -25,6 +25,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.FlowCollector
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -47,7 +48,7 @@ inline fun <reified T : Any> service(
 val golemMainConditioning = getClasspathResource("/conditioning/GolemXIVConditioning.md")
 
 class Golem(
-    private val identity: Identity,
+    private val identity: AgentIdentity,
     private val repository: CognitiveWorkspaceRepository,
     private val cognizer: Cognizer,
     private val golemScriptDependencies: List<GolemScriptExecutor.Dependency<*>>,
@@ -169,7 +170,7 @@ class Golem(
         val phenomenalExpression = repository.appendToWorkspace(
             workspaceId = workspaceId,
             agent = EpistemicAgent.Human(
-                id = identity.userId("foo") // TODO where to keep this mapping?
+                id = identity.getUserId("foo") // TODO where to keep this mapping?
             ),
             phenomena = phenomena
         )
@@ -189,21 +190,19 @@ class Golem(
                 cognizer.reason(
                     conditioning = golemConditioning,
                     workspaceId = workspaceId,
-                    phenomenalFlow = workspace.expressions,
+                    phenomenalFlow = workspace.expressions().toList(),
                     hints = emptyMap()
                 ).collect { event ->
                     cognitionBroadcaster.emit(event)
                 }
 
-                val updatedWorkspace = repository.getWorkspace(workspaceId)
+                val culminatedWithIntent = repository.maybeCulminatedWithIntent(
+                    workspaceId
+                )?.let { intent ->
 
-                val intents = updatedWorkspace.expressions.last().phenomena.filterIsInstance<Phenomenon.Intent>()
-
-                if (intents.isNotEmpty()) {
-
+                    // TODO this should be taken from identity
                     val agent = EpistemicAgent.Computer(
                         id = -1,
-                        belongsToAgentId = -2
                     )
 
                     val expressionInfo = repository.initiateExpression(
@@ -216,8 +215,6 @@ class Golem(
                         agent = agent,
                         moment = expressionInfo.initiationMoment
                     ))
-
-                    val intent = intents.first()
 
                     val fulfilmentId = repository.initiateFulfilmentPhenomenon(
                         workspaceId = workspaceId,
@@ -259,9 +256,10 @@ class Golem(
                         moment = moment
                     ))
 
-                }
+                    true
+                } ?: false
 
-            } while (intents.isNotEmpty())
+            } while (culminatedWithIntent)
         }
     }
 

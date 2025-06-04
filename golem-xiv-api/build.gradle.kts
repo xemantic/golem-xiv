@@ -18,6 +18,7 @@ kotlin {
         commonMain {
             dependencies {
                 api(project(":golem-xiv-serialization-time")) // TODO should not be needed with kotlin 2.2
+                api(libs.kotlinx.coroutines.core)
                 api(libs.kotlinx.serialization.json)
             }
         }

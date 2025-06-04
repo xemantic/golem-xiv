@@ -20,7 +20,7 @@ import com.xemantic.ai.golem.core.cognition.workspace.DefaultCognitiveWorkspaceR
 import com.xemantic.ai.golem.core.script.service.DefaultFiles
 import com.xemantic.ai.golem.core.service
 import com.xemantic.ai.golem.neo4j.Neo4jCognitiveWorkspaceMemory
-import com.xemantic.ai.golem.neo4j.Neo4jIdentity
+import com.xemantic.ai.golem.neo4j.Neo4jAgentIdentity
 import com.xemantic.ai.golem.neo4j.Neo4jMemory
 import com.xemantic.ai.golem.storage.file.FileCognitiveWorkspaceStorage
 import io.github.oshai.kotlinlogging.KLogger
@@ -57,6 +57,7 @@ import io.ktor.server.websocket.WebSockets
 import io.ktor.server.websocket.webSocket
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.apache.logging.log4j.LogManager
 import org.neo4j.driver.AuthTokens
 import org.neo4j.driver.GraphDatabase
@@ -79,7 +80,7 @@ fun Application.module() {
 
     val neo4j = GraphDatabase.driver("bolt://localhost:7687", AuthTokens.none())
 
-    val identity = Neo4jIdentity(driver = neo4j)
+    val identity = Neo4jAgentIdentity(driver = neo4j)
 
     val repository = DefaultCognitiveWorkspaceRepository(
         memory = Neo4jCognitiveWorkspaceMemory(
@@ -92,7 +93,9 @@ fun Application.module() {
 
     val anthropicCognizer = AnthropicToolUseCognizer(
         anthropic = anthropic,
-        golemSelfId = identity.selfId,
+        golemSelfId = runBlocking { // TODO should be solved much better
+            identity.getSelfId()
+        },
         repository = repository
     )
 
