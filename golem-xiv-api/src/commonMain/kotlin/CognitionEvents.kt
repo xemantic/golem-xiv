@@ -131,16 +131,16 @@ sealed interface CognitionEvent {
     data class FulfillmentUnfolding(
         val id: Long,
         val expressionId: Long,
-        val designation: String // TODO why designation?
+        val textDelta: String
     ) : CognitionEvent
 
     @Serializable
     @SerialName("fulfillmentCulmination")
     data class FulfillmentCulmination(
         val id: Long,
-        val expressionId: Long
+        val expressionId: Long,
+        val impeded: Boolean
     ) : CognitionEvent
-    // TODO here we need impediment indication
 
     @Serializable
     @SerialName("recursiveFulfillmentUnfolding")

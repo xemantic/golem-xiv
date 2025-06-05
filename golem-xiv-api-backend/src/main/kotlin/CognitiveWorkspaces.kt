@@ -171,14 +171,14 @@ interface CognitiveWorkspaceStorage {
         expressionId: Long,
         phenomenonId: Long,
         textDelta: String,
-        classifier: String = "text"
+        type: StorageType
     )
 
-    suspend fun readPhenomenon(
+    suspend fun readPhenomenonComponent(
         workspaceId: Long,
         expressionId: Long,
         phenomenonId: Long,
-        classifier: String = "text"
+        type: StorageType
     ): String
 
     //    // TODO it is not used at the moment
@@ -202,7 +202,9 @@ interface CognitiveWorkspaceStorage {
 
 }
 
-enum class PhenomenonType {
+enum class StorageType {
     TEXT,
-    INTENT,
+    SYSTEM_ID,
+    INTENT_PURPOSE,
+    INTENT_CODE,
 }

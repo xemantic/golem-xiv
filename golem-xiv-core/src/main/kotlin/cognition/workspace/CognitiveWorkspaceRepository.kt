@@ -16,7 +16,10 @@ import com.xemantic.ai.golem.api.backend.CognitiveWorkspaceMemory
 import com.xemantic.ai.golem.api.backend.CognitiveWorkspaceRepository
 import com.xemantic.ai.golem.api.backend.CognitiveWorkspaceStorage
 import com.xemantic.ai.golem.api.backend.PhenomenalExpressionInfo
+import com.xemantic.ai.golem.api.backend.StorageType
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
+import kotlin.time.Clock
 import kotlin.time.Instant
 
 class DefaultCognitiveWorkspaceRepository(
@@ -114,7 +117,7 @@ class DefaultCognitiveWorkspaceRepository(
             expressionId = expressionId,
             phenomenonId = phenomenonId,
             textDelta = systemId,
-            classifier = "system"
+            type = StorageType.SYSTEM_ID
         )
         return phenomenonId
     }
@@ -134,7 +137,7 @@ class DefaultCognitiveWorkspaceRepository(
             expressionId = expressionId,
             phenomenonId = phenomenonId,
             textDelta = systemId,
-            classifier = "system"
+            type = StorageType.SYSTEM_ID
         )
         return phenomenonId
     }
@@ -149,7 +152,8 @@ class DefaultCognitiveWorkspaceRepository(
             workspaceId = workspaceId,
             expressionId = expressionId,
             phenomenonId = phenomenonId,
-            textDelta = textDelta
+            textDelta = textDelta,
+            type = StorageType.TEXT
         )
     }
 
@@ -164,7 +168,7 @@ class DefaultCognitiveWorkspaceRepository(
             expressionId = expressionId,
             phenomenonId = phenomenonId,
             textDelta = purposeDelta,
-            classifier = "intent-purpose"
+            type = StorageType.INTENT_PURPOSE
         )
     }
 
@@ -179,7 +183,7 @@ class DefaultCognitiveWorkspaceRepository(
             expressionId = expressionId,
             phenomenonId = phenomenonId,
             textDelta = codeDelta,
-            classifier = "intent-code"
+            type = StorageType.INTENT_CODE
         )
     }
 
@@ -195,7 +199,9 @@ class DefaultCognitiveWorkspaceRepository(
         workspaceId: Long,
         expressionId: Long
     ): Instant {
-        TODO("Not yet implemented")
+        // this should just add date, not implemented at the moment
+        // TODO implement it in neo4j
+        return Clock.System.now()
     }
 
     override suspend fun getWorkspace(
@@ -231,7 +237,61 @@ class DefaultCognitiveWorkspaceRepository(
 
             override fun expressions(): Flow<PhenomenalExpression> = memory.expressions(
                 workspaceId
-            )
+            ).map { expression ->
+                expression.copy(
+                    phenomena = expression.phenomena.map { phenomenon ->
+                        when (phenomenon) {
+                            is Phenomenon.Text -> Phenomenon.Text(
+                                id = phenomenon.id,
+                                text = storage.readPhenomenonComponent(
+                                    workspaceId = workspaceId,
+                                    expressionId = expression.id,
+                                    phenomenonId = phenomenon.id,
+                                    type = StorageType.TEXT
+                                )
+                            )
+                            is Phenomenon.Intent -> Phenomenon.Intent(
+                                id = phenomenon.id,
+                                systemId = storage.readPhenomenonComponent(
+                                    workspaceId = workspaceId,
+                                    expressionId = expression.id,
+                                    phenomenonId = phenomenon.id,
+                                    type = StorageType.SYSTEM_ID
+                                ),
+                                purpose = storage.readPhenomenonComponent(
+                                    workspaceId = workspaceId,
+                                    expressionId = expression.id,
+                                    phenomenonId = phenomenon.id,
+                                    type = StorageType.INTENT_PURPOSE
+                                ),
+                                code = storage.readPhenomenonComponent(
+                                    workspaceId = workspaceId,
+                                    expressionId = expression.id,
+                                    phenomenonId = phenomenon.id,
+                                    type = StorageType.INTENT_CODE
+                                )
+                            )
+                            is Phenomenon.Fulfillment -> Phenomenon.Fulfillment(
+                                id = phenomenon.id,
+                                intentId = "N/A", // TODO fix it
+                                intentSystemId = storage.readPhenomenonComponent(
+                                    workspaceId = workspaceId,
+                                    expressionId = expression.id,
+                                    phenomenonId = phenomenon.id,
+                                    type = StorageType.SYSTEM_ID
+                                ),
+                                result = storage.readPhenomenonComponent(
+                                    workspaceId = workspaceId,
+                                    expressionId = expression.id,
+                                    phenomenonId = phenomenon.id,
+                                    type = StorageType.TEXT
+                                )
+                            )
+                            else -> throw IllegalStateException("Unsupported phenomenon: $phenomenon")
+                        }
+                    }
+                )
+            }
 
         }
 
@@ -245,16 +305,16 @@ class DefaultCognitiveWorkspaceRepository(
         )
         return if (culminatedWithIntent != null) {
 
-            suspend fun read(classifier: String) = storage.readPhenomenon(
+            suspend fun read(type: StorageType) = storage.readPhenomenonComponent(
                 workspaceId = workspaceId,
                 expressionId = culminatedWithIntent.expressionId,
                 phenomenonId = culminatedWithIntent.phenomenonId,
-                classifier = classifier
+                type = type
             )
 
-            val systemId = read("systemId")
-            val purpose = read("purpose")
-            val code = read("code")
+            val systemId = read(type = StorageType.SYSTEM_ID)
+            val purpose = read(type = StorageType.INTENT_PURPOSE)
+            val code = read(type = StorageType.INTENT_CODE)
 
             Phenomenon.Intent(
                 id = culminatedWithIntent.phenomenonId,

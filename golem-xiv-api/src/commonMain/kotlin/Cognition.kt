@@ -103,16 +103,8 @@ sealed interface Phenomenon {
         override val id: Long,
         val intentId: String,
         val intentSystemId: String,
-        val result: String
-    ) : Phenomenon
-
-    @Serializable
-    @SerialName("impediment")
-    data class Impediment(
-        override val id: Long,
-        val intentId: String,  // Reference to the original intent
-        val intentSystemId: String,
-        val reason: String,    // Why the intent failed
+        val result: String,
+        val impeded: Boolean = false
     ) : Phenomenon
 
 }

@@ -8,6 +8,7 @@
 package com.xemantic.ai.golem.storage.file
 
 import com.xemantic.ai.golem.api.backend.CognitiveWorkspaceStorage
+import com.xemantic.ai.golem.api.backend.StorageType
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.io.File
 
@@ -34,7 +35,7 @@ class FileCognitiveWorkspaceStorage(
         conditioning: List<String>
     ) {
         logger.debug {
-            "Creating workspace, workspaceId: $workspaceId"
+            "WorkspaceId[$workspaceId]: creating storage dirs and writing conditioning"
         }
         val workspaceDir = File(storageDir, workspaceId.pad())
         workspaceDir.mkdir()
@@ -50,9 +51,11 @@ class FileCognitiveWorkspaceStorage(
         workspaceId: Long,
         expressionId: Long
     ) {
+
         logger.debug {
-            "Creating expression, workspaceId: $workspaceId, expressionId: $expressionId"
+            "WorkspaceId[$workspaceId]/Expression[$expressionId]: creating storage dirs"
         }
+
         val workspaceDir = File(storageDir, workspaceId.pad())
         val expressionDir = File(workspaceDir, expressionId.pad())
         expressionDir.mkdir()
@@ -100,25 +103,29 @@ class FileCognitiveWorkspaceStorage(
         expressionId: Long,
         phenomenonId: Long,
         textDelta: String,
-        classifier: String
+        type: StorageType
     ) {
-        logger.debug {
-            "Workspace[$workspaceId]/Expression[$expressionId]/[$phenomenonId]: appending $classifier"
+
+        logger.trace {
+            "Workspace[$workspaceId]/Expression[$expressionId]/Phenomenon[$phenomenonId]: appending $type"
         }
-        val file = getPhenomenonFile(workspaceId, expressionId, phenomenonId, classifier)
+
+        val file = getPhenomenonFile(workspaceId, expressionId, phenomenonId, type)
         file.appendText(textDelta)
     }
 
-    override suspend fun readPhenomenon(
+    override suspend fun readPhenomenonComponent(
         workspaceId: Long,
         expressionId: Long,
         phenomenonId: Long,
-        classifier: String
+        type: StorageType
     ): String {
+
         logger.debug {
-            "Workspace[$workspaceId]/Expression[$expressionId]/[$phenomenonId]: reading $classifier"
+            "Workspace[$workspaceId]/Expression[$expressionId]/[$phenomenonId]: reading $type"
         }
-        val file = getPhenomenonFile(workspaceId, expressionId, phenomenonId, classifier)
+
+        val file = getPhenomenonFile(workspaceId, expressionId, phenomenonId, type)
         val text = file.readText()
         return text
     }
@@ -127,11 +134,17 @@ class FileCognitiveWorkspaceStorage(
         workspaceId: Long,
         expressionId: Long,
         phenomenonId: Long,
-        classifier: String
+        type: StorageType
     ): File {
         val workspaceDir = File(storageDir, workspaceId.pad())
         val expressionDir = File(workspaceDir, expressionId.pad())
-        val file = File(expressionDir, "${phenomenonId.pad()}-$classifier.md")
+        val extension = when (type) {
+            StorageType.INTENT_CODE -> "kts"
+            StorageType.SYSTEM_ID -> "txt"
+            else -> "md"
+        }
+        val name = "${phenomenonId.pad()}-${type.name.lowercase()}.$extension"
+        val file = File(expressionDir, name)
         return file
     }
 

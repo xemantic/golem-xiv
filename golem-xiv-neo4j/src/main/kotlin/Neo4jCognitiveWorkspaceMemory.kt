@@ -9,14 +9,14 @@ package com.xemantic.ai.golem.neo4j
 
 import com.xemantic.ai.golem.api.EpistemicAgent
 import com.xemantic.ai.golem.api.PhenomenalExpression
+import com.xemantic.ai.golem.api.Phenomenon
 import com.xemantic.ai.golem.api.backend.CognitiveWorkspaceInfo
 import com.xemantic.ai.golem.api.backend.CognitiveWorkspaceMemory
 import com.xemantic.ai.golem.api.backend.CulminatedWithIntent
 import com.xemantic.ai.golem.api.backend.PhenomenalExpressionInfo
 import io.github.oshai.kotlinlogging.KotlinLogging
-import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.flow
 import org.neo4j.driver.Driver
 import org.neo4j.driver.types.Node
 
@@ -86,7 +86,7 @@ class Neo4jCognitiveWorkspaceMemory(
     ): PhenomenalExpressionInfo {
 
         logger.debug {
-            "Workspace[$workspaceId]: creating PhenomenalExpression"
+            "Workspace[$workspaceId]: creating PhenomenalExpression of agentId: $agentId"
         }
 
         val expressionInfo = driver.session().use { session ->
@@ -122,7 +122,7 @@ class Neo4jCognitiveWorkspaceMemory(
         }
 
         logger.debug {
-            "Workspace[$workspaceId]: created PhenomenalExpression[${expressionInfo.id}]"
+            "Workspace[$workspaceId]: created PhenomenalExpression[${expressionInfo.id}] of agentId: $agentId"
         }
 
         return expressionInfo
@@ -322,10 +322,10 @@ class Neo4jCognitiveWorkspaceMemory(
 
     override fun expressions(
         workspaceId: Long
-    ): Flow<PhenomenalExpression> = callbackFlow {
+    ): Flow<PhenomenalExpression> = flow {
 
         logger.debug {
-            "Workspace[$workspaceId] streaming PhenomenalExpressions"
+            "Workspace[$workspaceId]: streaming PhenomenalExpressions"
         }
 
         val list = driver.session().use { session ->
@@ -340,9 +340,10 @@ class Neo4jCognitiveWorkspaceMemory(
                     WITH expression, agent, phenomenon
                     ORDER BY expression.initiationMoment, phenomenon.initiationMoment
                     
-                    RETURN id(expression) as expressionId,
+                    RETURN
+                        id(expression) as expressionId,
                         expression.initiationMoment as initiationMoment,
-                        expression.agentId as agentId,
+                        id(agent) as agentId,
                         agent as agent,
                         labels(agent) as agentLabels,
                         collect(phenomenon) as phenomena
@@ -353,16 +354,29 @@ class Neo4jCognitiveWorkspaceMemory(
                 result.stream().map { record ->
 
                     val epistemicAgent = toEpistemicAgent(
+                        id = record["agentId"].asLong(),
                         agent = record["agent"].asNode(),
                         agentLabels = record["agentLabels"].asList {
                             it.asString()
                         }.toSet()
                     )
 
+                    val phenomena = record["phenomena"].asList {
+                        val node = it.asNode()
+                        val labels = node.labels()
+                        logger.trace { "Labels $labels" }
+                        when {
+                            labels.contains("Text") -> Phenomenon.Text(id = node.id(), text = "")
+                            labels.contains("Intent") -> Phenomenon.Intent(id = node.id(), systemId = "", purpose = "", code = "")
+                            labels.contains("Fulfilment") -> Phenomenon.Fulfillment(id = node.id(), intentId = "", intentSystemId = "", result = "")
+                            else -> throw java.lang.IllegalStateException("Unsupported phenomenon: $labels")
+                        }
+                    }
+
                     PhenomenalExpression(
-                        id = record["id"].asLong(),
+                        id = record["expressionId"].asLong(),
                         agent = epistemicAgent,
-                        phenomena = emptyList(),
+                        phenomena = phenomena,
                         initiationMoment = record["initiationMoment"].asInstant()
                     )
 
@@ -371,7 +385,7 @@ class Neo4jCognitiveWorkspaceMemory(
         }
         list.forEach {
             // TODO it should be done much better
-            trySendBlocking(it)
+            emit(it)
         }
      }
 
@@ -415,19 +429,20 @@ class Neo4jCognitiveWorkspaceMemory(
 }
 
 private fun toEpistemicAgent(
+    id: Long,
     agent: Node,
     agentLabels: Set<String>
 ): EpistemicAgent = when {
     agentLabels.contains("AI") -> EpistemicAgent.AI(
-        id = agent["agentId"].asLong(),
+        id = id,
         model = agent["model"].asString(),
         vendor = agent["vendor"].asString(),
     )
     agentLabels.contains("Human") -> EpistemicAgent.Human(
-        id = agent["agentId"].asLong()
+        id = id
     )
     agentLabels.contains("Computer") -> EpistemicAgent.Computer(
-        id = agent["agentId"].asLong()
+        id = id
     )
     else -> throw IllegalStateException("unsupported agent type: $agentLabels")
 }

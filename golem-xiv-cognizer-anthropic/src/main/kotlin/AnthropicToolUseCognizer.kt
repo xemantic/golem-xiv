@@ -50,7 +50,9 @@ class AnthropicToolUseCognizer(
         hints: Map<String, String>
     ): Flow<CognitionEvent> {
 
-        logger.debug { "Reasoning" }
+        logger.debug {
+            "Workspace[$workspaceId]: reasoning"
+        }
 
         var expressionId: Long? = null
 
@@ -65,7 +67,7 @@ class AnthropicToolUseCognizer(
         val messageFlow = phenomenalFlow.toAnthropicMessages().addCacheBreakpoint()
 
         logger.trace {
-            "Anthropic messages: $messageFlow"
+            "Workspace[$workspaceId]: anthropic messages: $messageFlow"
         }
 
         val flow = anthropic.messages.stream {
@@ -226,9 +228,9 @@ class AnthropicToolUseCognizer(
                 else -> null
             }
         }.onStart {
-            logger.debug { "API streaming: start" }
+            logger.debug { "Workspace[$workspaceId]: API streaming start" }
         }.onCompletion {
-            logger.debug { "API streaming: stop" }
+            logger.debug { "Workspace[$workspaceId]: API streaming stop" }
         }
 
         return flow
@@ -254,11 +256,7 @@ private fun Phenomenon.toAnthropicContent() = when (this) {
     is Phenomenon.Fulfillment -> ToolResult {
         toolUseId = intentSystemId
         content = listOf(Text(result))
-    }
-    is Phenomenon.Impediment -> ToolResult {
-        toolUseId = intentSystemId
-        content = listOf(Text(reason))
-        isError = true
+        isError = impeded
     }
     else -> throw IllegalStateException("Unsupported content type: $this")
 }
