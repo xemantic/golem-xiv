@@ -338,7 +338,7 @@ class Neo4jCognitiveWorkspaceMemory(
                     OPTIONAL MATCH (expression)-[:hasPart]->(phenomenon:Phenomenon)
                     
                     WITH expression, agent, phenomenon
-                    ORDER BY expression.initiationMoment, phenomenon.initiationMoment
+                    ORDER BY id(expression), id(phenomenon)
                     
                     RETURN
                         id(expression) as expressionId,
@@ -347,7 +347,7 @@ class Neo4jCognitiveWorkspaceMemory(
                         agent as agent,
                         labels(agent) as agentLabels,
                         collect(phenomenon) as phenomena
-                    ORDER BY expression.initiationMoment
+                    ORDER BY id(expression)
                 """.trimIndent(), mapOf(
                     "workspaceId" to workspaceId
                 ))
@@ -400,25 +400,39 @@ class Neo4jCognitiveWorkspaceMemory(
         return driver.session().use { session ->
             session.executeRead { tx ->
 
+                // TODO for sure there is easier way of doing it
                 val result = tx.run($$"""
-                    MATCH (workspace:CognitiveWorkspace)-[:hasPart]->(expression:PhenomenalExpression)-[:hasPart]->(phenomenon:Phenomenon:Intent)
-                    WHERE
-                        id(workspace) = $workspaceId
-                    WITH
-                        expression, phenomenon ORDER BY phenomenon.initiationMoment DESC LIMIT 1
+                    MATCH (workspace:CognitiveWorkspace)-[:hasPart]->(expression:PhenomenalExpression)
+                    WHERE id(workspace) = $workspaceId
+                    
+                    WITH MAX(id(expression)) as maxExpressionId
+                    
+                    MATCH (workspace:CognitiveWorkspace)-[:hasPart]->(expression:PhenomenalExpression)-[:hasPart]->(phenomenon:Phenomenon)
+                    WHERE id(workspace) = $workspaceId AND id(expression) = maxExpressionId
+                    
+                    WITH expression, MAX(id(phenomenon)) as maxPhenomenonId
+                    
+                    OPTIONAL MATCH (expression)-[:hasPart]->(maxPhenomenon:Phenomenon:Intent)
+                    WHERE id(maxPhenomenon) = maxPhenomenonId
+                    
                     RETURN
                         id(expression) AS expressionId,
-                        id(phenomenon) AS phenomenonId
+                        id(maxPhenomenon) AS phenomenonId
                 """.trimIndent(), mapOf(
                     "workspaceId" to workspaceId
                 ))
 
                 if (result.hasNext()) {
                     val record = result.single()
-                    CulminatedWithIntent(
-                        expressionId = record["expressionId"].asLong(),
-                        phenomenonId = record["phenomenonId"].asLong()
-                    )
+                    val idValue = record["phenomenonId"]
+                    if (idValue.isNull) {
+                        null
+                    } else {
+                        CulminatedWithIntent(
+                            expressionId = record["expressionId"].asLong(),
+                            phenomenonId = idValue.asLong()
+                        )
+                    }
                 } else {
                     null
                 }
