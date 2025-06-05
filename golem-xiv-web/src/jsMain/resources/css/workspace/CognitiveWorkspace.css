@@ -172,3 +172,13 @@
     }
 
 }
+
+.purpose {
+  background: blue;
+  padding: 1rem;
+}
+
+.code {
+  background: black;
+  padding: 1rem;
+}

@@ -8,6 +8,7 @@
 package com.xemantic.ai.golem.server
 
 import com.xemantic.ai.golem.api.GolemOutput
+import com.xemantic.ai.golem.api.client.http.collectGolemData
 import com.xemantic.ai.golem.api.client.http.sendGolemData
 import io.ktor.websocket.WebSocketSession
 
@@ -18,10 +19,10 @@ suspend fun WebSocketSession.sendGolemOutput(
 }
 
 //
-//suspend fun WebSocketSession.collectGolemInput(
-//    block: suspend (GolemInput) -> Unit
-//) {
-//    collectGolemData<GolemInput>(block)
-//}
+suspend fun WebSocketSession.collectGolemInput(
+    block: suspend (String) -> Unit
+) {
+    collectGolemData<String>(block)
+}
 
 // TODO is it in use?

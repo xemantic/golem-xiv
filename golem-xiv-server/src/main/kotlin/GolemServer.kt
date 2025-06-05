@@ -210,9 +210,9 @@ fun Application.module() {
             }
 
             // not used at the moment
-//            collectGolemInput {
-//                logger.debug { it }
-//            }
+            collectGolemInput {
+                logger.debug { it }
+            }
 
 //                try {
 //                    val context = golem.newContext()

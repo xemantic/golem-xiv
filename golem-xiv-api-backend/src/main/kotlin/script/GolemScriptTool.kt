@@ -28,9 +28,7 @@ $$GOLEM_SCRIPT_API
 Here are object instances injected to the script:
 
 <golem-script-api>
-val context: Context
 val files: Files
-val browser: WebBrowser
 val memory: Memory
 <golem-script-api>
 
