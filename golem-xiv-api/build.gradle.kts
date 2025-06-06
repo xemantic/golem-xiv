@@ -1,25 +1,12 @@
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlin.plugin.serialization)
+    id("golem.convention")
 }
 
 kotlin {
 
-    compilerOptions {
-        //apiVersion = KotlinVersion.fromVersion(libs.versions.kotlinTarget.get())
-        //languageVersion = kotlinTarget
-        freeCompilerArgs.addAll(
-            "-Xmulti-dollar-interpolation",
-            "-opt-in=kotlin.uuid.ExperimentalUuidApi",
-            "-opt-in=kotlinx.serialization.ExperimentalSerializationApi",
-            "-opt-in=kotlin.time.ExperimentalTime"
-        )
-        extraWarnings = true
-        progressiveMode = true
-    }
-
-    jvm {
-    }
+    jvm()
 
     js {
         browser()
@@ -30,10 +17,9 @@ kotlin {
 
         commonMain {
             dependencies {
-                implementation(libs.kotlinx.serialization.json)
-                implementation(libs.ktor.websockets)
-                implementation(libs.ktor.client.core)
-                implementation(libs.kotlin.logging)
+                api(project(":golem-xiv-serialization-time")) // TODO should not be needed with kotlin 2.2
+                api(libs.kotlinx.coroutines.core)
+                api(libs.kotlinx.serialization.json)
             }
         }
 

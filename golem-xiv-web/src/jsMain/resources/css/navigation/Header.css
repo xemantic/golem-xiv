@@ -6,11 +6,8 @@ header {
     background-color: var(--bg-color);
     border-bottom: 1px solid var(--border-color);
     padding: var(--inset-padding);
-    box-shadow: 0 2px 5px var(--shadow-color);
-    position: sticky; /* Make header sticky */
-    top: 0; /* Stick to the top */
-    z-index: 10; /* Ensure it's above other content */
     backdrop-filter: blur(var(--blur-scale));
+    flex-shrink: 0;
 }
 
 nav {

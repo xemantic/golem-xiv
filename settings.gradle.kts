@@ -1,16 +1,26 @@
 rootProject.name = "golem-xiv"
 
 pluginManagement {
-//    includeBuild("build-logic")
-//    repositories {
-//        mavenCentral()
-//        gradlePluginPortal()
-//    }
+    includeBuild("build-logic")
 }
 
-include(":golem-xiv-api")
-include(":golem-xiv-presenter")
-include(":golem-xiv-server")
-include(":golem-xiv-web")
-include(":golem-xiv-cli")
-include(":golem-xiv-neo4j")
+// TODO can it be a series of paths?
+include(
+    ":golem-xiv-serialization-time",
+    ":golem-xiv-json",
+    ":golem-xiv-api",
+    ":golem-xiv-api-websocket",
+    ":golem-xiv-api-backend",
+    ":golem-xiv-api-client",
+    ":golem-xiv-core",
+    ":golem-xiv-storage-file",
+    ":golem-xiv-neo4j",
+    ":golem-xiv-cognizer-anthropic",
+//    ":golem-xiv-cognizer-dashscope",
+    ":golem-xiv-playwright",
+    ":golem-xiv-server",
+    ":golem-xiv-presenter",
+    ":golem-xiv-web",
+    ":golem-xiv-cli",
+    ":golem-xiv-neo4j-starter"
+)

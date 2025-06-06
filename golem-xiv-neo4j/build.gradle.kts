@@ -1,40 +1,16 @@
 plugins {
     alias(libs.plugins.kotlin.jvm)
-}
-
-kotlin {
-    compilerOptions {
-        //apiVersion = KotlinVersion.fromVersion(libs.versions.kotlinTarget.get())
-        //languageVersion = kotlinTarget
-        freeCompilerArgs.addAll(
-            "-Xmulti-dollar-interpolation"
-        )
-        extraWarnings = true
-        progressiveMode = true
-    }
+    id("golem.convention")
 }
 
 dependencies {
-    implementation(libs.neo4j)
-}
+    api(project(":golem-xiv-api-backend"))
+    api(libs.neo4j.java.driver)
 
-tasks.register<JavaExec>("runNeo4J") {
-    description = "Start Neo4j embedded database with optimized JVM settings"
-    group = "neo4j"
+    implementation(libs.kotlin.logging)
 
-    standardInput = System.`in`
-    standardOutput = System.out
-    errorOutput = System.err
-
-    classpath = sourceSets.main.get().runtimeClasspath
-    mainClass.set("com.xemantic.ai.golem.neo4j.GolemNeo4JKt")
-
-    jvmArgs("-Xms512m", "-Xmx1g")
-
-    // Make task interruptible
-    doFirst {
-        println("Starting Neo4j (DEV MODE)")
-        println("Press Ctrl+C to stop")
-    }
-
+    testImplementation(libs.kotlin.test)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.xemantic.kotlin.test)
+    testImplementation(libs.neo4j.harness)
 }

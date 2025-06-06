@@ -18,15 +18,18 @@ import kotlinx.html.js.span
 import kotlinx.html.span
 import org.w3c.dom.HTMLAnchorElement
 import org.w3c.dom.HTMLButtonElement
+import org.w3c.dom.HTMLDivElement
 import org.w3c.dom.HTMLSpanElement
 
-fun FlowContent.icon(name: String) {
+@Suppress("FunctionName")
+fun FlowContent.Icon(name: String) {
     span("material-symbols-outlined") {
         +name
     }
 }
 
-fun icon(
+@Suppress("FunctionName")
+fun Icon(
     name: String
 ): HTMLSpanElement = document.create.span(
     classes = "material-symbols-outlined"
@@ -34,7 +37,8 @@ fun icon(
     +name
 }
 
-fun button(
+@Suppress("FunctionName")
+fun Button(
     label: String,
     icon: String? = null,
     ariaLabel: String
@@ -42,34 +46,39 @@ fun button(
     classes = "action-button"
 ) {
     if (icon != null) {
-        icon(icon)
+        Icon(icon)
     }
     +label
     this.ariaLabel = ariaLabel
 }
 
-fun iconButton(
+@Suppress("FunctionName")
+fun IconButton(
     icon: String? = null,
     ariaLabel: String
 ): HTMLButtonElement = document.create.button(
     classes = "icon-button"
 ) {
     if (icon != null) {
-        icon(icon)
+        Icon(icon)
     }
     this.ariaLabel = ariaLabel
 }
 
-fun link(
+@Suppress("FunctionName")
+fun Link(
     label: String,
     icon: String? = null,
     ariaLabel: String
 ): HTMLAnchorElement = document.create.a(classes = "navigation-link") {
     if (icon != null) {
-        icon(icon)
+        Icon(icon)
     }
     +label
     this.ariaLabel = ariaLabel
 } as HTMLAnchorElement
 
-fun div(classes: String) = document.create.div(classes = classes)
+@Suppress("FunctionName")
+fun Div(
+    classes: String
+): HTMLDivElement = document.create.div(classes)

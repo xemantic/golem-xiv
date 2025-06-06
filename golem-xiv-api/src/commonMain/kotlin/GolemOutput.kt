@@ -9,16 +9,14 @@ package com.xemantic.ai.golem.api
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonClassDiscriminator
 
 interface WithWorkspaceId {
 
-    val workspaceId: String
+    val workspaceId: Long
 
 }
 
 @Serializable
-@JsonClassDiscriminator("type")
 sealed class GolemOutput {
 
     @Serializable
@@ -30,41 +28,27 @@ sealed class GolemOutput {
     @Serializable
     @SerialName("message")
     data class Message (
-        override val workspaceId: String,
-        val expression: Expression
+        override val workspaceId: Long,
+        val expression: PhenomenalExpression
     ): GolemOutput(), WithWorkspaceId
-
-    @Serializable
-    @SerialName("textDelta")
-    data class TextDelta (
-        override val workspaceId: String,
-        val delta: String
-    ): GolemOutput(), WithWorkspaceId
-
-    @Serializable
-    @SerialName("osProcess")
-    data class OsProcess(
-        override val workspaceId: String,
-        val event: OsProcessEvent
-    ) : GolemOutput(), WithWorkspaceId
 
     @Serializable
     @SerialName("workspaceAdded")
     data class WorkspaceAdded(
-        override val workspaceId: String
+        override val workspaceId: Long
     ) : GolemOutput(), WithWorkspaceId
 
     @Serializable
     @SerialName("workspaceUpdated")
     data class WorkspaceUpdated(
-        override val workspaceId: String,
+        override val workspaceId: Long,
 //        val info: CognitiveWorkspaceInfo
     ) : GolemOutput(), WithWorkspaceId
 
     @Serializable
     @SerialName("reasoning")
     data class Cognition( // TODO cognizing?
-        override val workspaceId: String,
+        override val workspaceId: Long,
         val event: CognitionEvent
     ) : GolemOutput(), WithWorkspaceId
 

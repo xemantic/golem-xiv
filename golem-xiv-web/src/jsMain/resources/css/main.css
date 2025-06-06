@@ -57,22 +57,20 @@ https://developers.google.com/fonts/docs/material_symbols
 }
 
 body {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     background-color: var(--bg-color);
     color: var(--text-color);
     line-height: 1.6;
-    height: 100vh;
-    overflow-x: hidden; /* Changed from hidden to auto to allow vertical scroll */
-    overflow-y: hidden; /* Enabling vertical scroll */
-}
-
-/* Main container with sidebar open (desktop) */
-.main-container-sidebar-open {
-    margin-left: var(--sidebar-width);
+    overflow: hidden;
 }
 
 main {
-    height: 100%;
+    flex: 1;
+    display: flex;
+    overflow-y: hidden;
 }
 
 @keyframes fadeIn {

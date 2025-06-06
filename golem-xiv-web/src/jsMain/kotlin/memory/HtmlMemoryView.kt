@@ -16,8 +16,9 @@ import org.w3c.dom.HTMLElement
 
 class HtmlMemoryView() : MemoryView, HasRootHtmlElement {
 
+    // TODO it should be populated with local storage if DB is remote
     override val element: HTMLElement = document.create.iframe(classes = "memory") {
-        src = "neo4j-browser/"
+        src = "neo4j-browser/?dbms=bolt://localhost:7687&preselectAuthMethod=NO_AUTH"
     }
 
 }

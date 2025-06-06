@@ -7,15 +7,26 @@
 
 package com.xemantic.ai.golem.server
 
+import com.xemantic.ai.anthropic.Anthropic
+import com.xemantic.ai.golem.api.GolemError
 import com.xemantic.ai.golem.api.GolemOutput
 import com.xemantic.ai.golem.api.Phenomenon
-import com.xemantic.ai.golem.server.server.collectGolemInput
-import com.xemantic.ai.golem.server.server.sendGolemOutput
+import com.xemantic.ai.golem.api.backend.GolemException
+import com.xemantic.ai.golem.api.backend.script.Files
+import com.xemantic.ai.golem.api.backend.script.Memory
+import com.xemantic.ai.golem.cognizer.anthropic.AnthropicToolUseCognizer
+import com.xemantic.ai.golem.core.Golem
+import com.xemantic.ai.golem.core.cognition.workspace.DefaultCognitiveWorkspaceRepository
+import com.xemantic.ai.golem.core.script.service.DefaultFiles
+import com.xemantic.ai.golem.core.service
+import com.xemantic.ai.golem.neo4j.Neo4jCognitiveWorkspaceMemory
+import com.xemantic.ai.golem.neo4j.Neo4jAgentIdentity
+import com.xemantic.ai.golem.neo4j.Neo4jMemory
+import com.xemantic.ai.golem.storage.file.FileCognitiveWorkspaceStorage
 import io.github.oshai.kotlinlogging.KLogger
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
-import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationStopPreparing
@@ -29,10 +40,13 @@ import io.ktor.server.plugins.calllogging.CallLogging
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.cors.routing.CORS
 import io.ktor.server.plugins.origin
+import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.request.receive
+import io.ktor.server.request.uri
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondText
 import io.ktor.server.routing.Route
+import io.ktor.server.routing.RoutingContext
 import io.ktor.server.routing.get
 import io.ktor.server.routing.patch
 import io.ktor.server.routing.post
@@ -43,7 +57,11 @@ import io.ktor.server.websocket.WebSockets
 import io.ktor.server.websocket.webSocket
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.apache.logging.log4j.LogManager
+import org.neo4j.driver.AuthTokens
+import org.neo4j.driver.GraphDatabase
+import java.io.File
 
 val logger = KotlinLogging.logger {}
 
@@ -59,11 +77,51 @@ fun Application.module() {
     logger.info { "Starting Golem XIV server" }
 
     val outputs = MutableSharedFlow<GolemOutput>() // TODO can we move outputs to Golem?
-    val golem = Golem(outputs)
+
+    val neo4j = GraphDatabase.driver("bolt://localhost:7687", AuthTokens.none())
+
+    val identity = Neo4jAgentIdentity(driver = neo4j)
+
+    val repository = DefaultCognitiveWorkspaceRepository(
+        memory = Neo4jCognitiveWorkspaceMemory(
+            driver = neo4j
+        ),
+        storage = FileCognitiveWorkspaceStorage(File("var/workspaces"))
+    )
+
+    val anthropic = Anthropic()
+
+    val anthropicCognizer = AnthropicToolUseCognizer(
+        anthropic = anthropic,
+        golemSelfId = runBlocking { // TODO should be solved much better
+            identity.getSelfId()
+        },
+        repository = repository
+    )
+
+    val files = DefaultFiles()
+
+    val golemScriptDependencies = listOf(
+//            service<com.xemantic.ai.golem.server.script.Context>("phenomena", com.xemantic.ai.golem.server.script.service.DefaultContext(scope, outputs)),
+        service<Files>("files", files),
+        //service<WebBrowser>("browser", DefaultWebBrowser(browser)),
+        service<Memory>("memory", Neo4jMemory(neo4j))
+////            service<WebBrowserService>("webBrowserService", DefaultWebBrowserService())
+////                    service<StringEditorService>("stringEditorService", stringEditorService())
+    )
+
+    val golem = Golem(
+        identity = identity,
+        repository = repository,
+        cognizer = anthropicCognizer,
+        golemScriptDependencies = golemScriptDependencies,
+        outputs = outputs
+    )
 
     monitor.subscribe(ApplicationStopPreparing) {
         logger.info { "Stopping Golem XIV server" }
         golem.close()
+        neo4j.close()
     }
 
     monitor.subscribe(ApplicationStopped) {
@@ -111,6 +169,11 @@ fun Application.module() {
 //        maxFrameSize = Long.MAX_VALUE
 //        masking = false
     }
+
+    install(StatusPages) {
+        configureStatusPages()
+    }
+
     routing {
 
         staticResources("/", "web") {
@@ -146,6 +209,7 @@ fun Application.module() {
                 }
             }
 
+            // not used at the moment
             collectGolemInput {
                 logger.debug { it }
             }
@@ -192,27 +256,23 @@ fun Route.golemApiRoute(
 
     put("/workspaces") {
         val phenomena = call.receive<List<Phenomenon>>()
-        val workspace = golem.newCognitiveWorkspace()
-        val expression = workspace.structure(phenomena)
-        call.respond(workspace.id)
-        workspace.integrate(expression)
+        val workspaceId = golem.initiateCognition()
+        call.respond(workspaceId)
+        golem.perceive(
+            workspaceId = workspaceId,
+            phenomena = phenomena
+        )
     }
 
     patch("/workspaces/{id}") {
         logger.debug { "Updating context: start" }
-        val id = requireNotNull(call.parameters["id"]) { "Should never happen" }
+        val id = parseCognitiveWorkspaceId()
         val phenomena = call.receive<List<Phenomenon>>()
-        val workspace = golem.getCognitiveWorkspace(id)
-        if (workspace == null) {
-            call.respond(
-                status = HttpStatusCode.NotFound,
-                message = "Cognitive workspace not found: $id"
-            )
-        } else {
-            val expression = workspace.structure(phenomena)
-            call.respond("Phenomena received")
-            workspace.integrate(expression)
-        }
+        golem.perceive(
+            workspaceId = id,
+            phenomena = phenomena
+        )
+        call.respond("ok") // TODO what should be returned here?
     }
 
     get("/workspaces/{id}") {
@@ -225,4 +285,25 @@ fun Route.golemApiRoute(
 
     }
 
+}
+
+private fun RoutingContext.parseCognitiveWorkspaceId(): Long {
+    val paramId = call.parameters["id"]
+    if (paramId == null) {
+        throw GolemException(
+            GolemError.BadRequest(
+                "The workspace id must be specified in uri: ${call.request.uri}"
+            )
+        )
+    }
+    return try {
+        paramId.toLong()
+    } catch (e: NumberFormatException) {
+        throw GolemException(
+            error = GolemError.BadRequest(
+                "The workspace id must be specified in uri: ${call.request.uri}"
+            ),
+            cause = e
+        )
+    }
 }
