@@ -25,7 +25,9 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.html.div
 import kotlinx.html.dom.append
+import kotlinx.html.js.details
 import kotlinx.html.js.div
+import kotlinx.html.js.summary
 import kotlinx.html.js.textArea
 import org.w3c.dom.HTMLDivElement
 import org.w3c.dom.HTMLTextAreaElement
@@ -95,13 +97,13 @@ class HtmlCognitiveWorkspaceView(
 
             override fun intentAppender(): IntentAppender {
 
-                val intentDiv = dom.div("intent")
+                val intentDiv = dom.details("intent")
                 messageDiv.append(intentDiv)
 
                 return object : IntentAppender {
 
                     override fun purposeAppender(): TextAppender {
-                        val purposeDiv = dom.div("purpose")
+                        val purposeDiv = dom.summary("purpose")
                         intentDiv.append(purposeDiv)
                         return { purposeDiv.append(it) }
                     }
