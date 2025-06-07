@@ -33,3 +33,9 @@ http://localhost:8080
 communicating with Ktor-based Web server (with WebSockets) running on:
 
 http://localhost:8081
+
+## Developing Golem
+
+### Optional Cypher syntax highlighting
+The [Graph Database](https://plugins.jetbrains.com/plugin/20417-graph-database) IntelliJ plugin adds syntax highlighting to Cypher queries
+

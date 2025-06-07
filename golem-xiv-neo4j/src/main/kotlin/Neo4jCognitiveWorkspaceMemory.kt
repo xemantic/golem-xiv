@@ -39,28 +39,34 @@ class Neo4jCognitiveWorkspaceMemory(
             session.executeWrite { tx ->
 
                 val result = if (parentId != null) {
-                    tx.run($$"""
-                        MATCH (parent:CognitiveWorkspace) WHERE id(parent) = $parentId
-                        CREATE (workspace:CognitiveWorkspace {
-                            initiationMoment: datetime()
-                        })
-                        CREATE (parent)-[:superEvent]->(workspace)
-                        CREATE (workspace)-[:subEvent]->(parent)
-                        RETURN
-                            id(workspace) as id,
-                            workspace.initiationMoment as initiationMoment
-                    """.trimIndent(), mapOf(
-                        "parentId" to parentId
-                    ))
+                    tx.runCypher(query =
+                        $$"""
+                            MATCH (parent:CognitiveWorkspace) WHERE id(parent) = $parentId
+                            CREATE (workspace:CognitiveWorkspace {
+                                title: "Untitled",
+                                summary: "",
+                                initiationMoment: datetime()
+                            })
+                            CREATE (parent)-[:superEvent]->(workspace)
+                            CREATE (workspace)-[:subEvent]->(parent)
+                            RETURN
+                                id(workspace) as id,
+                                workspace.initiationMoment as initiationMoment
+                        """.trimIndent(),
+                        parameters = mapOf(
+                            "parentId" to parentId
+                        )
+                    )
                 } else {
-                    tx.run("""
+                    tx.runCypher(query = """
                         CREATE (workspace:CognitiveWorkspace {
                             initiationMoment: datetime()
                         })
                         RETURN
                             id(workspace) as id,
                             workspace.initiationMoment as initiationMoment
-                    """.trimIndent())
+                    """.trimIndent()
+                    )
                 }
 
                 val record = result.single()
@@ -92,23 +98,27 @@ class Neo4jCognitiveWorkspaceMemory(
         val expressionInfo = driver.session().use { session ->
 
             session.executeWrite { tx ->
-
-                val result = tx.run($$"""
-                    MATCH (workspace:CognitiveWorkspace) WHERE id(workspace) = $workspaceId
-                    MATCH (agent:EpistemicAgent) WHERE id(agent) = $agentId
-                    CREATE (expression:PhenomenalExpression {
-                        initiationMoment: datetime()
-                    })
-                    CREATE (agent)-[:creator]->(expression)
-                    CREATE (workspace)-[:hasPart]->(expression)
-                    CREATE (expression)-[:isPartOf]->(workspace)
-                    RETURN
-                        id(expression) as id,
-                        expression.initiationMoment as initiationMoment
-                """.trimIndent(), mapOf(
-                    "workspaceId" to workspaceId,
-                    "agentId" to agentId
-                ))
+                val result = tx.runCypher(
+                    query = $$"""
+                        MATCH (workspace:CognitiveWorkspace) WHERE id(workspace) = $workspaceId
+                        MATCH (agent:EpistemicAgent) WHERE id(agent) = $agentId
+                        CREATE (expression:PhenomenalExpression {
+                            title: "Expression",
+                            initiationMoment: datetime()
+                        })
+                        SET expression.title = expression.title + " " + id(expression)
+                        CREATE (agent)-[:creator]->(expression)
+                        CREATE (workspace)-[:hasPart]->(expression)
+                        CREATE (expression)-[:isPartOf]->(workspace)
+                        RETURN
+                            id(expression) as id,
+                            expression.initiationMoment as initiationMoment
+                    """.trimIndent(),
+                    parameters = mapOf(
+                        "workspaceId" to workspaceId,
+                        "agentId" to agentId
+                    )
+                )
 
                 val record = result.single()
 
@@ -142,17 +152,22 @@ class Neo4jCognitiveWorkspaceMemory(
 
             session.executeWrite { tx ->
 
-                val result = tx.run($$"""
-                    MATCH (expression:PhenomenalExpression) WHERE id(expression) = $expressionId
-                    CREATE (phenomenon:Phenomenon:$$label)
-                    CREATE (expression)-[:hasPart]->(phenomenon)
-                    CREATE (phenomenon)-[:isPartOf]->(expression)
-                    RETURN
-                        id(phenomenon) as id
-                """.trimIndent(), mapOf(
-                    "expressionId" to expressionId,
-                    "label" to label // TODO most likely label needs to be in the query
-                ))
+                val result = tx.runCypher(
+                    query = $$"""
+                        MATCH (expression:PhenomenalExpression) WHERE id(expression) = $expressionId
+                        CREATE (phenomenon:Phenomenon:$$label {
+                            title: "Phenomenon "
+                        })
+                        SET phenomenon.title = phenomenon.title + " " + id(phenomenon)
+                        CREATE (expression)-[:hasPart]->(phenomenon)
+                        CREATE (phenomenon)-[:isPartOf]->(expression)
+                        RETURN
+                            id(phenomenon) as id
+                    """.trimIndent(),
+                    parameters = mapOf(
+                        "expressionId" to expressionId
+                    )
+                )
 
                 val record = result.single()
 
@@ -180,14 +195,16 @@ class Neo4jCognitiveWorkspaceMemory(
 
             session.executeRead { tx ->
 
-                val result = tx.run($$"""
+                val result = tx.runCypher(query = $$"""
                     MATCH (workspace:CognitiveWorkspace) WHERE id(workspace) = $workspaceId
                     RETURN
                         id(workspace) as id,
                         workspace.initiationMoment as initiationMoment
-                """.trimIndent(), mapOf(
-                    "workspaceId" to workspaceId
-                ))
+                """.trimIndent(),
+                    parameters = mapOf(
+                        "workspaceId" to workspaceId
+                    )
+                )
 
                 val record = result.single()
 
@@ -218,13 +235,15 @@ class Neo4jCognitiveWorkspaceMemory(
 
             session.executeRead { tx ->
 
-                val result = tx.run($$"""
+                val result = tx.runCypher(query = $$"""
                     MATCH (workspace:CognitiveWorkspace) WHERE id(workspace) = $workspaceId
                     RETURN
                         workspace.title as title
-                """.trimIndent(), mapOf(
-                    "workspaceId" to workspaceId
-                ))
+                    """.trimIndent(),
+                    parameters = mapOf(
+                        "workspaceId" to workspaceId
+                    )
+                )
 
                 val record = result.single()
 
@@ -251,13 +270,16 @@ class Neo4jCognitiveWorkspaceMemory(
         driver.session().use { session ->
 
             session.executeWrite { tx ->
-                tx.run($$"""
-                    MATCH (workspace:CognitiveWorkspace) WHERE id(workspace) = $workspaceId
-                    SET workspace.title = $title
-                """.trimIndent(), mapOf(
-                    "workspaceId" to workspaceId,
-                    "title" to title
-                ))
+                tx.runCypher(
+                    query = $$"""
+                        MATCH (workspace:CognitiveWorkspace) WHERE id(workspace) = $workspaceId
+                        SET workspace.title = $title
+                    """.trimIndent(),
+                    parameters = mapOf(
+                        "workspaceId" to workspaceId,
+                        "title" to title
+                    )
+                )
             }
 
         }
@@ -275,13 +297,15 @@ class Neo4jCognitiveWorkspaceMemory(
 
             session.executeRead { tx ->
 
-                val result = tx.run($$"""
-                    MATCH (workspace:CognitiveWorkspace) WHERE id(workspace) = $workspaceId
-                    RETURN
-                        workspace.summary as summary
-                """.trimIndent(), mapOf(
-                    "workspaceId" to workspaceId
-                ))
+                val result = tx.runCypher(
+                    query = $$"""
+                        MATCH (workspace:CognitiveWorkspace) WHERE id(workspace) = $workspaceId
+                        RETURN
+                            workspace.summary as summary
+                    """.trimIndent(), mapOf(
+                        "workspaceId" to workspaceId
+                    )
+                )
 
                 val record = result.single()
 
@@ -308,13 +332,15 @@ class Neo4jCognitiveWorkspaceMemory(
         driver.session().use { session ->
 
             session.executeWrite { tx ->
-                tx.run($$"""
-                    MATCH (workspace:CognitiveWorkspace) WHERE id(workspace) = $workspaceId
-                    SET workspace.summary = $summary
-                """.trimIndent(), mapOf(
-                    "workspaceId" to workspaceId,
-                    "summary" to summary
-                ))
+                tx.runCypher(
+                    query = $$"""
+                        MATCH (workspace:CognitiveWorkspace) WHERE id(workspace) = $workspaceId
+                        SET workspace.summary = $summary
+                    """.trimIndent(), mapOf(
+                        "workspaceId" to workspaceId,
+                        "summary" to summary
+                    )
+                )
             }
 
         }
@@ -330,27 +356,30 @@ class Neo4jCognitiveWorkspaceMemory(
 
         val list = driver.session().use { session ->
             session.executeRead { tx ->
-                val result = tx.run($$"""
-                    MATCH (workspace:CognitiveWorkspace)-[:hasPart]->(expression:PhenomenalExpression)
-                    MATCH (agent:EpistemicAgent)-[:creator]->(expression)
-                    WHERE id(workspace) = $workspaceId
-                    
-                    OPTIONAL MATCH (expression)-[:hasPart]->(phenomenon:Phenomenon)
-                    
-                    WITH expression, agent, phenomenon
-                    ORDER BY id(expression), id(phenomenon)
-                    
-                    RETURN
-                        id(expression) as expressionId,
-                        expression.initiationMoment as initiationMoment,
-                        id(agent) as agentId,
-                        agent as agent,
-                        labels(agent) as agentLabels,
-                        collect(phenomenon) as phenomena
-                    ORDER BY id(expression)
-                """.trimIndent(), mapOf(
-                    "workspaceId" to workspaceId
-                ))
+                val result = tx.runCypher(
+                    query = $$"""
+                        MATCH (workspace:CognitiveWorkspace)-[:hasPart]->(expression:PhenomenalExpression)
+                        MATCH (agent:EpistemicAgent)-[:creator]->(expression)
+                        WHERE id(workspace) = $workspaceId
+                        
+                        OPTIONAL MATCH (expression)-[:hasPart]->(phenomenon:Phenomenon)
+                        
+                        WITH expression, agent, phenomenon
+                        ORDER BY id(expression), id(phenomenon)
+                        
+                        RETURN
+                            id(expression) as expressionId,
+                            expression.initiationMoment as initiationMoment,
+                            id(agent) as agentId,
+                            agent as agent,
+                            labels(agent) as agentLabels,
+                            collect(phenomenon) as phenomena
+                        ORDER BY id(expression)
+                    """.trimIndent(),
+                    parameters = mapOf(
+                        "workspaceId" to workspaceId
+                    )
+                )
                 result.stream().map { record ->
 
                     val epistemicAgent = toEpistemicAgent(
@@ -366,6 +395,7 @@ class Neo4jCognitiveWorkspaceMemory(
                         val labels = node.labels()
                         logger.trace { "Labels $labels" }
                         when {
+                            // TODO fix this id retrieval with direct id specs
                             labels.contains("Text") -> Phenomenon.Text(id = node.id(), text = "")
                             labels.contains("Intent") -> Phenomenon.Intent(id = node.id(), systemId = "", purpose = "", code = "")
                             labels.contains("Fulfilment") -> Phenomenon.Fulfillment(id = node.id(), intentId = "", intentSystemId = "", result = "")
@@ -401,26 +431,29 @@ class Neo4jCognitiveWorkspaceMemory(
             session.executeRead { tx ->
 
                 // TODO for sure there is easier way of doing it
-                val result = tx.run($$"""
-                    MATCH (workspace:CognitiveWorkspace)-[:hasPart]->(expression:PhenomenalExpression)
-                    WHERE id(workspace) = $workspaceId
-                    
-                    WITH MAX(id(expression)) as maxExpressionId
-                    
-                    MATCH (workspace:CognitiveWorkspace)-[:hasPart]->(expression:PhenomenalExpression)-[:hasPart]->(phenomenon:Phenomenon)
-                    WHERE id(workspace) = $workspaceId AND id(expression) = maxExpressionId
-                    
-                    WITH expression, MAX(id(phenomenon)) as maxPhenomenonId
-                    
-                    OPTIONAL MATCH (expression)-[:hasPart]->(maxPhenomenon:Phenomenon:Intent)
-                    WHERE id(maxPhenomenon) = maxPhenomenonId
-                    
-                    RETURN
-                        id(expression) AS expressionId,
-                        id(maxPhenomenon) AS phenomenonId
-                """.trimIndent(), mapOf(
-                    "workspaceId" to workspaceId
-                ))
+                val result = tx.runCypher(
+                    query = $$"""
+                        MATCH (workspace:CognitiveWorkspace)-[:hasPart]->(expression:PhenomenalExpression)
+                        WHERE id(workspace) = $workspaceId
+                        
+                        WITH MAX(id(expression)) as maxExpressionId
+                        
+                        MATCH (workspace:CognitiveWorkspace)-[:hasPart]->(expression:PhenomenalExpression)-[:hasPart]->(phenomenon:Phenomenon)
+                        WHERE id(workspace) = $workspaceId AND id(expression) = maxExpressionId
+                        
+                        WITH expression, MAX(id(phenomenon)) as maxPhenomenonId
+                        
+                        OPTIONAL MATCH (expression)-[:hasPart]->(maxPhenomenon:Phenomenon:Intent)
+                        WHERE id(maxPhenomenon) = maxPhenomenonId
+                        
+                        RETURN
+                            id(expression) AS expressionId,
+                            id(maxPhenomenon) AS phenomenonId
+                    """.trimIndent(),
+                    parameters = mapOf(
+                        "workspaceId" to workspaceId
+                    )
+                )
 
                 if (result.hasNext()) {
                     val record = result.single()
