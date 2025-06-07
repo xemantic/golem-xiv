@@ -181,4 +181,6 @@
 .code {
   background: black;
   padding: 1rem;
+  font-family: monospace;
+  overflow-y: auto;
 }

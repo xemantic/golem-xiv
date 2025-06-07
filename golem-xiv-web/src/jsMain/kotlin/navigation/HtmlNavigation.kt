@@ -17,10 +17,10 @@ class HtmlNavigation(
 
     override suspend fun navigate(target: Navigation.Target) {
         when (target) {
-            is Navigation.Target.CognitiveWorkspace -> {
+            is Navigation.Target.Cognition -> {
                 window.history.replaceState(data = null, title = "workspace", url = "/workspaces/${target.id}")
             }
-            is Navigation.Target.KnowledgeGraph -> {
+            is Navigation.Target.Memory -> {
                 window.history.replaceState(data = null, title = "Golem XIV: Memory", url = "/memory")
             }
         }

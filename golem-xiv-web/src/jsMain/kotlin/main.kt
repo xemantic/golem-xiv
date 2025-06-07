@@ -10,6 +10,7 @@ package com.xemantic.ai.golem.web
 import com.xemantic.ai.golem.presenter.MainPresenter
 import com.xemantic.ai.golem.presenter.environment.LocalStorageThemeManager
 import com.xemantic.ai.golem.presenter.navigation.Navigation
+import com.xemantic.ai.golem.presenter.navigation.parseNavigationTarget
 import com.xemantic.ai.golem.web.dev.devMode
 import com.xemantic.ai.golem.web.environment.BrowserDefaultThemeProvider
 import com.xemantic.ai.golem.web.environment.BrowserLocalStorage
@@ -23,7 +24,7 @@ import kotlinx.browser.document
 import kotlinx.browser.window
 import kotlinx.coroutines.flow.MutableSharedFlow
 
-fun main() {
+suspend fun main() {
     val currentProtocol = window.location.protocol.substringBefore(":")
     val protocol = URLProtocol.byName[currentProtocol]
     requireNotNull(protocol) { "protocol cannot be null" }
@@ -61,4 +62,6 @@ fun main() {
         themeManager = themeManager
     )
 
+    val target = parseNavigationTarget(window.location.pathname)
+    navigation.navigate(target)
 }

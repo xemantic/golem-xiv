@@ -64,7 +64,7 @@ class SidebarPresenter(
         }.launchIn(scope)
 
         view.memoryActions.onEach {
-            navigation.navigate(Navigation.Target.KnowledgeGraph)
+            navigation.navigate(Navigation.Target.Memory)
         }.launchIn(scope)
 
     }
