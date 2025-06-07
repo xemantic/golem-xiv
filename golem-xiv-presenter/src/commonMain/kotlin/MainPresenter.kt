@@ -120,10 +120,11 @@ class MainPresenter(
 
         navigationTargets.onEach {
             when (it) {
-                is Navigation.Target.KnowledgeGraph -> {
+                is Navigation.Target.Memory -> {
                     view.display(memoryView)
                 }
-                is Navigation.Target.CognitiveWorkspace -> {
+                is Navigation.Target.Cognition -> {
+                    initContex()
                 }
             }
             sidebarView.opened = false

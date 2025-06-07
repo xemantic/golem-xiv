@@ -13,16 +13,33 @@ interface Navigation {
 
     sealed interface Target {
 
-        object KnowledgeGraph : Target {
-            override fun toString(): String = "KnowledgeGraph"
+        object Memory : Target {
+            override fun toString(): String = "Memory"
         }
 
-        class CognitiveWorkspace(
-            val id: String
-        ) : Target {
-            override fun toString(): String = "CognitiveWorkspace(id=$id)"
-        }
+        data class Cognition(
+            val id: Long
+        ) : Target
 
     }
 
+}
+
+fun parseNavigationTarget(
+    pathname: String
+): Navigation.Target {
+    val segments = pathname.removePrefix("/").split("/").filter { it.isNotEmpty() }
+
+    return when {
+        segments.size == 2 && segments[0] == "cognition" -> {
+            val id = segments[1].toLongOrNull()
+                ?: throw IllegalArgumentException("Invalid cognition id: ${segments[1]}")
+            Navigation.Target.Cognition(id = id)
+        }
+
+        // Future patterns can be added here
+        // segments.size == 2 && segments[0] == "project" -> { ... }
+
+        else -> throw IllegalArgumentException("Unknown pathname pattern: $pathname")
+    }
 }
