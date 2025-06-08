@@ -8,8 +8,11 @@
 package com.xemantic.ai.golem.web
 
 import com.xemantic.ai.golem.presenter.MainPresenter
+import com.xemantic.ai.golem.presenter.environment.LocalStorageThemeManager
 import com.xemantic.ai.golem.presenter.navigation.Navigation
 import com.xemantic.ai.golem.web.dev.devMode
+import com.xemantic.ai.golem.web.environment.BrowserDefaultThemeProvider
+import com.xemantic.ai.golem.web.environment.BrowserLocalStorage
 import com.xemantic.ai.golem.web.main.HtmlMainView
 import com.xemantic.ai.golem.web.memory.HtmlMemoryView
 import com.xemantic.ai.golem.web.navigation.HtmlHeaderView
@@ -40,6 +43,13 @@ fun main() {
         headerView,
         sidebarView
     )
+
+    val localStorage = BrowserLocalStorage()
+    val themeManager = LocalStorageThemeManager(
+        localStorage = localStorage,
+        defaultTheme = BrowserDefaultThemeProvider().defaultTheme
+    )
+
     MainPresenter(
         config,
         view,
@@ -47,6 +57,8 @@ fun main() {
         sidebarView,
         navigation,
         navigationTargets,
-        memoryViewProvider = { HtmlMemoryView() }
+        memoryViewProvider = { HtmlMemoryView() },
+        themeManager = themeManager
     )
+
 }

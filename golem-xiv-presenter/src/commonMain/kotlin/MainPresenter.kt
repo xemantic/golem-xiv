@@ -10,6 +10,8 @@ package com.xemantic.ai.golem.presenter
 import com.xemantic.ai.golem.api.GolemOutput
 import com.xemantic.ai.golem.api.client.http.HttpClientCognitionService
 import com.xemantic.ai.golem.api.client.http.HttpClientPingService
+import com.xemantic.ai.golem.presenter.environment.Theme
+import com.xemantic.ai.golem.presenter.environment.ThemeManager
 import com.xemantic.ai.golem.presenter.memory.MemoryView
 import com.xemantic.ai.golem.presenter.navigation.HeaderPresenter
 import com.xemantic.ai.golem.presenter.navigation.HeaderView
@@ -59,9 +61,10 @@ class MainPresenter(
     private val view: MainView,
     headerView: HeaderView,
     private val sidebarView: SidebarView,
-    private val navigation: Navigation,
-    private val navigationTargets: Flow<Navigation.Target>,
-    private val memoryViewProvider: () -> MemoryView
+    navigation: Navigation,
+    navigationTargets: Flow<Navigation.Target>,
+    private val memoryViewProvider: () -> MemoryView,
+    private val themeManager: ThemeManager
 ) {
 
     private val logger = KotlinLogging.logger {}
@@ -91,6 +94,8 @@ class MainPresenter(
 
     private val toggleFlow = MutableSharedFlow<Action>()
 
+    private val themeChangesFlow = MutableSharedFlow<Theme>()
+
     private val memoryView by lazy { memoryViewProvider() }
 
     val headerPresenter = HeaderPresenter(
@@ -103,7 +108,8 @@ class MainPresenter(
         scope,
         sidebarView,
         toggles = toggleFlow,
-        navigation
+        navigation,
+        themeChangesSink = themeChangesFlow
     )
 
 //    private val golemInput = MutableSharedFlow<GolemInput>()
@@ -117,7 +123,9 @@ class MainPresenter(
     private lateinit var workspaceView: CognitiveWorkspaceView
 
     init {
-
+        val theme = themeManager.theme
+        view.theme(theme)
+        sidebarPresenter.theme = theme
         navigationTargets.onEach {
             when (it) {
                 is Navigation.Target.KnowledgeGraph -> {
@@ -129,9 +137,10 @@ class MainPresenter(
             sidebarView.opened = false
         }.launchIn(scope)
 
-
-        sidebarView.themeChanges.onEach {
-            view.theme(it)
+        themeChangesFlow.onEach { theme ->
+            themeManager.theme = theme
+            sidebarPresenter.theme = theme
+            view.theme(theme)
         }.launchIn(scope)
 
         scope.launch {

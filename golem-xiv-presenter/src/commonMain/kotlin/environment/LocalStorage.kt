@@ -5,9 +5,12 @@
  * Unauthorized reproduction or distribution is prohibited.
  */
 
-package com.xemantic.ai.golem.presenter
+package com.xemantic.ai.golem.presenter.environment
 
-enum class Theme {
-    LIGHT,
-    DARK
+interface LocalStorage {
+
+    fun getItem(key: String): String?
+
+    fun setItem(key: String, value: String)
+
 }

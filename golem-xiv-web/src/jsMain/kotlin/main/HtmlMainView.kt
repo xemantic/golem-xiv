@@ -9,7 +9,7 @@ package com.xemantic.ai.golem.web.main
 
 import com.xemantic.ai.golem.presenter.MainView
 import com.xemantic.ai.golem.presenter.ScreenView
-import com.xemantic.ai.golem.presenter.Theme
+import com.xemantic.ai.golem.presenter.environment.Theme
 import com.xemantic.ai.golem.presenter.phenomena.CognitiveWorkspaceView
 import com.xemantic.ai.golem.presenter.util.Action
 import com.xemantic.ai.golem.web.js.dom
@@ -18,7 +18,6 @@ import com.xemantic.ai.golem.web.navigation.HtmlHeaderView
 import com.xemantic.ai.golem.web.navigation.HtmlSidebarView
 import com.xemantic.ai.golem.web.workspace.HtmlCognitiveWorkspaceView
 import com.xemantic.ai.golem.web.view.HasRootHtmlElement
-import kotlinx.browser.localStorage
 import kotlinx.browser.window
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -29,7 +28,7 @@ import org.w3c.dom.events.Event
 class HtmlMainView(
     private val body: HTMLElement,
     headerView: HtmlHeaderView,
-    private val sidebarView: HtmlSidebarView,
+    sidebarView: HtmlSidebarView,
 ): MainView {
 
     private val mainElement = dom.main()
@@ -43,25 +42,13 @@ class HtmlMainView(
             mainElement,
             overlayElement
         )
-        // TODO this should rather come from the presenter
-        val savedTheme = localStorage.getItem("theme")?.let {
-            Theme.valueOf(it)
-        } ?: Theme.LIGHT
-        theme(savedTheme)
     }
 
     override fun theme(theme: Theme) {
         when (theme) {
-            Theme.LIGHT -> {
-                body.classList.toggle("dark-theme", false)
-                localStorage.setItem("theme", theme.name)
-            }
-            Theme.DARK -> {
-                body.classList.toggle("dark-theme", true)
-                localStorage.setItem("theme", theme.name)
-            }
+            Theme.LIGHT -> body.classList.remove("dark-theme")
+            Theme.DARK -> body.classList.add("dark-theme")
         }
-        sidebarView.theme(theme)
     }
 
     override fun workspaceView(): CognitiveWorkspaceView = HtmlCognitiveWorkspaceView() // TODO move the factory outside

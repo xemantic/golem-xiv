@@ -7,7 +7,7 @@
 
 package com.xemantic.ai.golem.web.navigation
 
-import com.xemantic.ai.golem.presenter.Theme
+import com.xemantic.ai.golem.presenter.environment.Theme
 import com.xemantic.ai.golem.presenter.navigation.SidebarView
 import com.xemantic.ai.golem.presenter.util.Action
 import com.xemantic.ai.golem.web.js.actions
@@ -23,8 +23,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.html.*
 
 class HtmlSidebarView() : SidebarView, HasRootHtmlElement {
-
-    private var theme: Theme = Theme.LIGHT
 
     private val conversationList = dom.ul("workspace-list") {
         li("no-cognitions") {
@@ -71,10 +69,8 @@ class HtmlSidebarView() : SidebarView, HasRootHtmlElement {
             updateVisibility()
         }
 
-    // TODO should be a separate component
-    override fun theme(theme: Theme) {
-        themeSwitcher.theme = theme
-        this.theme = theme
+    override fun themeActionLabel(theme: Theme) {
+        themeSwitcher.themeActionLabel(theme)
     }
 
     private fun updateVisibility() {
@@ -87,12 +83,7 @@ class HtmlSidebarView() : SidebarView, HasRootHtmlElement {
         )
     }
 
-    override val themeChanges: Flow<Theme> = themeSwitcher.actions.map {
-        when (theme) {
-            Theme.LIGHT -> Theme.DARK
-            Theme.DARK -> Theme.LIGHT
-        }
-    }
+    override val themeChanges: Flow<Action> = themeSwitcher.themeChanges
 
     override val resizes: Flow<Action> = window.resizes().map { Action }
 
