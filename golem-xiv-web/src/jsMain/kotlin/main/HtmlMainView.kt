@@ -10,7 +10,7 @@ package com.xemantic.ai.golem.web.main
 import com.xemantic.ai.golem.presenter.MainView
 import com.xemantic.ai.golem.presenter.ScreenView
 import com.xemantic.ai.golem.presenter.environment.Theme
-import com.xemantic.ai.golem.presenter.phenomena.CognitionView
+import com.xemantic.ai.golem.presenter.cognition.CognitionView
 import com.xemantic.ai.golem.presenter.util.Action
 import com.xemantic.ai.golem.web.js.dom
 import com.xemantic.ai.golem.web.js.eventFlow

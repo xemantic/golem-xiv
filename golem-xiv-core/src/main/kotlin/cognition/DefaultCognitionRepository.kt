@@ -208,6 +208,7 @@ class DefaultCognitionRepository(
     override suspend fun getCognition(
         cognitionId: Long
     ): Cognition {
+
         val info = memory.getCognitionInfo(cognitionId)
 
         return object : Cognition {
@@ -215,6 +216,9 @@ class DefaultCognitionRepository(
             override val id: Long = info.id
 
             override val initiationMoment: Instant = info.initiationMoment
+
+            override val parentId: Long?
+                get() = TODO("Not yet implemented")
 
             override suspend fun getTitle(): String? = memory.getCognitionTitle(
                 cognitionId

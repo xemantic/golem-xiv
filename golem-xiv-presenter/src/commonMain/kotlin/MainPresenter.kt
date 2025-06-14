@@ -23,8 +23,8 @@ import com.xemantic.ai.golem.presenter.navigation.Navigation
 import com.xemantic.ai.golem.presenter.navigation.NotFoundView
 import com.xemantic.ai.golem.presenter.navigation.SidebarPresenter
 import com.xemantic.ai.golem.presenter.navigation.SidebarView
-import com.xemantic.ai.golem.presenter.phenomena.CognitionPresenter
-import com.xemantic.ai.golem.presenter.phenomena.CognitionView
+import com.xemantic.ai.golem.presenter.cognition.CognitionPresenter
+import com.xemantic.ai.golem.presenter.cognition.CognitionView
 import com.xemantic.ai.golem.presenter.util.Action
 import com.xemantic.ai.golem.presenter.websocket.collectGolemOutput
 import io.github.oshai.kotlinlogging.KotlinLogging

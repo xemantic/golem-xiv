@@ -5,7 +5,7 @@
  * Unauthorized reproduction or distribution is prohibited.
  */
 
-package com.xemantic.ai.golem.presenter.phenomena // TODO maybe it should be rather cognition?
+package com.xemantic.ai.golem.presenter.cognition
 
 import com.xemantic.ai.golem.api.PhenomenalExpression
 import com.xemantic.ai.golem.api.GolemOutput
@@ -127,6 +127,7 @@ class CognitionPresenter(
             var codeAppender: TextAppender? = null
             golemOutputs.filterIsInstance<GolemOutput.Cognition>().filter {
                 it.cognitionId == cognitionId
+                true
             }.map {
                 it.event
             }.collect {

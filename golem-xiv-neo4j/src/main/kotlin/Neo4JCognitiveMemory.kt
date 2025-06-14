@@ -39,8 +39,8 @@ class Neo4JCognitiveMemory(
             session.executeWrite { tx ->
 
                 val result = if (parentId != null) {
-                    tx.runCypher(query =
-                        $$"""
+                    tx.runCypher(
+                        query = $$"""
                             MATCH (parent:Cognition) WHERE id(parent) = $parentId
                             CREATE (cognition:Cognition {
                                 title: "Untitled",

@@ -20,12 +20,19 @@ import kotlin.time.Instant
 interface Cognition {
     val id: Long
     val initiationMoment: Instant
-//    val parentId: String?
+    val parentId: Long?
     suspend fun getTitle(): String?
     suspend fun setTitle(title: String?)
     suspend fun getSummary(): String?
     suspend fun setSummary(summary: String?)
     fun expressions(): Flow<PhenomenalExpression>
+
+    enum class State {
+        OPEN,
+        INTERACTION_PENDING,
+        CONCLUDED
+    }
+
 }
 
 @Serializable
