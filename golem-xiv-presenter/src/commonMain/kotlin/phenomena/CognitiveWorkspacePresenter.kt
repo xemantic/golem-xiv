@@ -18,12 +18,14 @@ import com.xemantic.ai.golem.presenter.util.Action
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -83,8 +85,9 @@ class CognitiveWorkspacePresenter(
 
     private val logger = KotlinLogging.logger {}
 
-    // TODO it should be a proper child scope
-    private val scope: CoroutineScope = MainScope()
+    private val scope: CoroutineScope = CoroutineScope(
+        mainScope.coroutineContext + SupervisorJob()
+    )
 
     private var isShift: Boolean = false
 
@@ -98,30 +101,24 @@ class CognitiveWorkspacePresenter(
 
         view.sendDisabled = true
 
-        scope.launch {
-            view.promptInputShiftKeys.collect {
-                isShift = it
-            }
-        }
+        view.promptInputShiftKeys.onEach {
+            isShift = it
+        }.launchIn(scope)
 
-        scope.launch {
-            view.promptChanges.collect { prompt ->
-                currentPrompt = prompt
-                view.sendDisabled = prompt.isBlank()
-                if (prompt.isNotBlank() && (prompt.last() == '\n' && !isShift)) {
-                    sendPrompt()
-                }
-                view.updatePromptInputHeight()
+        view.promptChanges.onEach { prompt ->
+            currentPrompt = prompt
+            view.sendDisabled = prompt.isBlank()
+            if (prompt.isNotBlank() && (prompt.last() == '\n' && !isShift)) {
+                sendPrompt()
             }
-        }
+            view.updatePromptInputHeight()
+        }.launchIn(scope)
 
-        scope.launch {
-            view.sendActions.collect {
-                if (currentPrompt.isNotBlank()) {
-                    sendPrompt()
-                }
+        view.sendActions.onEach {
+            if (currentPrompt.isNotBlank()) {
+                sendPrompt()
             }
-        }
+        }.launchIn(scope)
 
         scope.launch {
             var intentAppender: IntentAppender? = null
@@ -166,18 +163,6 @@ class CognitiveWorkspacePresenter(
 
     }
 
-//    suspend fun loadContext(id: Uuid): Boolean {
-//        logger.info { "Loading context: $id" }
-//        val context = scope.async(ioDispatcher) {
-//            cognitiveWorkspaceService.get(id)
-//        }.await()
-//        if (context == null) return false
-////        context.messages.forEach {
-////            view.addMessage(it)
-////        }
-//        return true
-//    }
-
     fun dispose() {
         scope.cancel()
     }
@@ -200,7 +185,7 @@ class CognitiveWorkspacePresenter(
 
     private suspend fun continueCognition() = withContext(ioDispatcher) {
         cognitionService.continueCognition(
-            workspaceId = workspaceId!!,
+            id = workspaceId!!,
             phenomena = listOf(Phenomenon.Text(id = -1, currentPrompt))
         )
     }

@@ -173,6 +173,10 @@
 
 }
 
+.intent {
+  interpolate-size: allow-keywords;
+}
+
 .purpose {
   background: blue;
   padding: 1rem;
@@ -183,4 +187,22 @@
   padding: 1rem;
   font-family: monospace;
   overflow-y: auto;
+}
+
+details::details-content {
+  block-size: 0;
+  overflow: hidden;
+
+  transition: content-visibility, block-size;
+  transition-duration: 750ms;
+  transition-behavior: allow-discrete;
+}
+
+/* open state */
+details[open]::details-content {
+  block-size: auto;
+}
+
+summary {
+  cursor: pointer;
 }

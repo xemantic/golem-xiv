@@ -28,6 +28,7 @@ kotlin {
                 implementation(project(":golem-xiv-api"))
                 implementation(project(":golem-xiv-presenter"))
                 implementation(libs.kotlinx.coroutines.core)
+                implementation(libs.kotlin.logging)
                 implementation(libs.kotlinx.html)
                 implementation(libs.ktor.client.websockets)
                 implementation(libs.ktor.serialization.kotlinx.json)

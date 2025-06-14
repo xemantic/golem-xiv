@@ -17,39 +17,39 @@ interface WithWorkspaceId {
 }
 
 @Serializable
-sealed class GolemOutput {
+sealed interface GolemOutput {
 
     @Serializable
-    @SerialName("welcome")
+    @SerialName("Welcome")
     data class Welcome (
         val message: String
-    ): GolemOutput()
+    ): GolemOutput
 
     @Serializable
-    @SerialName("message")
+    @SerialName("Message")
     data class Message (
         override val workspaceId: Long,
         val expression: PhenomenalExpression
-    ): GolemOutput(), WithWorkspaceId
+    ): GolemOutput, WithWorkspaceId
 
     @Serializable
-    @SerialName("workspaceAdded")
+    @SerialName("WorkspaceAdded")
     data class WorkspaceAdded(
         override val workspaceId: Long
-    ) : GolemOutput(), WithWorkspaceId
+    ) : GolemOutput, WithWorkspaceId
 
     @Serializable
-    @SerialName("workspaceUpdated")
+    @SerialName("WorkspaceUpdated")
     data class WorkspaceUpdated(
         override val workspaceId: Long,
 //        val info: CognitiveWorkspaceInfo
-    ) : GolemOutput(), WithWorkspaceId
+    ) : GolemOutput, WithWorkspaceId
 
     @Serializable
-    @SerialName("reasoning")
-    data class Cognition( // TODO cognizing?
+    @SerialName("Cognition")
+    data class Cognition(
         override val workspaceId: Long,
         val event: CognitionEvent
-    ) : GolemOutput(), WithWorkspaceId
+    ) : GolemOutput, WithWorkspaceId
 
 }

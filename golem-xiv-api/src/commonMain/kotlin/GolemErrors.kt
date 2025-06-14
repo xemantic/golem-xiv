@@ -14,19 +14,19 @@ import kotlinx.serialization.Serializable
 sealed interface GolemError {
 
     @Serializable
-    @SerialName("noSuchCognitiveWorkspace")
-    data class NoSuchCognitiveWorkspace(
+    @SerialName("NoSuchCognition")
+    data class NoSuchCognition(
         val workspaceId: Long
     ) : GolemError
 
     @Serializable
-    @SerialName("badRequest")
+    @SerialName("BadRequest")
     data class BadRequest(
         val message: String
     ) : GolemError
 
     @Serializable
-    @SerialName("unexpected")
+    @SerialName("Unexpected")
     data class Unexpected(
         val message: String
     ) : GolemError

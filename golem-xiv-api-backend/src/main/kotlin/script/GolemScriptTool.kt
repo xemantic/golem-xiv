@@ -39,7 +39,8 @@ IMPORTANT: always prefer to use `Files` service to list files (it will skip hidd
 The script execution is wrapped in a coroutine, therefore suspended functions can be called directly.
 
 It the last expression of the script is null, or Unit (e.g. function), no information about script execution will be sent back to you. 
-If the last expression of the script will be send back as a tool result.
+If the last expression of the script, e.g. a String, will be send back to you as a tool result.
+IMPORTANT: don't use println, the only script output you will see is the last expression of the Golem script. 
 """
 )
 data class ExecuteGolemScript(

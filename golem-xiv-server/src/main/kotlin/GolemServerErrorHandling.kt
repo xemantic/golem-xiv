@@ -22,11 +22,18 @@ private val errorLogger = KotlinLogging.logger {}
 @OptIn(ExperimentalUuidApi::class)
 fun StatusPagesConfig.configureStatusPages() {
 
+    // TODO add proper support
+//    status(HttpStatusCode.NotFound) { call, status ->
+//        call.respond(
+//            status = HttpStatusCode.NotFound,
+//        )
+//    }
+
     exception<GolemException> { call, cause ->
         // TODO should we log golem exceptions here?
         logger.error(cause) { "Request error" }
         val status = when (cause.error) {
-            is GolemError.NoSuchCognitiveWorkspace -> HttpStatusCode.NotFound
+            is GolemError.NoSuchCognition -> HttpStatusCode.NotFound
             is GolemError.BadRequest -> HttpStatusCode.BadRequest
             is GolemError.Unexpected -> HttpStatusCode.InternalServerError
         }

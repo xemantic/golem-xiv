@@ -17,9 +17,11 @@ import kotlinx.coroutines.flow.onEach
 
 interface SidebarView {
 
-    val themeChanges: Flow<Action>
+    val initiateCognitionActions: Flow<Action>
 
     val memoryActions: Flow<Action>
+
+    val themeChanges: Flow<Action>
 
     val resizes: Flow<Action>
 
@@ -53,9 +55,12 @@ class SidebarPresenter(
             view.opened = opened
         }.launchIn(scope)
 
-        view.resizes.onEach {
-            opened = false
-            view.opened = opened
+        view.initiateCognitionActions.onEach {
+            navigation.navigateTo(Navigation.Target.InitiateCognition)
+        }.launchIn(scope)
+
+        view.memoryActions.onEach {
+            navigation.navigateTo(Navigation.Target.Memory)
         }.launchIn(scope)
 
         view.themeChanges.onEach {
@@ -63,8 +68,9 @@ class SidebarPresenter(
             themeChangesSink.emit(theme)
         }.launchIn(scope)
 
-        view.memoryActions.onEach {
-            navigation.navigate(Navigation.Target.Memory)
+        view.resizes.onEach {
+            opened = false
+            view.opened = opened
         }.launchIn(scope)
 
     }

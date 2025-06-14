@@ -23,7 +23,7 @@ import kotlin.time.Instant
 sealed interface CognitionEvent {
 
     @Serializable
-    @SerialName("expressionInitiation")
+    @SerialName("ExpressionInitiation")
     data class ExpressionInitiation(
         val expressionId: Long,
         val agent: EpistemicAgent,
@@ -31,7 +31,7 @@ sealed interface CognitionEvent {
     ) : CognitionEvent
 
     @Serializable
-    @SerialName("expressionCulmination")
+    @SerialName("ExpressionCulmination")
     data class ExpressionCulmination(
         val expressionId: Long,
         val moment: Instant
@@ -45,7 +45,7 @@ sealed interface CognitionEvent {
     ) : CognitionEvent
 
     @Serializable
-    @SerialName("textUnfolding")
+    @SerialName("TextUnfolding")
     data class TextUnfolding(
         val id: Long,
         val expressionId: Long,
@@ -53,14 +53,14 @@ sealed interface CognitionEvent {
     ) : CognitionEvent
 
     @Serializable
-    @SerialName("textCulmination")
+    @SerialName("TextCulmination")
     data class TextCulmination(
         val id: Long,
         val expressionId: Long
     ) : CognitionEvent
 
     @Serializable
-    @SerialName("intentInitiation")
+    @SerialName("IntentInitiation")
     data class IntentInitiation(
         val id: Long,
         val expressionId: Long,
@@ -69,14 +69,14 @@ sealed interface CognitionEvent {
     ) : CognitionEvent
 
     @Serializable
-    @SerialName("intentPurposeInitiation")
+    @SerialName("IntentPurposeInitiation")
     data class IntentPurposeInitiation(
         val id: Long,
         val expressionId: Long
     ) : CognitionEvent
 
     @Serializable
-    @SerialName("intentPurposeUnfolding")
+    @SerialName("IntentPurposeUnfolding")
     data class IntentPurposeUnfolding(
         val id: Long,
         val expressionId: Long,
@@ -84,21 +84,21 @@ sealed interface CognitionEvent {
     ) : CognitionEvent
 
     @Serializable
-    @SerialName("intentPurposeCulmination")
+    @SerialName("IntentPurposeCulmination")
     data class IntentPurposeCulmination(
         val id: Long,
         val expressionId: Long,
     ) : CognitionEvent
 
     @Serializable
-    @SerialName("intentCodeInitiation")
+    @SerialName("IntentCodeInitiation")
     data class IntentCodeInitiation(
         val id: Long,
         val expressionId: Long
     ) : CognitionEvent
 
     @Serializable
-    @SerialName("intentCodeUnfolding")
+    @SerialName("IntentCodeUnfolding")
     data class IntentCodeUnfolding(
         val id: Long,
         val expressionId: Long,
@@ -106,28 +106,30 @@ sealed interface CognitionEvent {
     ) : CognitionEvent
 
     @Serializable
-    @SerialName("intentCodeCulmination")
+    @SerialName("IntentCodeCulmination")
     data class IntentCodeCulmination(
         val id: Long,
         val expressionId: Long,
     ) : CognitionEvent
 
     @Serializable
-    @SerialName("intentCulmination")
+    @SerialName("IntentCulmination")
     data class IntentCulmination(
         val id: Long,
         val expressionId: Long
     ) : CognitionEvent
 
     @Serializable
-    @SerialName("fulfillmentStart")
+    @SerialName("FulfillmentInitiation")
     data class FulfillmentInitiation(
         val id: Long,
-        val expressionId: Long
+        val expressionId: Long,
+        val intentId: Long,
+        val intentSystemId: String
     ) : CognitionEvent
 
     @Serializable
-    @SerialName("fulfillmentUnfolding")
+    @SerialName("FulfillmentUnfolding")
     data class FulfillmentUnfolding(
         val id: Long,
         val expressionId: Long,
@@ -135,7 +137,7 @@ sealed interface CognitionEvent {
     ) : CognitionEvent
 
     @Serializable
-    @SerialName("fulfillmentCulmination")
+    @SerialName("FulfillmentCulmination")
     data class FulfillmentCulmination(
         val id: Long,
         val expressionId: Long,
@@ -143,7 +145,7 @@ sealed interface CognitionEvent {
     ) : CognitionEvent
 
     @Serializable
-    @SerialName("recursiveFulfillmentUnfolding")
+    @SerialName("RecursiveFulfillmentUnfolding")
     data class RecursiveFulfillmentUnfolding(
         val id: Long,
         val expressionId: Long,
@@ -151,7 +153,7 @@ sealed interface CognitionEvent {
     ) : CognitionEvent
 
     @Serializable
-    @SerialName("workspaceDesignation")
+    @SerialName("WorkspaceDesignation")
     data class WorkspaceDesignation(
         val expressionId: Long,
         val title: String

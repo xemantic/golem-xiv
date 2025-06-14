@@ -23,16 +23,27 @@ interface CognitionService {
     ): Long
 
     /**
-     * @throws GolemServiceException if no such workspace id exists.
+     * Emits a cognition instance via WebSocket.
+     *
+     * @param id the cognition id
+     * @throws GolemServiceException if no such cognition exists.
+     */
+    suspend fun emitCognition(
+        id: Long
+    )
+
+    /**
+     * @throws GolemServiceException if no such cognition exists.
      */
     suspend fun continueCognition(
-        workspaceId: Long,
+        id: Long,
         phenomena: List<Phenomenon>
     )
 
 }
 
+// TODO should be rather exception hierarchy
 class GolemServiceException(
-    uri: String,
-    error: GolemError
+    val uri: String,
+    val error: GolemError
 ) : RuntimeException("Golem API error: $uri - $error")

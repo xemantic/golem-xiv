@@ -99,7 +99,7 @@ class FileCognitiveWorkspaceStorage(
 //    }
 
     override suspend fun append(
-        workspaceId: Long,
+        cognitionId: Long,
         expressionId: Long,
         phenomenonId: Long,
         textDelta: String,
@@ -107,25 +107,25 @@ class FileCognitiveWorkspaceStorage(
     ) {
 
         logger.trace {
-            "Workspace[$workspaceId]/Expression[$expressionId]/Phenomenon[$phenomenonId]: appending $type"
+            "Cognition[$cognitionId]/Expression[$expressionId]/Phenomenon[$phenomenonId]: appending $type"
         }
 
-        val file = getPhenomenonFile(workspaceId, expressionId, phenomenonId, type)
+        val file = getPhenomenonFile(cognitionId, expressionId, phenomenonId, type)
         file.appendText(textDelta)
     }
 
     override suspend fun readPhenomenonComponent(
-        workspaceId: Long,
+        cognitionId: Long,
         expressionId: Long,
         phenomenonId: Long,
         type: StorageType
     ): String {
 
         logger.debug {
-            "Workspace[$workspaceId]/Expression[$expressionId]/[$phenomenonId]: reading $type"
+            "Cognition[$cognitionId]/Expression[$expressionId]/[$phenomenonId]: reading $type"
         }
 
-        val file = getPhenomenonFile(workspaceId, expressionId, phenomenonId, type)
+        val file = getPhenomenonFile(cognitionId, expressionId, phenomenonId, type)
         val text = file.readText()
         return text
     }

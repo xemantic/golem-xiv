@@ -53,9 +53,10 @@ interface CognitiveWorkspaceRepository {
         systemId: String
     ): Long
 
-    suspend fun initiateFulfilmentPhenomenon(
+    suspend fun initiateFulfillmentPhenomenon(
         workspaceId: Long,
         expressionId: Long,
+        intentId: Long,
         systemId: String
     ): Long
 
@@ -114,7 +115,13 @@ interface CognitiveWorkspaceMemory {
     suspend fun createPhenomenon(
         workspaceId: Long,
         expressionId: Long,
-        label:String
+        label: String
+    ): Long
+
+    suspend fun createFulfillmentPhenomenon(
+        workspaceId: Long,
+        expressionId: Long,
+        intentId: Long
     ): Long
 
     suspend fun getWorkspaceInfo(
@@ -140,7 +147,7 @@ interface CognitiveWorkspaceMemory {
     )
 
     fun expressions(
-        workspaceId: Long
+        cognitionId: Long
     ): Flow<PhenomenalExpression>
 
     suspend fun maybeCulminatedWithIntent(
@@ -167,7 +174,7 @@ interface CognitiveWorkspaceStorage {
     )
 
     suspend fun append(
-        workspaceId: Long,
+        cognitionId: Long,
         expressionId: Long,
         phenomenonId: Long,
         textDelta: String,
@@ -175,7 +182,7 @@ interface CognitiveWorkspaceStorage {
     )
 
     suspend fun readPhenomenonComponent(
-        workspaceId: Long,
+        cognitionId: Long,
         expressionId: Long,
         phenomenonId: Long,
         type: StorageType

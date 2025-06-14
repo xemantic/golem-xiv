@@ -24,7 +24,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.toList
@@ -73,40 +72,6 @@ class Golem(
 //            if (additionalSystemPrompt != null) {
 //                add(System(text = additionalSystemPrompt)) // TODO cache control
 //            }
-    }
-
-    inner class ActiveCognition(
-        private val conditioning: String,
-        private val environmentSystemPrompt: String? = null,
-        private val golemScriptApi: String? = null,
-        private val hasGolemScriptApi: Boolean = true,
-    ) {
-
-//        private val workspaceId = repository.initiateWorkspace(
-//            conditioning = golemConditioning
-//        )
-
-//        override val info: CognitiveWorkspaceInfo get() = CognitiveWorkspaceInfo(
-//            id = id,
-//            title = "Untitled",
-//            creationDate = Clock.System.now()
-//        )
-
-
-
-//        val kotlinScriptTool = Tool<KotlinScript>(name = "kotlin_script") {
-//            //golemScriptExecutor.execute(script)
-//        }
-
-//        val golemTools = listOf(kotlinScriptTool)
-
-        // TODO this should come from the outside
-//        val human = EpistemicAgent.Human(
-//            id = 42
-//        )
-
-
-
     }
 
     suspend fun initiateCognition(): Long {
@@ -176,15 +141,18 @@ class Golem(
                         moment = expressionInfo.initiationMoment
                     ))
 
-                    val fulfilmentId = repository.initiateFulfilmentPhenomenon(
+                    val fulfillmentId = repository.initiateFulfillmentPhenomenon(
                         workspaceId = workspaceId,
                         expressionId = expressionInfo.id,
+                        intentId = intent.id,
                         systemId = intent.systemId
                     )
 
                     cognitionBroadcaster.emit(CognitionEvent.FulfillmentInitiation(
-                        id = fulfilmentId,
-                        expressionId = expressionInfo.id
+                        id = fulfillmentId,
+                        expressionId = expressionInfo.id,
+                        intentId = intent.id,
+                        intentSystemId = intent.systemId
                     ))
 
 //                    // TODO why we need this async?
@@ -192,7 +160,7 @@ class Golem(
 //                        actualize(
 //                            workspaceId = workspaceId,
 //                            expressionId = expressionInfo.id,
-//                            phenomenonId = fulfilmentId,
+//                            phenomenonId = fulfillmentId,
 //                            intent = intent
 //                        )
 //                    }.await()!!
@@ -210,18 +178,18 @@ class Golem(
                     repository.appendText(
                         workspaceId = workspaceId,
                         expressionId = expressionInfo.id,
-                        phenomenonId = fulfilmentId,
+                        phenomenonId = fulfillmentId,
                         textDelta = text
                     )
 
                     cognitionBroadcaster.emit(CognitionEvent.FulfillmentUnfolding(
-                        id = fulfilmentId,
+                        id = fulfillmentId,
                         expressionId = expressionInfo.id,
                         textDelta = text
                     ))
 
                     cognitionBroadcaster.emit(CognitionEvent.FulfillmentCulmination(
-                        id = fulfilmentId,
+                        id = fulfillmentId,
                         expressionId = expressionInfo.id,
                         impeded = impeded
                     ))
@@ -288,6 +256,15 @@ class Golem(
     fun interruptCognition(workspaceId: Long) {
         // TODO better implementation, should join, send Interrupted event and remove from activeCognitionMap
         activeCognitionMap[workspaceId]!!.cancel()
+    }
+
+    fun emitCognition(id: Long) {
+        scope.launch {
+            val cognitionBroadcaster = outputs.cognitionBroadcaster(id)
+            repository.getWorkspace(id).expressions().collect { expression ->
+                cognitionBroadcaster.emit(expression)
+            }
+        }
     }
 
     override fun close() {

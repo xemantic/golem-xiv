@@ -113,7 +113,7 @@ class DefaultCognitiveWorkspaceRepository(
             label = "Intent"
         )
         storage.append(
-            workspaceId = workspaceId,
+            cognitionId = workspaceId,
             expressionId = expressionId,
             phenomenonId = phenomenonId,
             textDelta = systemId,
@@ -122,18 +122,19 @@ class DefaultCognitiveWorkspaceRepository(
         return phenomenonId
     }
 
-    override suspend fun initiateFulfilmentPhenomenon(
+    override suspend fun initiateFulfillmentPhenomenon(
         workspaceId: Long,
         expressionId: Long,
+        intentId: Long,
         systemId: String
     ): Long {
-        val phenomenonId = memory.createPhenomenon(
+        val phenomenonId = memory.createFulfillmentPhenomenon(
             workspaceId = workspaceId,
             expressionId = expressionId,
-            label = "Fulfilment"
+            intentId = intentId
         )
         storage.append(
-            workspaceId = workspaceId,
+            cognitionId = workspaceId,
             expressionId = expressionId,
             phenomenonId = phenomenonId,
             textDelta = systemId,
@@ -149,7 +150,7 @@ class DefaultCognitiveWorkspaceRepository(
         textDelta: String
     ) {
         storage.append(
-            workspaceId = workspaceId,
+            cognitionId = workspaceId,
             expressionId = expressionId,
             phenomenonId = phenomenonId,
             textDelta = textDelta,
@@ -164,7 +165,7 @@ class DefaultCognitiveWorkspaceRepository(
         purposeDelta: String
     ) {
         storage.append(
-            workspaceId = workspaceId,
+            cognitionId = workspaceId,
             expressionId = expressionId,
             phenomenonId = phenomenonId,
             textDelta = purposeDelta,
@@ -179,7 +180,7 @@ class DefaultCognitiveWorkspaceRepository(
         codeDelta: String
     ) {
         storage.append(
-            workspaceId = workspaceId,
+            cognitionId = workspaceId,
             expressionId = expressionId,
             phenomenonId = phenomenonId,
             textDelta = codeDelta,
@@ -244,7 +245,7 @@ class DefaultCognitiveWorkspaceRepository(
                             is Phenomenon.Text -> Phenomenon.Text(
                                 id = phenomenon.id,
                                 text = storage.readPhenomenonComponent(
-                                    workspaceId = workspaceId,
+                                    cognitionId = workspaceId,
                                     expressionId = expression.id,
                                     phenomenonId = phenomenon.id,
                                     type = StorageType.TEXT
@@ -253,19 +254,19 @@ class DefaultCognitiveWorkspaceRepository(
                             is Phenomenon.Intent -> Phenomenon.Intent(
                                 id = phenomenon.id,
                                 systemId = storage.readPhenomenonComponent(
-                                    workspaceId = workspaceId,
+                                    cognitionId = workspaceId,
                                     expressionId = expression.id,
                                     phenomenonId = phenomenon.id,
                                     type = StorageType.SYSTEM_ID
                                 ),
                                 purpose = storage.readPhenomenonComponent(
-                                    workspaceId = workspaceId,
+                                    cognitionId = workspaceId,
                                     expressionId = expression.id,
                                     phenomenonId = phenomenon.id,
                                     type = StorageType.INTENT_PURPOSE
                                 ),
                                 code = storage.readPhenomenonComponent(
-                                    workspaceId = workspaceId,
+                                    cognitionId = workspaceId,
                                     expressionId = expression.id,
                                     phenomenonId = phenomenon.id,
                                     type = StorageType.INTENT_CODE
@@ -273,15 +274,15 @@ class DefaultCognitiveWorkspaceRepository(
                             )
                             is Phenomenon.Fulfillment -> Phenomenon.Fulfillment(
                                 id = phenomenon.id,
-                                intentId = "N/A", // TODO fix it
+                                intentId = phenomenon.intentId,
                                 intentSystemId = storage.readPhenomenonComponent(
-                                    workspaceId = workspaceId,
+                                    cognitionId = workspaceId,
                                     expressionId = expression.id,
                                     phenomenonId = phenomenon.id,
                                     type = StorageType.SYSTEM_ID
                                 ),
                                 result = storage.readPhenomenonComponent(
-                                    workspaceId = workspaceId,
+                                    cognitionId = workspaceId,
                                     expressionId = expression.id,
                                     phenomenonId = phenomenon.id,
                                     type = StorageType.TEXT
@@ -306,7 +307,7 @@ class DefaultCognitiveWorkspaceRepository(
         return if (culminatedWithIntent != null) {
 
             suspend fun read(type: StorageType) = storage.readPhenomenonComponent(
-                workspaceId = workspaceId,
+                cognitionId = workspaceId,
                 expressionId = culminatedWithIntent.expressionId,
                 phenomenonId = culminatedWithIntent.phenomenonId,
                 type = type

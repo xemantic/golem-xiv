@@ -68,28 +68,28 @@ sealed interface Phenomenon {
     val id: Long
 
     @Serializable
-    @SerialName("text")
+    @SerialName("Text")
     data class Text(
         override val id: Long,
         val text: String
     ) : Phenomenon
 
     @Serializable
-    @SerialName("image")
+    @SerialName("Image")
     data class Image(
         override val id: Long,
         val uri: String
     ) : Phenomenon
 
     @Serializable
-    @SerialName("document")
+    @SerialName("Document")
     data class Document(
         override val id: Long,
         val uri: String
     ) : Phenomenon
 
     @Serializable
-    @SerialName("intent")
+    @SerialName("Intent")
     data class Intent(
         override val id: Long,
         val systemId: String,
@@ -98,10 +98,10 @@ sealed interface Phenomenon {
     ) : Phenomenon
 
     @Serializable
-    @SerialName("fulfillment")
+    @SerialName("Fulfillment")
     data class Fulfillment(
         override val id: Long,
-        val intentId: String,
+        val intentId: Long,
         val intentSystemId: String,
         val result: String,
         val impeded: Boolean = false

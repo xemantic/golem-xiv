@@ -83,6 +83,8 @@ class HtmlSidebarView() : SidebarView, HasRootHtmlElement {
         )
     }
 
+    override val initiateCognitionActions: Flow<Action> = initiateCognitionButton.actions()
+
     override val themeChanges: Flow<Action> = themeSwitcher.themeChanges
 
     override val resizes: Flow<Action> = window.resizes().map { Action }

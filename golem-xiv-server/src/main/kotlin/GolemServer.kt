@@ -211,7 +211,9 @@ fun Application.module() {
 
             // not used at the moment
             collectGolemInput {
-                logger.debug { it }
+                logger.debug {
+                    "GolemInput received: $it"
+                }
             }
 
 //                try {
@@ -248,25 +250,35 @@ fun Route.golemApiRoute(
         call.respondText("pong")
     }
 
-    get("/workspaces") {
+    get("/cognitions") {
 //        call.respond(
 //            golem.contexts
 //        )
     }
 
-    put("/workspaces") {
+    put("/cognitions") {
+
+        logger.debug {
+            "Cognition: initiating"
+        }
+
         val phenomena = call.receive<List<Phenomenon>>()
-        val workspaceId = golem.initiateCognition()
-        call.respond(workspaceId)
+        val cognitionId = golem.initiateCognition()
+        call.respond(cognitionId)
         golem.perceive(
-            workspaceId = workspaceId,
+            workspaceId = cognitionId,
             phenomena = phenomena
         )
     }
 
-    patch("/workspaces/{id}") {
-        logger.debug { "Updating context: start" }
-        val id = parseCognitiveWorkspaceId()
+    patch("/cognitions/{id}") {
+
+        val id = parseCognitionId()
+
+        logger.debug {
+            "Cognition[$id]: continuing"
+        }
+
         val phenomena = call.receive<List<Phenomenon>>()
         golem.perceive(
             workspaceId = id,
@@ -275,19 +287,26 @@ fun Route.golemApiRoute(
         call.respond("ok") // TODO what should be returned here?
     }
 
-    get("/workspaces/{id}") {
-//        call.respond(
-//            golem.contexts
-//        )
+    get("/cognitions/{id}") {
+
+        val id = parseCognitionId()
+
+        logger.debug {
+            "Cognition[$id]: emitting via WebSocket"
+        }
+
+        call.respond("ok")
+
+        golem.emitCognition(id)
     }
 
-    post("/workspaces") {
+    post("/cognitions") {
 
     }
 
 }
 
-private fun RoutingContext.parseCognitiveWorkspaceId(): Long {
+private fun RoutingContext.parseCognitionId(): Long {
     val paramId = call.parameters["id"]
     if (paramId == null) {
         throw GolemException(

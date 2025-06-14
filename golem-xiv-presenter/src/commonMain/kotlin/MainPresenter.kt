@@ -7,15 +7,20 @@
 
 package com.xemantic.ai.golem.presenter
 
+import com.xemantic.ai.golem.api.GolemError
+import com.xemantic.ai.golem.api.GolemInput
 import com.xemantic.ai.golem.api.GolemOutput
+import com.xemantic.ai.golem.api.client.GolemServiceException
 import com.xemantic.ai.golem.api.client.http.HttpClientCognitionService
 import com.xemantic.ai.golem.api.client.http.HttpClientPingService
+import com.xemantic.ai.golem.api.client.http.sendGolemData
 import com.xemantic.ai.golem.presenter.environment.Theme
 import com.xemantic.ai.golem.presenter.environment.ThemeManager
 import com.xemantic.ai.golem.presenter.memory.MemoryView
 import com.xemantic.ai.golem.presenter.navigation.HeaderPresenter
 import com.xemantic.ai.golem.presenter.navigation.HeaderView
 import com.xemantic.ai.golem.presenter.navigation.Navigation
+import com.xemantic.ai.golem.presenter.navigation.NotFoundView
 import com.xemantic.ai.golem.presenter.navigation.SidebarPresenter
 import com.xemantic.ai.golem.presenter.navigation.SidebarView
 import com.xemantic.ai.golem.presenter.phenomena.CognitiveWorkspacePresenter
@@ -31,8 +36,8 @@ import io.ktor.client.plugins.websocket.webSocket
 import io.ktor.http.URLProtocol
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.websocket.WebSocketSession
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.launchIn
@@ -57,6 +62,7 @@ interface MainView {
 interface ScreenView
 
 class MainPresenter(
+    private val scope: CoroutineScope,
     private val config: Config,
     private val view: MainView,
     headerView: HeaderView,
@@ -64,6 +70,7 @@ class MainPresenter(
     navigation: Navigation,
     navigationTargets: Flow<Navigation.Target>,
     private val memoryViewProvider: () -> MemoryView,
+    private val notFoundViewProvider: () -> NotFoundView,
     private val themeManager: ThemeManager
 ) {
 
@@ -75,8 +82,6 @@ class MainPresenter(
         val apiPort: Int,
         val wsProtocol: URLProtocol = if (apiProtocol == URLProtocol.HTTPS) URLProtocol.WSS else URLProtocol.WS
     )
-
-    private val scope = MainScope()
 
     private val apiClient = HttpClient {
         install(WebSockets)
@@ -98,6 +103,8 @@ class MainPresenter(
 
     private val memoryView by lazy { memoryViewProvider() }
 
+    private val notFoundView by lazy { notFoundViewProvider() }
+
     val headerPresenter = HeaderPresenter(
         scope,
         headerView,
@@ -114,6 +121,7 @@ class MainPresenter(
 
 //    private val golemInput = MutableSharedFlow<GolemInput>()
 
+    private val golemInputs = MutableSharedFlow<GolemInput>()
     private val golemOutputs = MutableSharedFlow<GolemOutput>()
 
     private val pingService = HttpClientPingService(apiClient)
@@ -123,16 +131,39 @@ class MainPresenter(
     private lateinit var workspaceView: CognitiveWorkspaceView
 
     init {
+        logger.debug {
+            "Main presenter init start"
+        }
         val theme = themeManager.theme
         view.theme(theme)
         sidebarPresenter.theme = theme
-        navigationTargets.onEach {
-            when (it) {
-                is Navigation.Target.Memory -> {
-                    view.display(memoryView)
+        navigationTargets.onEach { target ->
+            logger.info { "Navigation target in main presenter: $target" }
+            when (target) {
+                is Navigation.Target.InitiateCognition -> {
+                    initContex()
                 }
                 is Navigation.Target.Cognition -> {
                     initContex()
+                    try {
+                        workspaceService.emitCognition(id = target.id)
+                    } catch (e: GolemServiceException) {
+                        if (e.error is GolemError.NoSuchCognition) {
+                            navigation.navigateTo(Navigation.Target.NotFound(
+                                message = "Cognition not found",
+                                pathname = "/cognitions/${target.id}"
+                            ))
+                        } else {
+                            throw e
+                        }
+                    }
+                }
+                is Navigation.Target.Memory -> {
+                    view.display(memoryView)
+                }
+                is Navigation.Target.NotFound -> {
+                    notFoundView.message = target.message
+                    view.display(notFoundView)
                 }
             }
             sidebarView.opened = false
@@ -160,7 +191,7 @@ class MainPresenter(
 //        }
 
         scope.launch {
-            logger.error { "wsPort ${config.apiPort}" }
+            logger.debug { "Connecting to WebSocket, port: ${config.apiPort}" }
             apiClient.webSocket(
                 request = {
                     url.host = config.apiHost
@@ -171,13 +202,19 @@ class MainPresenter(
             ) {
                 launch {
                     // nothing to send at the moment
-                    //golemInput.collect { sendToGolem(it) }
+                    golemInputs.collect { intput ->
+                        sendGolemData(intput)
+                    }
                 }
                 collectGolemOutput { handle(it) }
             }
         }
 
-        initContex()
+//        initContex()
+
+        logger.debug {
+            "Context initiated"
+        }
     }
 
     fun initContex() {
