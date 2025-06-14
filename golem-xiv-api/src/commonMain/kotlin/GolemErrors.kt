@@ -16,7 +16,7 @@ sealed interface GolemError {
     @Serializable
     @SerialName("NoSuchCognition")
     data class NoSuchCognition(
-        val workspaceId: Long
+        val cognitionId: Long
     ) : GolemError
 
     @Serializable

@@ -1,8 +1,8 @@
-.cognitive-workspace {
+.cognition {
     display: flex;
     flex-direction: column;
     height: var(--main-height);
-    width: var(--cognitive-workspace-width);
+    width: var(--cognition-width);
     flex-shrink: 0;
     background-color: var(--bg-color);
 }

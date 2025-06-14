@@ -17,7 +17,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
 import kotlin.time.Instant
 
-interface CognitiveWorkspace {
+interface Cognition {
     val id: Long
     val initiationMoment: Instant
 //    val parentId: String?

@@ -112,10 +112,10 @@ internal suspend fun FlowCollector<CognitionEvent>.emit(
 }
 
 internal fun FlowCollector<GolemOutput>.cognitionBroadcaster(
-    workspaceId: Long
+    cognitionId: Long
 ) = FlowCollector<CognitionEvent> { value ->
     emit(GolemOutput.Cognition(
-        workspaceId = workspaceId,
+        cognitionId = cognitionId,
         event = value
     ))
 }

@@ -23,8 +23,8 @@ import com.xemantic.ai.golem.presenter.navigation.Navigation
 import com.xemantic.ai.golem.presenter.navigation.NotFoundView
 import com.xemantic.ai.golem.presenter.navigation.SidebarPresenter
 import com.xemantic.ai.golem.presenter.navigation.SidebarView
-import com.xemantic.ai.golem.presenter.phenomena.CognitiveWorkspacePresenter
-import com.xemantic.ai.golem.presenter.phenomena.CognitiveWorkspaceView
+import com.xemantic.ai.golem.presenter.phenomena.CognitionPresenter
+import com.xemantic.ai.golem.presenter.phenomena.CognitionView
 import com.xemantic.ai.golem.presenter.util.Action
 import com.xemantic.ai.golem.presenter.websocket.collectGolemOutput
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -49,13 +49,11 @@ interface MainView {
 
     fun theme(theme: Theme)
 
-    fun workspaceView(): CognitiveWorkspaceView // TODO maybe factory should be outside?
+    fun cognitionView(): CognitionView // TODO maybe factory should be outside?
 
     fun display(view: ScreenView)
 
     val resizes: Flow<Action>
-
-    val workspaceSelection: Flow<String>
 
 }
 
@@ -125,10 +123,10 @@ class MainPresenter(
     private val golemOutputs = MutableSharedFlow<GolemOutput>()
 
     private val pingService = HttpClientPingService(apiClient)
-    private val workspaceService = HttpClientCognitionService(apiClient)
+    private val cognitionService = HttpClientCognitionService(apiClient)
 
-    private lateinit var workspacePresenter: CognitiveWorkspacePresenter
-    private lateinit var workspaceView: CognitiveWorkspaceView
+    private lateinit var cognitionPresenter: CognitionPresenter
+    private lateinit var cognitionView: CognitionView
 
     init {
         logger.debug {
@@ -146,7 +144,7 @@ class MainPresenter(
                 is Navigation.Target.Cognition -> {
                     initContex()
                     try {
-                        workspaceService.emitCognition(id = target.id)
+                        cognitionService.emitCognition(id = target.id)
                     } catch (e: GolemServiceException) {
                         if (e.error is GolemError.NoSuchCognition) {
                             navigation.navigateTo(Navigation.Target.NotFound(
@@ -218,18 +216,18 @@ class MainPresenter(
     }
 
     fun initContex() {
-        if (::workspacePresenter.isInitialized) {
-            workspacePresenter.dispose()
+        if (::cognitionPresenter.isInitialized) {
+            cognitionPresenter.dispose()
         }
-        workspaceView = view.workspaceView()
-        workspacePresenter = CognitiveWorkspacePresenter(
+        cognitionView = view.cognitionView()
+        cognitionPresenter = CognitionPresenter(
             scope,
             Dispatchers.Default,
-            workspaceService,
-            workspaceView,
+            cognitionService,
+            cognitionView,
             golemOutputs
         )
-        view.display(workspaceView)
+        view.display(cognitionView)
     }
 
     fun onContextSelected() {

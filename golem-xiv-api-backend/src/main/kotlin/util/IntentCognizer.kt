@@ -8,7 +8,7 @@
 package com.xemantic.ai.golem.api.backend.util
 
 import com.xemantic.ai.golem.api.CognitionEvent
-import com.xemantic.ai.golem.api.backend.CognitiveWorkspaceRepository
+import com.xemantic.ai.golem.api.backend.CognitionRepository
 import com.xemantic.ai.golem.json.DefaultStreamingJsonParser
 import com.xemantic.ai.golem.json.JsonEvent
 
@@ -16,10 +16,10 @@ import com.xemantic.ai.golem.json.JsonEvent
  * The intent cognizer is a component to be used in the implementation of [Cognizer] interface.
  */
 class IntentCognizer(
-    private val workspaceId: Long,
+    private val cognitionId: Long,
     private val expressionId: Long,
     private val phenomenonId: Long,
-    private val repository: CognitiveWorkspaceRepository
+    private val repository: CognitionRepository
 ) {
 
     private val jsonParser = DefaultStreamingJsonParser()
@@ -67,7 +67,7 @@ class IntentCognizer(
                 when (phase) {
                     Phase.COLLECTING_PURPOSE -> {
                         repository.appendIntentPurpose(
-                            workspaceId = workspaceId,
+                            cognitionId = cognitionId,
                             expressionId = expressionId,
                             phenomenonId = phenomenonId,
                             purposeDelta = event.chunk
@@ -80,7 +80,7 @@ class IntentCognizer(
                     }
                     Phase.COLLECTING_CODE -> {
                         repository.appendIntentCode(
-                            workspaceId = workspaceId,
+                            cognitionId = cognitionId,
                             expressionId = expressionId,
                             phenomenonId = phenomenonId,
                             codeDelta = event.chunk

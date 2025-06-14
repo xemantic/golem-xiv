@@ -17,7 +17,7 @@ import kotlin.time.Instant
 
 /**
  * Cognition events are "broadcasted" from the cognitive process unfolding
- * over provided [CognitiveWorkspace].
+ * over provided [Cognition].
  */
 @Serializable
 sealed interface CognitionEvent {
@@ -65,7 +65,7 @@ sealed interface CognitionEvent {
         val id: Long,
         val expressionId: Long,
         val systemId: String,
-        val recursiveWorkspaceId: String? = null
+        val recursiveCognitionId: String? = null
     ) : CognitionEvent
 
     @Serializable
@@ -149,12 +149,12 @@ sealed interface CognitionEvent {
     data class RecursiveFulfillmentUnfolding(
         val id: Long,
         val expressionId: Long,
-        val recursiveWorkspaceId: String
+        val recursiveCognitionId: String
     ) : CognitionEvent
 
     @Serializable
-    @SerialName("WorkspaceDesignation")
-    data class WorkspaceDesignation(
+    @SerialName("CognitionDesignation")
+    data class CognitionDesignation(
         val expressionId: Long,
         val title: String
     ) : CognitionEvent

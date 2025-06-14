@@ -10,8 +10,8 @@ package com.xemantic.ai.golem.neo4j
 import com.xemantic.ai.golem.api.EpistemicAgent
 import com.xemantic.ai.golem.api.PhenomenalExpression
 import com.xemantic.ai.golem.api.Phenomenon
-import com.xemantic.ai.golem.api.backend.CognitiveWorkspaceInfo
-import com.xemantic.ai.golem.api.backend.CognitiveWorkspaceMemory
+import com.xemantic.ai.golem.api.backend.CognitionInfo
+import com.xemantic.ai.golem.api.backend.CognitiveMemory
 import com.xemantic.ai.golem.api.backend.CulminatedWithIntent
 import com.xemantic.ai.golem.api.backend.PhenomenalExpressionInfo
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -20,38 +20,38 @@ import kotlinx.coroutines.flow.flow
 import org.neo4j.driver.Driver
 import org.neo4j.driver.types.Node
 
-class Neo4jCognitiveWorkspaceMemory(
+class Neo4JCognitiveMemory(
     private val driver: Driver
-) : CognitiveWorkspaceMemory {
+) : CognitiveMemory {
 
     private val logger = KotlinLogging.logger {}
 
-    override suspend fun createWorkspace(
+    override suspend fun createCognition(
         parentId: Long?
-    ): CognitiveWorkspaceInfo {
+    ): CognitionInfo {
 
         logger.debug {
-            "Workspace[parentId=$parentId]: creating"
+            "Cognition[parentId=$parentId]: creating"
         }
 
-        val workspaceInfo = driver.session().use { session ->
+        val cognitionInfo = driver.session().use { session ->
 
             session.executeWrite { tx ->
 
                 val result = if (parentId != null) {
                     tx.runCypher(query =
                         $$"""
-                            MATCH (parent:CognitiveWorkspace) WHERE id(parent) = $parentId
-                            CREATE (workspace:CognitiveWorkspace {
+                            MATCH (parent:Cognition) WHERE id(parent) = $parentId
+                            CREATE (cognition:Cognition {
                                 title: "Untitled",
                                 summary: "",
                                 initiationMoment: datetime()
                             })
-                            CREATE (parent)-[:superEvent]->(workspace)
-                            CREATE (workspace)-[:subEvent]->(parent)
+                            CREATE (parent)-[:superEvent]->(cognition)
+                            CREATE (cognition)-[:subEvent]->(parent)
                             RETURN
-                                id(workspace) as id,
-                                workspace.initiationMoment as initiationMoment
+                                id(cognition) as id,
+                                cognition.initiationMoment as initiationMoment
                         """.trimIndent(),
                         parameters = mapOf(
                             "parentId" to parentId
@@ -59,19 +59,19 @@ class Neo4jCognitiveWorkspaceMemory(
                     )
                 } else {
                     tx.runCypher(query = """
-                        CREATE (workspace:CognitiveWorkspace {
+                        CREATE (cognition:Cognition {
                             initiationMoment: datetime()
                         })
                         RETURN
-                            id(workspace) as id,
-                            workspace.initiationMoment as initiationMoment
+                            id(cognition) as id,
+                            cognition.initiationMoment as initiationMoment
                     """.trimIndent()
                     )
                 }
 
                 val record = result.single()
 
-                CognitiveWorkspaceInfo(
+                CognitionInfo(
                     id = record["id"].asLong(),
                     initiationMoment = record["initiationMoment"].asInstant()
                 )
@@ -80,19 +80,19 @@ class Neo4jCognitiveWorkspaceMemory(
         }
 
         logger.debug {
-            "Workspace[${workspaceInfo.id}}]: created"
+            "Cognition[${cognitionInfo.id}}]: created"
         }
 
-        return workspaceInfo
+        return cognitionInfo
     }
 
     override suspend fun createExpression(
-        workspaceId: Long,
+        cognitionId: Long,
         agentId: Long,
     ): PhenomenalExpressionInfo {
 
         logger.debug {
-            "Workspace[$workspaceId]: creating PhenomenalExpression of agentId: $agentId"
+            "Cognition[$cognitionId]: creating PhenomenalExpression of agentId: $agentId"
         }
 
         val expressionInfo = driver.session().use { session ->
@@ -100,7 +100,7 @@ class Neo4jCognitiveWorkspaceMemory(
             session.executeWrite { tx ->
                 val result = tx.runCypher(
                     query = $$"""
-                        MATCH (workspace:CognitiveWorkspace) WHERE id(workspace) = $workspaceId
+                        MATCH (cognition:Cognition) WHERE id(cognition) = $cognitionId
                         MATCH (agent:EpistemicAgent) WHERE id(agent) = $agentId
                         CREATE (expression:PhenomenalExpression {
                             title: "Expression",
@@ -108,14 +108,14 @@ class Neo4jCognitiveWorkspaceMemory(
                         })
                         SET expression.title = expression.title + " " + id(expression)
                         CREATE (agent)-[:creator]->(expression)
-                        CREATE (workspace)-[:hasPart]->(expression)
-                        CREATE (expression)-[:isPartOf]->(workspace)
+                        CREATE (cognition)-[:hasPart]->(expression)
+                        CREATE (expression)-[:isPartOf]->(cognition)
                         RETURN
                             id(expression) as id,
                             expression.initiationMoment as initiationMoment
                     """.trimIndent(),
                     parameters = mapOf(
-                        "workspaceId" to workspaceId,
+                        "cognitionId" to cognitionId,
                         "agentId" to agentId
                     )
                 )
@@ -132,20 +132,20 @@ class Neo4jCognitiveWorkspaceMemory(
         }
 
         logger.debug {
-            "Workspace[$workspaceId]: created PhenomenalExpression[${expressionInfo.id}] of agentId: $agentId"
+            "Cognition[$cognitionId]: created PhenomenalExpression[${expressionInfo.id}] of agentId: $agentId"
         }
 
         return expressionInfo
     }
 
     override suspend fun createPhenomenon(
-        workspaceId: Long,
+        cognitionId: Long,
         expressionId: Long,
         label: String
     ): Long {
 
         logger.debug {
-            "Cognition[$workspaceId]/Expression[$expressionId]: creating Phenomenon ($label)"
+            "Cognition[$cognitionId]/Expression[$expressionId]: creating Phenomenon ($label)"
         }
 
         val phenomenonId = driver.session().use { session ->
@@ -175,20 +175,20 @@ class Neo4jCognitiveWorkspaceMemory(
         }
 
         logger.debug {
-            "Cognition[$workspaceId]/Expression[$expressionId]/Phenomenon[$phenomenonId]($label): created"
+            "Cognition[$cognitionId]/Expression[$expressionId]/Phenomenon[$phenomenonId]($label): created"
         }
 
         return phenomenonId
     }
 
     override suspend fun createFulfillmentPhenomenon(
-        workspaceId: Long,
+        cognitionId: Long,
         expressionId: Long,
         intentId: Long
     ): Long {
 
         logger.debug {
-            "Cognition[$workspaceId]/Expression[$expressionId]: creating Phenomenon(Fulfillment)"
+            "Cognition[$cognitionId]/Expression[$expressionId]: creating Phenomenon(Fulfillment)"
         }
 
         val phenomenonId = driver.session().use { session ->
@@ -206,7 +206,7 @@ class Neo4jCognitiveWorkspaceMemory(
                         WITH fulfillment
                         MATCH (intent:Phenomenon:Intent) WHERE id(intent) = $intentId
                         CREATE (fulfillment)-[:fulfills]->(intent)
-
+                        
                         RETURN
                             id(fulfillment) as id
                     """.trimIndent(),
@@ -224,38 +224,38 @@ class Neo4jCognitiveWorkspaceMemory(
         }
 
         logger.debug {
-            "Cognition[$workspaceId]/Expression[$expressionId]/Phenomenon[$phenomenonId](Fulfillment): created"
+            "Cognition[$cognitionId]/Expression[$expressionId]/Phenomenon[$phenomenonId](Fulfillment): created"
         }
 
         return phenomenonId
     }
 
-    override suspend fun getWorkspaceInfo(
-        workspaceId: Long
-    ): CognitiveWorkspaceInfo {
+    override suspend fun getCognitionInfo(
+        cognitionId: Long
+    ): CognitionInfo {
 
         logger.debug {
-            "Workspace[$workspaceId]: getting CognitiveWorkspaceInfo"
+            "Cognition[$cognitionId]: getting CognitionInfo"
         }
 
-        val workspaceInfo = driver.session().use { session ->
+        val cognitionInfo = driver.session().use { session ->
 
             session.executeRead { tx ->
 
                 val result = tx.runCypher(query = $$"""
-                    MATCH (workspace:CognitiveWorkspace) WHERE id(workspace) = $workspaceId
+                    MATCH (cognition:Cognition) WHERE id(cognition) = $cognitionId
                     RETURN
-                        id(workspace) as id,
-                        workspace.initiationMoment as initiationMoment
+                        id(cognition) as id,
+                        cognition.initiationMoment as initiationMoment
                 """.trimIndent(),
                     parameters = mapOf(
-                        "workspaceId" to workspaceId
+                        "cognitionId" to cognitionId
                     )
                 )
 
                 val record = result.single()
 
-                CognitiveWorkspaceInfo(
+                CognitionInfo(
                     id = record["id"].asLong(),
                     initiationMoment = record["initiationMoment"].asInstant()
                 )
@@ -264,18 +264,18 @@ class Neo4jCognitiveWorkspaceMemory(
         }
 
         logger.debug {
-            "Workspace[$workspaceId]: retrieved CognitiveWorkspaceInfo"
+            "Cognition[$cognitionId]: retrieved CognitionInfo"
         }
 
-        return workspaceInfo
+        return cognitionInfo
     }
 
-    override suspend fun getWorkspaceTitle(
-        workspaceId: Long
+    override suspend fun getCognitionTitle(
+        cognitionId: Long
     ): String? {
 
         logger.debug {
-            "Workspace[$workspaceId]: getting title"
+            "Cognition[$cognitionId]: getting title"
         }
 
         val title = driver.session().use { session ->
@@ -283,12 +283,12 @@ class Neo4jCognitiveWorkspaceMemory(
             session.executeRead { tx ->
 
                 val result = tx.runCypher(query = $$"""
-                    MATCH (workspace:CognitiveWorkspace) WHERE id(workspace) = $workspaceId
+                    MATCH (cognition:Cognition) WHERE id(cognition) = $cognitionId
                     RETURN
-                        workspace.title as title
+                        cognition.title as title
                     """.trimIndent(),
                     parameters = mapOf(
-                        "workspaceId" to workspaceId
+                        "cognitionId" to cognitionId
                     )
                 )
 
@@ -299,19 +299,19 @@ class Neo4jCognitiveWorkspaceMemory(
         }
 
         logger.debug {
-            "Workspace[$workspaceId]: retrieved title: $title"
+            "Cognition[$cognitionId]: retrieved title: $title"
         }
 
         return title
     }
 
-    override suspend fun setWorkspaceTitle(
-        workspaceId: Long,
+    override suspend fun setCognitionTitle(
+        cognitionId: Long,
         title: String?
     ) {
 
         logger.debug {
-            "Workspace[$workspaceId]: setting title: $title"
+            "Cognition[$cognitionId]: setting title: $title"
         }
 
         driver.session().use { session ->
@@ -319,11 +319,11 @@ class Neo4jCognitiveWorkspaceMemory(
             session.executeWrite { tx ->
                 tx.runCypher(
                     query = $$"""
-                        MATCH (workspace:CognitiveWorkspace) WHERE id(workspace) = $workspaceId
-                        SET workspace.title = $title
+                        MATCH (cognition:Cognition) WHERE id(cognition) = $cognitionId
+                        SET cognition.title = $title
                     """.trimIndent(),
                     parameters = mapOf(
-                        "workspaceId" to workspaceId,
+                        "cognitionId" to cognitionId,
                         "title" to title
                     )
                 )
@@ -332,12 +332,12 @@ class Neo4jCognitiveWorkspaceMemory(
         }
     }
 
-    override suspend fun getWorkspaceSummary(
-        workspaceId: Long
+    override suspend fun getCognitionSummary(
+        cognitionId: Long
     ): String? {
 
         logger.debug {
-            "Workspace[$workspaceId]: getting summary"
+            "Cognition[$cognitionId]: getting summary"
         }
 
         val summary = driver.session().use { session ->
@@ -346,11 +346,11 @@ class Neo4jCognitiveWorkspaceMemory(
 
                 val result = tx.runCypher(
                     query = $$"""
-                        MATCH (workspace:CognitiveWorkspace) WHERE id(workspace) = $workspaceId
+                        MATCH (cognition:Cognition) WHERE id(cognition) = $cognitionId
                         RETURN
-                            workspace.summary as summary
+                            cognition.summary as summary
                     """.trimIndent(), mapOf(
-                        "workspaceId" to workspaceId
+                        "cognitionId" to cognitionId
                     )
                 )
 
@@ -361,19 +361,19 @@ class Neo4jCognitiveWorkspaceMemory(
         }
 
         logger.debug {
-            "Workspace[$workspaceId]: retrieved summary: $summary"
+            "Cognition[$cognitionId]: retrieved summary: $summary"
         }
 
         return summary
     }
 
-    override suspend fun setWorkspaceSummary(
-        workspaceId: Long,
+    override suspend fun setCognitionSummary(
+        cognitionId: Long,
         summary: String?
     ) {
 
         logger.debug {
-            "Workspace[$workspaceId]: setting summary: $summary"
+            "Cognition[$cognitionId]: setting summary: $summary"
         }
 
         driver.session().use { session ->
@@ -381,10 +381,10 @@ class Neo4jCognitiveWorkspaceMemory(
             session.executeWrite { tx ->
                 tx.runCypher(
                     query = $$"""
-                        MATCH (workspace:CognitiveWorkspace) WHERE id(workspace) = $workspaceId
-                        SET workspace.summary = $summary
+                        MATCH (cognition:Cognition) WHERE id(cognition) = $cognitionId
+                        SET cognition.summary = $summary
                     """.trimIndent(), mapOf(
-                        "workspaceId" to workspaceId,
+                        "cognitionId" to cognitionId,
                         "summary" to summary
                     )
                 )
@@ -405,9 +405,9 @@ class Neo4jCognitiveWorkspaceMemory(
             session.executeRead { tx ->
                 val result = tx.runCypher(
                     query = $$"""
-                        MATCH (workspace:CognitiveWorkspace)-[:hasPart]->(expression:PhenomenalExpression)
+                        MATCH (cognition:Cognition)-[:hasPart]->(expression:PhenomenalExpression)
                         MATCH (agent:EpistemicAgent)-[:creator]->(expression)
-                        WHERE id(workspace) = $cognitionId
+                        WHERE id(cognition) = $cognitionId
                         
                         OPTIONAL MATCH (expression)-[:hasPart]->(phenomenon:Phenomenon)
                         OPTIONAL MATCH (phenomenon)-[:fulfills]->(intent:Phenomenon:Intent)
@@ -483,11 +483,11 @@ class Neo4jCognitiveWorkspaceMemory(
     }
 
     override suspend fun maybeCulminatedWithIntent(
-        workspaceId: Long
+        cognitionId: Long
     ): CulminatedWithIntent? {
 
         logger.debug {
-            "Workspace[$workspaceId] Checking if culminated with an Intent phenomenon"
+            "Cognition[$cognitionId] Checking if culminated with an Intent phenomenon"
         }
 
         return driver.session().use { session ->
@@ -496,13 +496,13 @@ class Neo4jCognitiveWorkspaceMemory(
                 // TODO for sure there is easier way of doing it
                 val result = tx.runCypher(
                     query = $$"""
-                        MATCH (workspace:CognitiveWorkspace)-[:hasPart]->(expression:PhenomenalExpression)
-                        WHERE id(workspace) = $workspaceId
+                        MATCH (cognition:Cognition)-[:hasPart]->(expression:PhenomenalExpression)
+                        WHERE id(cognition) = $cognitionId
                         
                         WITH MAX(id(expression)) as maxExpressionId
                         
-                        MATCH (workspace:CognitiveWorkspace)-[:hasPart]->(expression:PhenomenalExpression)-[:hasPart]->(phenomenon:Phenomenon)
-                        WHERE id(workspace) = $workspaceId AND id(expression) = maxExpressionId
+                        MATCH (cognition:Cognition)-[:hasPart]->(expression:PhenomenalExpression)-[:hasPart]->(phenomenon:Phenomenon)
+                        WHERE id(cognition) = $cognitionId AND id(expression) = maxExpressionId
                         
                         WITH expression, MAX(id(phenomenon)) as maxPhenomenonId
                         
@@ -514,7 +514,7 @@ class Neo4jCognitiveWorkspaceMemory(
                             id(maxPhenomenon) AS phenomenonId
                     """.trimIndent(),
                     parameters = mapOf(
-                        "workspaceId" to workspaceId
+                        "cognitionId" to cognitionId
                     )
                 )
 

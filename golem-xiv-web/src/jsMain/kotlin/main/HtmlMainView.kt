@@ -10,13 +10,13 @@ package com.xemantic.ai.golem.web.main
 import com.xemantic.ai.golem.presenter.MainView
 import com.xemantic.ai.golem.presenter.ScreenView
 import com.xemantic.ai.golem.presenter.environment.Theme
-import com.xemantic.ai.golem.presenter.phenomena.CognitiveWorkspaceView
+import com.xemantic.ai.golem.presenter.phenomena.CognitionView
 import com.xemantic.ai.golem.presenter.util.Action
 import com.xemantic.ai.golem.web.js.dom
 import com.xemantic.ai.golem.web.js.eventFlow
 import com.xemantic.ai.golem.web.navigation.HtmlHeaderView
 import com.xemantic.ai.golem.web.navigation.HtmlSidebarView
-import com.xemantic.ai.golem.web.workspace.HtmlCognitiveWorkspaceView
+import com.xemantic.ai.golem.web.cognition.HtmlCognitionView
 import com.xemantic.ai.golem.web.view.HasRootHtmlElement
 import kotlinx.browser.window
 import kotlinx.coroutines.flow.Flow
@@ -51,17 +51,11 @@ class HtmlMainView(
         }
     }
 
-    override fun workspaceView(): CognitiveWorkspaceView = HtmlCognitiveWorkspaceView() // TODO move the factory outside
+    override fun cognitionView(): CognitionView = HtmlCognitionView() // TODO move the factory outside
 
     override fun display(view: ScreenView) {
         mainElement.innerHTML = ""
         mainElement.append((view as HasRootHtmlElement).element)
-    }
-
-    override val workspaceSelection: Flow<String> = window.eventFlow<Event>(
-        "hashchange"
-    ).map {
-        window.location.hash // TODO more parsing here?
     }
 
     override val resizes: Flow<Action>

@@ -7,7 +7,7 @@
 
 package com.xemantic.ai.golem.api.backend.script
 
-import com.xemantic.ai.golem.api.CognitiveWorkspace
+import com.xemantic.ai.golem.api.Cognition
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable
 import org.neo4j.driver.Result
@@ -70,13 +70,11 @@ interface Memory {
     fun <T: Any?> modify(cypher: String, block: (Result) -> T): T
 }
 
-interface Cognition {
+interface Mind {
 
-    val current: CognitiveWorkspace
+    val currentCognition: Cognition
 
-    fun queryCognitiveWorkspaces(
-        cypher: String
-    ): Flow<CognitiveWorkspace>
+    fun getCognition(id: Long): Cognition
 
 }
 

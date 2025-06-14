@@ -7,14 +7,14 @@
 
 package com.xemantic.ai.golem.api.backend
 
-import com.xemantic.ai.golem.api.CognitiveWorkspace
+import com.xemantic.ai.golem.api.Cognition
 import com.xemantic.ai.golem.api.EpistemicAgent
 import com.xemantic.ai.golem.api.PhenomenalExpression
 import com.xemantic.ai.golem.api.Phenomenon
 import kotlinx.coroutines.flow.Flow
 import kotlin.time.Instant
 
-data class CognitiveWorkspaceInfo(
+data class CognitionInfo(
     val id: Long,
     val initiationMoment: Instant
 )
@@ -24,125 +24,125 @@ data class PhenomenalExpressionInfo(
     val initiationMoment: Instant
 )
 
-interface CognitiveWorkspaceRepository {
+interface CognitionRepository {
 
-    suspend fun initiateWorkspace(
+    suspend fun initiateCognition(
         conditioning: List<String>,
         parentId: Long? = null
-    ): CognitiveWorkspaceInfo
+    ): CognitionInfo
 
-    suspend fun appendToWorkspace(
-        workspaceId: Long,
+    suspend fun appendPhenomena(
+        cognitionId: Long,
         agent: EpistemicAgent,
         phenomena: List<Phenomenon>
     ): PhenomenalExpression
 
     suspend fun initiateExpression(
-        workspaceId: Long,
+        cognitionId: Long,
         agent: EpistemicAgent
     ): PhenomenalExpressionInfo
 
     suspend fun initiateTextPhenomenon(
-        workspaceId: Long,
+        cognitionId: Long,
         expressionId: Long
     ): Long
 
     suspend fun initiateIntentPhenomenon(
-        workspaceId: Long,
+        cognitionId: Long,
         expressionId: Long,
         systemId: String
     ): Long
 
     suspend fun initiateFulfillmentPhenomenon(
-        workspaceId: Long,
+        cognitionId: Long,
         expressionId: Long,
         intentId: Long,
         systemId: String
     ): Long
 
     suspend fun appendText(
-        workspaceId: Long,
+        cognitionId: Long,
         expressionId: Long,
         phenomenonId: Long,
         textDelta: String
     )
 
     suspend fun appendIntentPurpose(
-        workspaceId: Long,
+        cognitionId: Long,
         expressionId: Long,
         phenomenonId: Long,
         purposeDelta: String
     )
 
     suspend fun appendIntentCode(
-        workspaceId: Long,
+        cognitionId: Long,
         expressionId: Long,
         phenomenonId: Long,
         codeDelta: String
     )
 
     suspend fun updateSystemPhenomena(
-        workspaceId: Long,
+        cognitionId: Long,
         phenomena: List<String>
     )
 
     suspend fun culminateExpression(
-        workspaceId: Long,
+        cognitionId: Long,
         expressionId: Long
     ): Instant
 
-    suspend fun getWorkspace(
-        workspaceId: Long
-    ): CognitiveWorkspace
+    suspend fun getCognition(
+        cognitionId: Long
+    ): Cognition
 
     suspend fun maybeCulminatedWithIntent(
-        workspaceId: Long
+        cognitionId: Long
     ): Phenomenon.Intent?
 
 }
 
-interface CognitiveWorkspaceMemory {
+interface CognitiveMemory {
 
-    suspend fun createWorkspace(
+    suspend fun createCognition(
         parentId: Long? = null
-    ): CognitiveWorkspaceInfo
+    ): CognitionInfo
 
     suspend fun createExpression(
-        workspaceId: Long,
+        cognitionId: Long,
         agentId: Long
     ): PhenomenalExpressionInfo
 
     suspend fun createPhenomenon(
-        workspaceId: Long,
+        cognitionId: Long,
         expressionId: Long,
         label: String
     ): Long
 
     suspend fun createFulfillmentPhenomenon(
-        workspaceId: Long,
+        cognitionId: Long,
         expressionId: Long,
         intentId: Long
     ): Long
 
-    suspend fun getWorkspaceInfo(
-        workspaceId: Long
-    ): CognitiveWorkspaceInfo
+    suspend fun getCognitionInfo(
+        cognitionId: Long
+    ): CognitionInfo
 
-    suspend fun getWorkspaceTitle(
-        workspaceId: Long
+    suspend fun getCognitionTitle(
+        cognitionId: Long
     ): String?
 
-    suspend fun setWorkspaceTitle(
-        workspaceId: Long,
+    suspend fun setCognitionTitle(
+        cognitionId: Long,
         title: String?
     )
 
-    suspend fun getWorkspaceSummary(
-        workspaceId: Long
+    suspend fun getCognitionSummary(
+        cognitionId: Long
     ): String?
 
-    suspend fun setWorkspaceSummary(
-        workspaceId: Long,
+    suspend fun setCognitionSummary(
+        cognitionId: Long,
         summary: String?
     )
 
@@ -151,7 +151,7 @@ interface CognitiveWorkspaceMemory {
     ): Flow<PhenomenalExpression>
 
     suspend fun maybeCulminatedWithIntent(
-        workspaceId: Long
+        cognitionId: Long
     ): CulminatedWithIntent?
 
 }
@@ -161,15 +161,15 @@ data class CulminatedWithIntent(
     val phenomenonId: Long
 )
 
-interface CognitiveWorkspaceStorage {
+interface CognitionStorage {
 
-    suspend fun createWorkspace(
-        workspaceId: Long,
+    suspend fun createCognition(
+        cognitionId: Long,
         conditioning: List<String>
     )
 
     suspend fun createExpression(
-        workspaceId: Long,
+        cognitionId: Long,
         expressionId: Long
     )
 
@@ -190,7 +190,7 @@ interface CognitiveWorkspaceStorage {
 
     //    // TODO it is not used at the moment
 //    suspend fun addExpression(
-//        workspaceId: Long,
+//        cognitionId: Long,
 //        expressionId: Long,
 //        phenomena: List<Phenomenon>
 //    )
@@ -203,7 +203,7 @@ interface CognitiveWorkspaceStorage {
 //    // TODO append delta
 //
 //    suspend fun commit(
-//        workspaceId: Long,
+//        cognitionId: Long,
 //        expressionId: Long
 //    )
 

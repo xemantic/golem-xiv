@@ -10,9 +10,9 @@ package com.xemantic.ai.golem.api
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-interface WithWorkspaceId {
+interface WithCognitionId {
 
-    val workspaceId: Long
+    val cognitionId: Long
 
 }
 
@@ -28,28 +28,28 @@ sealed interface GolemOutput {
     @Serializable
     @SerialName("Message")
     data class Message (
-        override val workspaceId: Long,
+        override val cognitionId: Long,
         val expression: PhenomenalExpression
-    ): GolemOutput, WithWorkspaceId
+    ): GolemOutput, WithCognitionId
 
     @Serializable
-    @SerialName("WorkspaceAdded")
-    data class WorkspaceAdded(
-        override val workspaceId: Long
-    ) : GolemOutput, WithWorkspaceId
+    @SerialName("CognitionAdded")
+    data class CognitionAdded(
+        override val cognitionId: Long
+    ) : GolemOutput, WithCognitionId
 
     @Serializable
-    @SerialName("WorkspaceUpdated")
-    data class WorkspaceUpdated(
-        override val workspaceId: Long,
-//        val info: CognitiveWorkspaceInfo
-    ) : GolemOutput, WithWorkspaceId
+    @SerialName("CognitionUpdated")
+    data class CognitionUpdated(
+        override val cognitionId: Long,
+//        val info: CognitionInfo
+    ) : GolemOutput, WithCognitionId
 
     @Serializable
     @SerialName("Cognition")
     data class Cognition(
-        override val workspaceId: Long,
+        override val cognitionId: Long,
         val event: CognitionEvent
-    ) : GolemOutput, WithWorkspaceId
+    ) : GolemOutput, WithCognitionId
 
 }

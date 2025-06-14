@@ -16,13 +16,13 @@ import com.xemantic.ai.golem.api.backend.script.Files
 import com.xemantic.ai.golem.api.backend.script.Memory
 import com.xemantic.ai.golem.cognizer.anthropic.AnthropicToolUseCognizer
 import com.xemantic.ai.golem.core.Golem
-import com.xemantic.ai.golem.core.cognition.workspace.DefaultCognitiveWorkspaceRepository
+import com.xemantic.ai.golem.core.cognition.DefaultCognitionRepository
 import com.xemantic.ai.golem.core.script.service.DefaultFiles
 import com.xemantic.ai.golem.core.service
-import com.xemantic.ai.golem.neo4j.Neo4jCognitiveWorkspaceMemory
+import com.xemantic.ai.golem.neo4j.Neo4JCognitiveMemory
 import com.xemantic.ai.golem.neo4j.Neo4jAgentIdentity
 import com.xemantic.ai.golem.neo4j.Neo4jMemory
-import com.xemantic.ai.golem.storage.file.FileCognitiveWorkspaceStorage
+import com.xemantic.ai.golem.storage.file.FileCognitionStorage
 import io.github.oshai.kotlinlogging.KLogger
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.HttpHeaders
@@ -82,11 +82,11 @@ fun Application.module() {
 
     val identity = Neo4jAgentIdentity(driver = neo4j)
 
-    val repository = DefaultCognitiveWorkspaceRepository(
-        memory = Neo4jCognitiveWorkspaceMemory(
+    val repository = DefaultCognitionRepository(
+        memory = Neo4JCognitiveMemory(
             driver = neo4j
         ),
-        storage = FileCognitiveWorkspaceStorage(File("var/workspaces"))
+        storage = FileCognitionStorage(File("var/cognitions"))
     )
 
     val anthropic = Anthropic()
@@ -266,7 +266,7 @@ fun Route.golemApiRoute(
         val cognitionId = golem.initiateCognition()
         call.respond(cognitionId)
         golem.perceive(
-            workspaceId = cognitionId,
+            cognitionId = cognitionId,
             phenomena = phenomena
         )
     }
@@ -281,7 +281,7 @@ fun Route.golemApiRoute(
 
         val phenomena = call.receive<List<Phenomenon>>()
         golem.perceive(
-            workspaceId = id,
+            cognitionId = id,
             phenomena = phenomena
         )
         call.respond("ok") // TODO what should be returned here?
@@ -311,7 +311,7 @@ private fun RoutingContext.parseCognitionId(): Long {
     if (paramId == null) {
         throw GolemException(
             GolemError.BadRequest(
-                "The workspace id must be specified in uri: ${call.request.uri}"
+                "The cognition id must be specified in uri: ${call.request.uri}"
             )
         )
     }
@@ -320,7 +320,7 @@ private fun RoutingContext.parseCognitionId(): Long {
     } catch (e: NumberFormatException) {
         throw GolemException(
             error = GolemError.BadRequest(
-                "The workspace id must be specified in uri: ${call.request.uri}"
+                "The cognition id must be specified in uri: ${call.request.uri}"
             ),
             cause = e
         )

@@ -5,7 +5,7 @@
  * Unauthorized reproduction or distribution is prohibited.
  */
 
-package com.xemantic.ai.golem.presenter.phenomena // TODO maybe it should be rather workspace?
+package com.xemantic.ai.golem.presenter.phenomena // TODO maybe it should be rather cognition?
 
 import com.xemantic.ai.golem.api.PhenomenalExpression
 import com.xemantic.ai.golem.api.GolemOutput
@@ -47,7 +47,7 @@ interface IntentAppender {
 
 }
 
-interface CognitiveWorkspaceView : ScreenView {
+interface CognitionView : ScreenView {
 
     fun addExpression(expression: PhenomenalExpression)
 
@@ -75,11 +75,11 @@ interface CognitiveWorkspaceView : ScreenView {
 
 }
 
-class CognitiveWorkspacePresenter(
+class CognitionPresenter(
     mainScope: CoroutineScope,
     private val ioDispatcher: CoroutineDispatcher,
     private val cognitionService: CognitionService,
-    private val view: CognitiveWorkspaceView,
+    private val view: CognitionView,
     private val golemOutputs: Flow<GolemOutput>
 ) {
 
@@ -93,7 +93,7 @@ class CognitiveWorkspacePresenter(
 
     private var currentPrompt: String = ""
 
-    private var workspaceId: Long? = null
+    private var cognitionId: Long? = null
 
     private val expressionAppenderMap = mutableMapOf<Long, ExpressionAppender>()
 
@@ -126,7 +126,7 @@ class CognitiveWorkspacePresenter(
             var purposeAppender: TextAppender? = null
             var codeAppender: TextAppender? = null
             golemOutputs.filterIsInstance<GolemOutput.Cognition>().filter {
-                it.workspaceId == workspaceId
+                it.cognitionId == cognitionId
             }.map {
                 it.event
             }.collect {
@@ -170,8 +170,8 @@ class CognitiveWorkspacePresenter(
     private suspend fun sendPrompt() {
         view.sendDisabled = true
         view.clearPromptInput()
-        if (workspaceId == null) {
-            workspaceId = initiateCognition()
+        if (cognitionId == null) {
+            cognitionId = initiateCognition()
         } else {
             continueCognition()
         }
@@ -185,7 +185,7 @@ class CognitiveWorkspacePresenter(
 
     private suspend fun continueCognition() = withContext(ioDispatcher) {
         cognitionService.continueCognition(
-            id = workspaceId!!,
+            id = cognitionId!!,
             phenomena = listOf(Phenomenon.Text(id = -1, currentPrompt))
         )
     }

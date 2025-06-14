@@ -44,3 +44,23 @@ allprojects {
 //    }
 //    apply(plugin = "maven-publish")
 }
+
+tasks.register<Exec>("cleanDevStorage") {
+    group = "other"
+    description = "Cleans local dev neo4j and disk storage"
+    val varDir = File("var")
+    val neo4jDir = File(varDir, "neo4j")
+    File(neo4jDir, "data").clearDirectory()
+    File(neo4jDir, "logs").clearDirectory()
+    File(varDir, "cognitions").clearDirectory()
+}
+
+fun File.clearDirectory() {
+
+    if (!exists() || !isDirectory) return
+
+    walkTopDown()
+        .filter { it != this@clearDirectory } // Keep the root directory
+        .sortedByDescending { it.path.length } // Delete deepest files first
+        .forEach { it.delete() }
+}

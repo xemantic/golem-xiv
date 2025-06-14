@@ -15,7 +15,7 @@ interface Cognizer {
 
     fun reason(
         conditioning: List<String>,
-        workspaceId: Long,
+        cognitionId: Long,
         phenomenalFlow: List<PhenomenalExpression>,
         hints: Map<String, String>
     ): Flow<CognitionEvent>

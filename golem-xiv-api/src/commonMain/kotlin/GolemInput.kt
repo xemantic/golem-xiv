@@ -13,8 +13,8 @@ import kotlinx.serialization.Serializable
 sealed interface GolemInput {
 
 //    @Serializable
-//    data class EmitCognitiveWorkspace(
-//        val workspaceId: Long
+//    data class EmitCognition(
+//        val cognitionId: Long
 //    ) : GolemInput
 
 }

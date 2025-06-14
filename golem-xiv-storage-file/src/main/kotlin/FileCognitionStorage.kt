@@ -7,14 +7,14 @@
 
 package com.xemantic.ai.golem.storage.file
 
-import com.xemantic.ai.golem.api.backend.CognitiveWorkspaceStorage
+import com.xemantic.ai.golem.api.backend.CognitionStorage
 import com.xemantic.ai.golem.api.backend.StorageType
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.io.File
 
-class FileCognitiveWorkspaceStorage(
+class FileCognitionStorage(
     storageDir: File
-) : CognitiveWorkspaceStorage {
+) : CognitionStorage {
 
     private val logger = KotlinLogging.logger {}
 
@@ -30,16 +30,16 @@ class FileCognitiveWorkspaceStorage(
         }
     }
 
-    override suspend fun createWorkspace(
-        workspaceId: Long,
+    override suspend fun createCognition(
+        cognitionId: Long,
         conditioning: List<String>
     ) {
         logger.debug {
-            "WorkspaceId[$workspaceId]: creating storage dirs and writing conditioning"
+            "Cognition[$cognitionId]: creating storage dirs and writing conditioning"
         }
-        val workspaceDir = File(storageDir, workspaceId.pad())
-        workspaceDir.mkdir()
-        val conditioningDir = File(workspaceDir, "000000_conditioning")
+        val cognitionDir = File(storageDir, cognitionId.pad())
+        cognitionDir.mkdir()
+        val conditioningDir = File(cognitionDir, "000000_conditioning")
         conditioningDir.mkdir()
         conditioning.forEachIndexed { index, prompt ->
             val promptFile = File(conditioningDir, "${index.pad()}.md")
@@ -48,34 +48,34 @@ class FileCognitiveWorkspaceStorage(
     }
 
     override suspend fun createExpression(
-        workspaceId: Long,
+        cognitionId: Long,
         expressionId: Long
     ) {
 
         logger.debug {
-            "WorkspaceId[$workspaceId]/Expression[$expressionId]: creating storage dirs"
+            "Cognition[$cognitionId]/Expression[$expressionId]: creating storage dirs"
         }
 
-        val workspaceDir = File(storageDir, workspaceId.pad())
-        val expressionDir = File(workspaceDir, expressionId.pad())
+        val cognitionDir = File(storageDir, cognitionId.pad())
+        val expressionDir = File(cognitionDir, expressionId.pad())
         expressionDir.mkdir()
     }
 
 //    // TODO is it being used at tall?
 //    override suspend fun addExpression(
-//        workspaceId: Long,
+//        cognitionId: Long,
 //        expressionId: Long,
 //        phenomena: List<Phenomenon>
 //    ) {
-//        logger.debug { "Adding expression, workspaceId: $workspaceId, expressionId: $expressionId" }
-//        val workspaceDir = File(storageDir, "$workspaceId")
-//        val expressionDir = File(workspaceDir, "$expressionId")
+//        logger.debug { "Adding expression, cognitionId: cognitionId, expressionId: $expressionId" }
+//        val cognitionDir = File(storageDir, "cognitionId")
+//        val expressionDir = File(cognitionDir, "$expressionId")
 //        expressionDir.mkdir()
 //        phenomena.forEach { phenomenon ->
 //            val id = phenomenon.id
 //            when (phenomenon) {
 //                is Phenomenon.Text -> {
-//                    val file = File(workspaceDir, "$id.md")
+//                    val file = File(cognitionDir, "$id.md")
 //                    file.writeText(phenomenon.text)
 //                }
 //                is Phenomenon.Intent -> {
@@ -131,13 +131,13 @@ class FileCognitiveWorkspaceStorage(
     }
 
     private fun getPhenomenonFile(
-        workspaceId: Long,
+        cognitionId: Long,
         expressionId: Long,
         phenomenonId: Long,
         type: StorageType
     ): File {
-        val workspaceDir = File(storageDir, workspaceId.pad())
-        val expressionDir = File(workspaceDir, expressionId.pad())
+        val cognitionDir = File(storageDir, cognitionId.pad())
+        val expressionDir = File(cognitionDir, expressionId.pad())
         val extension = when (type) {
             StorageType.INTENT_CODE -> "kts"
             StorageType.SYSTEM_ID -> "txt"

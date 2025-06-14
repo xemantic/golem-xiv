@@ -24,7 +24,7 @@ import kotlinx.html.*
 
 class HtmlSidebarView() : SidebarView, HasRootHtmlElement {
 
-    private val conversationList = dom.ul("workspace-list") {
+    private val conversationList = dom.ul("cognition-list") {
         li("no-cognitions") {
             +"No cognitions initiated"
         }
