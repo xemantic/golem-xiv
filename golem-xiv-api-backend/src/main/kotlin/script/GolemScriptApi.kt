@@ -7,10 +7,17 @@
 
 package com.xemantic.ai.golem.api.backend.script
 
-import com.xemantic.ai.golem.api.CognitiveWorkspace
-import kotlinx.coroutines.flow.Flow
+import com.xemantic.ai.golem.api.Cognition
 import kotlinx.serialization.Serializable
 import org.neo4j.driver.Result
+
+interface Mind {
+    suspend fun currentCognition(): Cognition
+    suspend fun getCognition(id: Long): Cognition
+}
+
+@Serializable
+data class FileEntry(val path: String, val isDirectory: Boolean)
 
 /** Note: create functions will also mkdirs parents. */
 interface Files {
@@ -21,9 +28,6 @@ interface Files {
     fun create(path: String, content: String)
     fun create(path: String, content: ByteArray)
 }
-
-@Serializable
-data class FileEntry(val path: String, val isDirectory: Boolean)
 
 interface WebBrowser {
     /** @return given [url] as Markdown. */
@@ -57,7 +61,7 @@ interface Memory {
      *         target = acme
      *         source = "Conversation with John"
      *     }
-     *     // return ids, so they can be referenced when storing next facts or updating
+     *     // return ids, so they can be referenced when storing subsequent facts or updating them
      *     "john: $john, acme: $acme, worksFor: $worksFor"
      * }
      * ```
@@ -70,26 +74,14 @@ interface Memory {
     fun <T: Any?> modify(cypher: String, block: (Result) -> T): T
 }
 
-interface Cognition {
-
-    val current: CognitiveWorkspace
-
-    fun queryCognitiveWorkspaces(
-        cypher: String
-    ): Flow<CognitiveWorkspace>
-
-}
-
 interface MemoryBuilder {
     /**
      * Creates a node.
-     *
      * @return node id.
      */
     fun node(block: NodeBuilder.() -> Unit): Long
     /**
      * Creates a relationship.
-     *
      * @return relationship id.
      */
     fun relationship(block: RelationshipBuilder.() -> Unit): Long
@@ -117,4 +109,3 @@ interface RelationshipBuilder : WithProperties {
     /** Optional confidence level in the 0-1 range, defaults to 1 if not specified */
     var confidence: Double?
 }
-

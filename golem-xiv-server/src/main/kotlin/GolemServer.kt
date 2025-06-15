@@ -16,13 +16,13 @@ import com.xemantic.ai.golem.api.backend.script.Files
 import com.xemantic.ai.golem.api.backend.script.Memory
 import com.xemantic.ai.golem.cognizer.anthropic.AnthropicToolUseCognizer
 import com.xemantic.ai.golem.core.Golem
-import com.xemantic.ai.golem.core.cognition.workspace.DefaultCognitiveWorkspaceRepository
+import com.xemantic.ai.golem.core.cognition.DefaultCognitionRepository
 import com.xemantic.ai.golem.core.script.service.DefaultFiles
 import com.xemantic.ai.golem.core.service
-import com.xemantic.ai.golem.neo4j.Neo4jCognitiveWorkspaceMemory
+import com.xemantic.ai.golem.neo4j.Neo4jCognitiveMemory
 import com.xemantic.ai.golem.neo4j.Neo4jAgentIdentity
 import com.xemantic.ai.golem.neo4j.Neo4jMemory
-import com.xemantic.ai.golem.storage.file.FileCognitiveWorkspaceStorage
+import com.xemantic.ai.golem.storage.file.FileCognitionStorage
 import io.github.oshai.kotlinlogging.KLogger
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.HttpHeaders
@@ -82,11 +82,11 @@ fun Application.module() {
 
     val identity = Neo4jAgentIdentity(driver = neo4j)
 
-    val repository = DefaultCognitiveWorkspaceRepository(
-        memory = Neo4jCognitiveWorkspaceMemory(
+    val repository = DefaultCognitionRepository(
+        memory = Neo4jCognitiveMemory(
             driver = neo4j
         ),
-        storage = FileCognitiveWorkspaceStorage(File("var/workspaces"))
+        storage = FileCognitionStorage(File("var/cognitions"))
     )
 
     val anthropic = Anthropic()
@@ -211,7 +211,9 @@ fun Application.module() {
 
             // not used at the moment
             collectGolemInput {
-                logger.debug { it }
+                logger.debug {
+                    "GolemInput received: $it"
+                }
             }
 
 //                try {
@@ -248,51 +250,68 @@ fun Route.golemApiRoute(
         call.respondText("pong")
     }
 
-    get("/workspaces") {
+    get("/cognitions") {
 //        call.respond(
 //            golem.contexts
 //        )
     }
 
-    put("/workspaces") {
+    put("/cognitions") {
+
+        logger.debug {
+            "Cognition: initiating"
+        }
+
         val phenomena = call.receive<List<Phenomenon>>()
-        val workspaceId = golem.initiateCognition()
-        call.respond(workspaceId)
+        val cognitionId = golem.initiateCognition()
+        call.respond(cognitionId)
         golem.perceive(
-            workspaceId = workspaceId,
+            cognitionId = cognitionId,
             phenomena = phenomena
         )
     }
 
-    patch("/workspaces/{id}") {
-        logger.debug { "Updating context: start" }
-        val id = parseCognitiveWorkspaceId()
+    patch("/cognitions/{id}") {
+
+        val id = parseCognitionId()
+
+        logger.debug {
+            "Cognition[$id]: continuing"
+        }
+
         val phenomena = call.receive<List<Phenomenon>>()
         golem.perceive(
-            workspaceId = id,
+            cognitionId = id,
             phenomena = phenomena
         )
         call.respond("ok") // TODO what should be returned here?
     }
 
-    get("/workspaces/{id}") {
-//        call.respond(
-//            golem.contexts
-//        )
+    get("/cognitions/{id}") {
+
+        val id = parseCognitionId()
+
+        logger.debug {
+            "Cognition[$id]: emitting via WebSocket"
+        }
+
+        call.respond("ok")
+
+        golem.emitCognition(id)
     }
 
-    post("/workspaces") {
+    post("/cognitions") {
 
     }
 
 }
 
-private fun RoutingContext.parseCognitiveWorkspaceId(): Long {
+private fun RoutingContext.parseCognitionId(): Long {
     val paramId = call.parameters["id"]
     if (paramId == null) {
         throw GolemException(
             GolemError.BadRequest(
-                "The workspace id must be specified in uri: ${call.request.uri}"
+                "The cognition id must be specified in uri: ${call.request.uri}"
             )
         )
     }
@@ -301,7 +320,7 @@ private fun RoutingContext.parseCognitiveWorkspaceId(): Long {
     } catch (e: NumberFormatException) {
         throw GolemException(
             error = GolemError.BadRequest(
-                "The workspace id must be specified in uri: ${call.request.uri}"
+                "The cognition id must be specified in uri: ${call.request.uri}"
             ),
             cause = e
         )

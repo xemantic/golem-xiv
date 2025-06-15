@@ -4,10 +4,17 @@ A meta-cognitive recursive AI agent with memory.
 
 ## Starting Golem XIV
 
-Open 3 separate terminals, in each of them run a different command:
+> [!NOTE]
+> Before Golem is started for the first time, the [neo4j-browser](https://neo4j.com/docs/browser-manual/current/) needs to be built from sources as a part of the `golem-xiv-web` module. It's a one-time action.
+
+```shell
+./gradlew installNeo4jBrowser
+```
 
 > [!NOTE]
-> The order is important!
+> The order of service startup is important!
+
+Open 3 separate terminals, in each of them run a different command:
 
 First start neo4j graph db (memory as knowledge graph):
 
@@ -21,7 +28,8 @@ export ANTHROPIC_API_KEY=your_key
 ./gradlew run
 ```
 
-Finally run the web client:
+finally, run the web client:
+
 ```shell
 ./gradlew jsBrowserDevelopmentRun --continuous
 ```

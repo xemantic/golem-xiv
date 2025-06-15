@@ -7,19 +7,24 @@
 
 package com.xemantic.ai.golem.presenter
 
+import com.xemantic.ai.golem.api.GolemError
+import com.xemantic.ai.golem.api.GolemInput
 import com.xemantic.ai.golem.api.GolemOutput
+import com.xemantic.ai.golem.api.client.GolemServiceException
 import com.xemantic.ai.golem.api.client.http.HttpClientCognitionService
 import com.xemantic.ai.golem.api.client.http.HttpClientPingService
+import com.xemantic.ai.golem.api.client.http.sendGolemData
 import com.xemantic.ai.golem.presenter.environment.Theme
 import com.xemantic.ai.golem.presenter.environment.ThemeManager
 import com.xemantic.ai.golem.presenter.memory.MemoryView
 import com.xemantic.ai.golem.presenter.navigation.HeaderPresenter
 import com.xemantic.ai.golem.presenter.navigation.HeaderView
 import com.xemantic.ai.golem.presenter.navigation.Navigation
+import com.xemantic.ai.golem.presenter.navigation.NotFoundView
 import com.xemantic.ai.golem.presenter.navigation.SidebarPresenter
 import com.xemantic.ai.golem.presenter.navigation.SidebarView
-import com.xemantic.ai.golem.presenter.phenomena.CognitiveWorkspacePresenter
-import com.xemantic.ai.golem.presenter.phenomena.CognitiveWorkspaceView
+import com.xemantic.ai.golem.presenter.cognition.CognitionPresenter
+import com.xemantic.ai.golem.presenter.cognition.CognitionView
 import com.xemantic.ai.golem.presenter.util.Action
 import com.xemantic.ai.golem.presenter.websocket.collectGolemOutput
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -31,8 +36,9 @@ import io.ktor.client.plugins.websocket.webSocket
 import io.ktor.http.URLProtocol
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.websocket.WebSocketSession
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.launchIn
@@ -44,26 +50,27 @@ interface MainView {
 
     fun theme(theme: Theme)
 
-    fun workspaceView(): CognitiveWorkspaceView // TODO maybe factory should be outside?
+    fun cognitionView(): CognitionView // TODO maybe factory should be outside?
 
     fun display(view: ScreenView)
 
     val resizes: Flow<Action>
-
-    val workspaceSelection: Flow<String>
 
 }
 
 interface ScreenView
 
 class MainPresenter(
+    private val scope: CoroutineScope,
+    ioDispatcher: CoroutineDispatcher,
     private val config: Config,
     private val view: MainView,
     headerView: HeaderView,
     private val sidebarView: SidebarView,
-    navigation: Navigation,
+    private val navigation: Navigation,
     navigationTargets: Flow<Navigation.Target>,
     private val memoryViewProvider: () -> MemoryView,
+    private val notFoundViewProvider: () -> NotFoundView,
     private val themeManager: ThemeManager
 ) {
 
@@ -75,8 +82,6 @@ class MainPresenter(
         val apiPort: Int,
         val wsProtocol: URLProtocol = if (apiProtocol == URLProtocol.HTTPS) URLProtocol.WSS else URLProtocol.WS
     )
-
-    private val scope = MainScope()
 
     private val apiClient = HttpClient {
         install(WebSockets)
@@ -98,6 +103,10 @@ class MainPresenter(
 
     private val memoryView by lazy { memoryViewProvider() }
 
+    private val notFoundView by lazy { notFoundViewProvider() }
+
+    private var currentNavigationTarget: Navigation.Target? = null
+
     val headerPresenter = HeaderPresenter(
         scope,
         headerView,
@@ -114,26 +123,54 @@ class MainPresenter(
 
 //    private val golemInput = MutableSharedFlow<GolemInput>()
 
+    private val golemInputs = MutableSharedFlow<GolemInput>()
     private val golemOutputs = MutableSharedFlow<GolemOutput>()
 
     private val pingService = HttpClientPingService(apiClient)
-    private val workspaceService = HttpClientCognitionService(apiClient)
+    private val cognitionService = HttpClientCognitionService(apiClient)
 
-    private lateinit var workspacePresenter: CognitiveWorkspacePresenter
-    private lateinit var workspaceView: CognitiveWorkspaceView
+    private lateinit var cognitionPresenter: CognitionPresenter
+    private lateinit var cognitionView: CognitionView
 
     init {
+        logger.debug {
+            "Main presenter init start"
+        }
         val theme = themeManager.theme
         view.theme(theme)
         sidebarPresenter.theme = theme
-        navigationTargets.onEach {
-            when (it) {
-                is Navigation.Target.KnowledgeGraph -> {
+        navigationTargets.onEach { target ->
+            logger.info { "Navigation target in main presenter: $target" }
+            when (target) {
+                is Navigation.Target.InitiateCognition -> {
+                    resetCognition()
+                }
+                is Navigation.Target.Cognition -> {
+                    if ((currentNavigationTarget == null) || (currentNavigationTarget !is Navigation.Target.InitiateCognition)) {
+                        resetCognition(cognitionId = target.id)
+                        try {
+                            cognitionService.emitCognition(id = target.id)
+                        } catch (e: GolemServiceException) {
+                            if (e.error is GolemError.NoSuchCognition) {
+                                navigation.navigateTo(Navigation.Target.NotFound(
+                                    message = "Cognition not found",
+                                    pathname = "/cognitions/${target.id}"
+                                ))
+                            } else {
+                                throw e
+                            }
+                        }
+                    } // else we keep the same view, just the pathname has changed
+                }
+                is Navigation.Target.Memory -> {
                     view.display(memoryView)
                 }
-                is Navigation.Target.CognitiveWorkspace -> {
+                is Navigation.Target.NotFound -> {
+                    notFoundView.message = target.message
+                    view.display(notFoundView)
                 }
             }
+            currentNavigationTarget = target
             sidebarView.opened = false
         }.launchIn(scope)
 
@@ -159,7 +196,7 @@ class MainPresenter(
 //        }
 
         scope.launch {
-            logger.error { "wsPort ${config.apiPort}" }
+            logger.debug { "Connecting to WebSocket, port: ${config.apiPort}" }
             apiClient.webSocket(
                 request = {
                     url.host = config.apiHost
@@ -170,32 +207,34 @@ class MainPresenter(
             ) {
                 launch {
                     // nothing to send at the moment
-                    //golemInput.collect { sendToGolem(it) }
+                    golemInputs.collect { intput ->
+                        sendGolemData(intput)
+                    }
                 }
                 collectGolemOutput { handle(it) }
             }
         }
 
-        initContex()
-    }
-
-    fun initContex() {
-        if (::workspacePresenter.isInitialized) {
-            workspacePresenter.dispose()
+        logger.debug {
+            "Context initiated"
         }
-        workspaceView = view.workspaceView()
-        workspacePresenter = CognitiveWorkspacePresenter(
-            scope,
-            Dispatchers.Default,
-            workspaceService,
-            workspaceView,
-            golemOutputs
-        )
-        view.display(workspaceView)
     }
 
-    fun onContextSelected() {
-
+    fun resetCognition(cognitionId: Long? = null) {
+        if (::cognitionPresenter.isInitialized) {
+            cognitionPresenter.dispose()
+        }
+        cognitionView = view.cognitionView()
+        cognitionPresenter = CognitionPresenter(
+            cognitionId = cognitionId,
+            view = cognitionView,
+            mainScope = scope,
+            ioDispatcher = Dispatchers.Default,
+            cognitionService = cognitionService,
+            golemOutputs = golemOutputs,
+            navigation = navigation
+        )
+        view.display(cognitionView)
     }
 
     @OptIn(ExperimentalTime::class)

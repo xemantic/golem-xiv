@@ -11,7 +11,7 @@ https://developers.google.com/fonts/docs/material_symbols
 @import url("ui/Scrollbar.css");
 @import url("navigation/Header.css");
 @import url("navigation/Sidebar.css");
-@import url("workspace/CognitiveWorkspace.css");
+@import url("cognition/Cognition.css");
 @import url("memory/Memory.css");
 
 :root {
@@ -31,7 +31,7 @@ https://developers.google.com/fonts/docs/material_symbols
     --sidebar-width: 280px;
     --disabled-color: #c0c0c0;
     --blur-scale: .3rem;
-    --cognitive-workspace-width: 50rem;
+    --cognition-width: 50rem;
 }
 
 /* Dark theme - Obsidian inspired */

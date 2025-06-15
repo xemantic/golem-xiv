@@ -24,7 +24,7 @@ import kotlinx.html.*
 
 class HtmlSidebarView() : SidebarView, HasRootHtmlElement {
 
-    private val conversationList = dom.ul("workspace-list") {
+    private val conversationList = dom.ul("cognition-list") {
         li("no-cognitions") {
             +"No cognitions initiated"
         }
@@ -82,6 +82,8 @@ class HtmlSidebarView() : SidebarView, HasRootHtmlElement {
             if (!opened) "sidebar-hidden" else "sidebar-visible"
         )
     }
+
+    override val initiateCognitionActions: Flow<Action> = initiateCognitionButton.actions()
 
     override val themeChanges: Flow<Action> = themeSwitcher.themeChanges
 

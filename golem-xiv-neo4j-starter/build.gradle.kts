@@ -7,16 +7,16 @@ dependencies {
     implementation(libs.neo4j)
 }
 
-tasks.register<JavaExec>("runNeo4J") {
+tasks.register<JavaExec>("runNeo4j") {
     description = "Start Neo4j embedded database with optimized JVM settings"
-    group = "neo4j"
+    group = "golem"
 
     standardInput = System.`in`
     standardOutput = System.out
     errorOutput = System.err
 
     classpath = sourceSets.main.get().runtimeClasspath
-    mainClass.set("com.xemantic.ai.golem.neo4j.starter.GolemNeo4JKt")
+    mainClass.set("com.xemantic.ai.golem.neo4j.starter.GolemNeo4jKt")
 
     jvmArgs("-Xms512m", "-Xmx1g")
 

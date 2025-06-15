@@ -44,3 +44,11 @@ allprojects {
 //    }
 //    apply(plugin = "maven-publish")
 }
+
+tasks.register<Delete>("cleanDevStorage") {
+    group = "golem"
+    description = "Cleans local dev neo4j and disk storage"
+    delete(fileTree("var/neo4j/data"))
+    delete(fileTree("var/neo4j/logs"))
+    delete(fileTree("var/cognitions"))
+}

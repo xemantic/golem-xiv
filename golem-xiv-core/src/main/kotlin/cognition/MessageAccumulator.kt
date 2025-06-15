@@ -17,7 +17,7 @@ import kotlin.time.Instant
 
 // TODO should it be part of the backend API?
 class ExpressionAccumulator(
-    private val workspaceId: Long,
+    private val cognitionId: Long,
     private val expressionId: Long
 ) {
 

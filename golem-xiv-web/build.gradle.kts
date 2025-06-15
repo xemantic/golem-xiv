@@ -28,6 +28,7 @@ kotlin {
                 implementation(project(":golem-xiv-api"))
                 implementation(project(":golem-xiv-presenter"))
                 implementation(libs.kotlinx.coroutines.core)
+                implementation(libs.kotlin.logging)
                 implementation(libs.kotlinx.html)
                 implementation(libs.ktor.client.websockets)
                 implementation(libs.ktor.serialization.kotlinx.json)
@@ -45,8 +46,8 @@ node {
 
 val neo4jBrowserVersion: String = libs.versions.neo4jBrowser.get()
 
-tasks.register<Exec>("cloneNeo4JBrowser") {
-    group = "neo4j browser"
+tasks.register<Exec>("cloneNeo4jBrowser") {
+    group = "golem-support"
     description = "Clones neo4j-browser repository, builds it, and copies the build to jsMain resources"
     val cloneDir = project.layout.buildDirectory.get().asFile
     File(cloneDir, "neo4j-browser").deleteRecursively()
@@ -55,22 +56,22 @@ tasks.register<Exec>("cloneNeo4JBrowser") {
     commandLine = "git -c advice.detachedHead=false clone --branch $neo4jBrowserVersion --depth 1 https://github.com/neo4j/neo4j-browser.git".split(' ')
 }
 
-tasks.register<YarnTask>("neo4JBrowserYarnInstall") {
-    group = "neo4j browser"
-    dependsOn("cloneNeo4JBrowser")
+tasks.register<YarnTask>("neo4jBrowserYarnInstall") {
+    group = "golem-support"
+    dependsOn("cloneNeo4jBrowser")
     args.set(listOf("install"))
 }
 
-tasks.register<YarnTask>("neo4JBrowserYarnBuild") {
-    group = "neo4j browser"
-    dependsOn("neo4JBrowserYarnInstall")
+tasks.register<YarnTask>("neo4jBrowserYarnBuild") {
+    group = "golem-support"
+    dependsOn("neo4jBrowserYarnInstall")
     environment = mapOf("NODE_OPTIONS" to "--openssl-legacy-provider")
     args.set(listOf("build"))
 }
 
-tasks.register("installNeo4JBrowser") {
-    group = "neo4j browser"
-    dependsOn("neo4JBrowserYarnBuild")
+tasks.register("installNeo4jBrowser") {
+    group = "golem"
+    dependsOn("neo4jBrowserYarnBuild")
     val destination = file("src/jsMain/resources/neo4j-browser")
     destination.mkdirs()
     copy {

@@ -17,15 +17,24 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
 import kotlin.time.Instant
 
-interface CognitiveWorkspace {
+interface Cognition {
     val id: Long
     val initiationMoment: Instant
-//    val parentId: String?
+    val parentId: Long?
+//    suspend fun getConditioning()
+//    suspend fun setConditioning(conditioning: String)
     suspend fun getTitle(): String?
     suspend fun setTitle(title: String?)
     suspend fun getSummary(): String?
     suspend fun setSummary(summary: String?)
     fun expressions(): Flow<PhenomenalExpression>
+
+    enum class State {
+        OPEN,
+        INTERACTION_PENDING,
+        CONCLUDED
+    }
+
 }
 
 @Serializable
@@ -68,28 +77,28 @@ sealed interface Phenomenon {
     val id: Long
 
     @Serializable
-    @SerialName("text")
+    @SerialName("Text")
     data class Text(
         override val id: Long,
         val text: String
     ) : Phenomenon
 
     @Serializable
-    @SerialName("image")
+    @SerialName("Image")
     data class Image(
         override val id: Long,
         val uri: String
     ) : Phenomenon
 
     @Serializable
-    @SerialName("document")
+    @SerialName("Document")
     data class Document(
         override val id: Long,
         val uri: String
     ) : Phenomenon
 
     @Serializable
-    @SerialName("intent")
+    @SerialName("Intent")
     data class Intent(
         override val id: Long,
         val systemId: String,
@@ -98,10 +107,10 @@ sealed interface Phenomenon {
     ) : Phenomenon
 
     @Serializable
-    @SerialName("fulfillment")
+    @SerialName("Fulfillment")
     data class Fulfillment(
         override val id: Long,
-        val intentId: String,
+        val intentId: Long,
         val intentSystemId: String,
         val result: String,
         val impeded: Boolean = false

@@ -21,7 +21,7 @@ import com.xemantic.ai.golem.api.Phenomenon
 import com.xemantic.ai.golem.api.PhenomenalExpression
 import com.xemantic.ai.golem.api.CognitionEvent
 import com.xemantic.ai.golem.api.EpistemicAgent
-import com.xemantic.ai.golem.api.backend.CognitiveWorkspaceRepository
+import com.xemantic.ai.golem.api.backend.CognitionRepository
 import com.xemantic.ai.golem.api.backend.Cognizer
 import com.xemantic.ai.golem.api.backend.script.ExecuteGolemScript
 import com.xemantic.ai.golem.api.backend.util.IntentCognizer
@@ -36,7 +36,7 @@ import kotlinx.serialization.json.buildJsonObject
 class AnthropicToolUseCognizer(
     private val anthropic: Anthropic,
     private val golemSelfId: Long,
-    private val repository: CognitiveWorkspaceRepository
+    private val repository: CognitionRepository
 ) : Cognizer {
 
     private val logger = KotlinLogging.logger {}
@@ -45,13 +45,13 @@ class AnthropicToolUseCognizer(
 
     override fun reason(
         conditioning: List<String>,
-        workspaceId: Long,
+        cognitionId: Long,
         phenomenalFlow: List<PhenomenalExpression>,
         hints: Map<String, String>
     ): Flow<CognitionEvent> {
 
         logger.debug {
-            "Workspace[$workspaceId]: reasoning"
+            "Cognition[$cognitionId]: reasoning"
         }
 
         var expressionId: Long? = null
@@ -67,7 +67,7 @@ class AnthropicToolUseCognizer(
         val messageFlow = phenomenalFlow.toAnthropicMessages().addCacheBreakpoint()
 
         logger.trace {
-            "Workspace[$workspaceId]: anthropic messages: $messageFlow"
+            "Cognition[$cognitionId]: anthropic messages: $messageFlow"
         }
 
         val flow = anthropic.messages.stream {
@@ -85,7 +85,7 @@ class AnthropicToolUseCognizer(
                         vendor = "Anthropic"
                     )
 
-                    val info = repository.initiateExpression(workspaceId, agent)
+                    val info = repository.initiateExpression(cognitionId, agent)
                     expressionId = info.id
 
                     emit(
@@ -110,7 +110,7 @@ class AnthropicToolUseCognizer(
                             processedContentType = ProcessedContentType.TEXT
 
                             val id = repository.initiateTextPhenomenon(
-                                workspaceId = workspaceId,
+                                cognitionId = cognitionId,
                                 expressionId = expressionId!!,
                             )
 
@@ -128,7 +128,7 @@ class AnthropicToolUseCognizer(
                             toolUseId = (event.contentBlock as Event.ContentBlockStart.ContentBlock.ToolUse).id
 
                             val id = repository.initiateIntentPhenomenon(
-                                workspaceId = workspaceId,
+                                cognitionId = cognitionId,
                                 expressionId = expressionId!!,
                                 systemId = toolUseId
                             )
@@ -136,7 +136,7 @@ class AnthropicToolUseCognizer(
                             phenomenonId = id
 
                             intentCognizer = IntentCognizer(
-                                workspaceId = workspaceId,
+                                cognitionId = cognitionId,
                                 expressionId = expressionId,
                                 phenomenonId = id,
                                 repository = repository
@@ -164,7 +164,7 @@ class AnthropicToolUseCognizer(
                             val textDelta = (event.delta as Event.ContentBlockDelta.Delta.TextDelta).text
 
                             repository.appendText(
-                                workspaceId = workspaceId,
+                                cognitionId = cognitionId,
                                 expressionId = expressionId!!,
                                 phenomenonId = phenomenonId!!,
                                 textDelta = textDelta
@@ -213,7 +213,7 @@ class AnthropicToolUseCognizer(
                 is Event.MessageStop -> {
 
                     val moment = repository.culminateExpression(
-                        workspaceId = workspaceId,
+                        cognitionId = cognitionId,
                         expressionId = expressionId!!
                     )
 
@@ -228,9 +228,9 @@ class AnthropicToolUseCognizer(
                 else -> null
             }
         }.onStart {
-            logger.debug { "Workspace[$workspaceId]: API streaming start" }
+            logger.debug { "Cognition[$cognitionId]: API streaming start" }
         }.onCompletion {
-            logger.debug { "Workspace[$workspaceId]: API streaming stop" }
+            logger.debug { "Cognition[$cognitionId]: API streaming stop" }
         }
 
         return flow

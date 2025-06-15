@@ -18,16 +18,20 @@ class HttpClientCognitionService(
     override suspend fun initiateCognition(
         phenomena: List<Phenomenon>
     ): Long = client.servicePut(
-        uri = "/api/workspaces",
+        uri = "/api/cognitions",
         value = phenomena
     )
 
+    override suspend fun emitCognition(id: Long) {
+        client.serviceGet<String>("/api/cognitions/$id")
+    }
+
     override suspend fun continueCognition(
-        workspaceId: Long,
+        id: Long,
         phenomena: List<Phenomenon>
     ) {
         client.servicePatch(
-            uri = "/api/workspaces/$workspaceId",
+            uri = "/api/cognitions/$id",
             value = phenomena
         )
     }

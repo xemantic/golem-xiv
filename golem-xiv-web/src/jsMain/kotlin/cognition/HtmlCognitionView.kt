@@ -5,15 +5,15 @@
  * Unauthorized reproduction or distribution is prohibited.
  */
 
-package com.xemantic.ai.golem.web.workspace
+package com.xemantic.ai.golem.web.cognition
 
 import com.xemantic.ai.golem.api.EpistemicAgent
 import com.xemantic.ai.golem.api.PhenomenalExpression
 import com.xemantic.ai.golem.api.Phenomenon
-import com.xemantic.ai.golem.presenter.phenomena.ExpressionAppender
-import com.xemantic.ai.golem.presenter.phenomena.IntentAppender
-import com.xemantic.ai.golem.presenter.phenomena.TextAppender
-import com.xemantic.ai.golem.presenter.phenomena.CognitiveWorkspaceView
+import com.xemantic.ai.golem.presenter.cognition.ExpressionAppender
+import com.xemantic.ai.golem.presenter.cognition.IntentAppender
+import com.xemantic.ai.golem.presenter.cognition.TextAppender
+import com.xemantic.ai.golem.presenter.cognition.CognitionView
 import com.xemantic.ai.golem.web.js.actions
 import com.xemantic.ai.golem.web.js.dom
 import com.xemantic.ai.golem.web.js.eventFlow
@@ -34,9 +34,9 @@ import org.w3c.dom.HTMLTextAreaElement
 import org.w3c.dom.events.InputEvent
 import org.w3c.dom.events.KeyboardEvent
 
-class HtmlCognitiveWorkspaceView(
+class HtmlCognitionView(
     private val parentDiv: HTMLDivElement? = null,
-) : CognitiveWorkspaceView, HasRootHtmlElement {
+) : CognitionView, HasRootHtmlElement {
 
     private val phenomenaDiv = Div("phenomena")
 
@@ -67,7 +67,7 @@ class HtmlCognitiveWorkspaceView(
         }
     }
 
-    override val element = dom.div("cognitive-workspace") {
+    override val element = dom.div("cognition") {
         inject(
             phenomenaDiv,
                     promptDiv
