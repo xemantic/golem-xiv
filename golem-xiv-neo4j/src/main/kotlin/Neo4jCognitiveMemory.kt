@@ -20,7 +20,7 @@ import kotlinx.coroutines.flow.flow
 import org.neo4j.driver.Driver
 import org.neo4j.driver.types.Node
 
-class Neo4JCognitiveMemory(
+class Neo4jCognitiveMemory(
     private val driver: Driver
 ) : CognitiveMemory {
 
@@ -487,10 +487,10 @@ class Neo4JCognitiveMemory(
     ): CulminatedWithIntent? {
 
         logger.debug {
-            "Cognition[$cognitionId] Checking if culminated with an Intent phenomenon"
+            "Cognition[$cognitionId]: checking if culminated with an Intent"
         }
 
-        return driver.session().use { session ->
+        val culminatedWithIntent = driver.session().use { session ->
             session.executeRead { tx ->
 
                 // TODO for sure there is easier way of doing it
@@ -499,12 +499,12 @@ class Neo4JCognitiveMemory(
                         MATCH (cognition:Cognition)-[:hasPart]->(expression:PhenomenalExpression)
                         WHERE id(cognition) = $cognitionId
                         
-                        WITH MAX(id(expression)) as maxExpressionId
+                        WITH max(id(expression)) AS maxExpressionId
                         
                         MATCH (cognition:Cognition)-[:hasPart]->(expression:PhenomenalExpression)-[:hasPart]->(phenomenon:Phenomenon)
                         WHERE id(cognition) = $cognitionId AND id(expression) = maxExpressionId
                         
-                        WITH expression, MAX(id(phenomenon)) as maxPhenomenonId
+                        WITH expression, max(id(phenomenon)) AS maxPhenomenonId
                         
                         OPTIONAL MATCH (expression)-[:hasPart]->(maxPhenomenon:Phenomenon:Intent)
                         WHERE id(maxPhenomenon) = maxPhenomenonId
@@ -534,6 +534,17 @@ class Neo4JCognitiveMemory(
                 }
             }
         }
+
+        if (culminatedWithIntent == null) {
+            logger.debug {
+                "Cognition[$cognitionId]: no Intent to fulfill"
+            }
+        } else {
+            logger.debug {
+                "Cognition[$cognitionId]/Expression[${culminatedWithIntent.expressionId}]/Phenomenon[${culminatedWithIntent.phenomenonId}]: expression culminated with an intent to fulfill"
+            }
+        }
+        return culminatedWithIntent
     }
 
 }

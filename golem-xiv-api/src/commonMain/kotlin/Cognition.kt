@@ -21,6 +21,8 @@ interface Cognition {
     val id: Long
     val initiationMoment: Instant
     val parentId: Long?
+//    suspend fun getConditioning()
+//    suspend fun setConditioning(conditioning: String)
     suspend fun getTitle(): String?
     suspend fun setTitle(title: String?)
     suspend fun getSummary(): String?

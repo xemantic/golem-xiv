@@ -14,6 +14,7 @@ import com.xemantic.ai.golem.api.EpistemicAgent
 import com.xemantic.ai.golem.api.Phenomenon
 import com.xemantic.ai.golem.api.client.CognitionService
 import com.xemantic.ai.golem.presenter.ScreenView
+import com.xemantic.ai.golem.presenter.navigation.Navigation
 import com.xemantic.ai.golem.presenter.util.Action
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CoroutineDispatcher
@@ -26,7 +27,6 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 typealias TextAppender = (text: String) -> Unit
@@ -76,11 +76,13 @@ interface CognitionView : ScreenView {
 }
 
 class CognitionPresenter(
+    private var cognitionId: Long? = null,
+    private val view: CognitionView,
     mainScope: CoroutineScope,
     private val ioDispatcher: CoroutineDispatcher,
     private val cognitionService: CognitionService,
-    private val view: CognitionView,
-    private val golemOutputs: Flow<GolemOutput>
+    golemOutputs: Flow<GolemOutput>,
+    private val navigation: Navigation
 ) {
 
     private val logger = KotlinLogging.logger {}
@@ -92,8 +94,6 @@ class CognitionPresenter(
     private var isShift: Boolean = false
 
     private var currentPrompt: String = ""
-
-    private var cognitionId: Long? = null
 
     private val expressionAppenderMap = mutableMapOf<Long, ExpressionAppender>()
 
@@ -109,58 +109,57 @@ class CognitionPresenter(
             currentPrompt = prompt
             view.sendDisabled = prompt.isBlank()
             if (prompt.isNotBlank() && (prompt.last() == '\n' && !isShift)) {
-                sendPrompt()
+                sendPhenomena()
             }
             view.updatePromptInputHeight()
         }.launchIn(scope)
 
         view.sendActions.onEach {
             if (currentPrompt.isNotBlank()) {
-                sendPrompt()
+                sendPhenomena()
             }
         }.launchIn(scope)
 
-        scope.launch {
-            var intentAppender: IntentAppender? = null
-            var textAppender: TextAppender? = null
-            var purposeAppender: TextAppender? = null
-            var codeAppender: TextAppender? = null
-            golemOutputs.filterIsInstance<GolemOutput.Cognition>().filter {
-                it.cognitionId == cognitionId
-                true
-            }.map {
-                it.event
-            }.collect {
-                logger.info { "$it" }
-                when (it) {
-                    is CognitionEvent.ExpressionInitiation -> {
-                        expressionAppenderMap[it.expressionId] = view.starExpression(it.agent)
-                    }
-                    is CognitionEvent.TextInitiation -> {
-                        textAppender = expressionAppenderMap[it.expressionId]!!.textAppender()
-                    }
-                    is CognitionEvent.TextUnfolding -> {
-                        textAppender!!(it.textDelta)
-                    }
-                    is CognitionEvent.IntentInitiation -> {
-                        intentAppender = expressionAppenderMap[it.expressionId]!!.intentAppender()
-                    }
-                    is CognitionEvent.IntentPurposeInitiation -> {
-                        purposeAppender = intentAppender!!.purposeAppender()
-                    }
-                    is CognitionEvent.IntentPurposeUnfolding -> {
-                        purposeAppender!!(it.purposeDelta)
-                    }
-                    is CognitionEvent.IntentCodeInitiation -> {
-                        codeAppender = intentAppender!!.codeAppender()
-                    }
-                    is CognitionEvent.IntentCodeUnfolding -> {
-                        codeAppender!!(it.codeDelta)
-                    }
-                    else -> {}
+        var intentAppender: IntentAppender? = null
+        var textAppender: TextAppender? = null
+        var purposeAppender: TextAppender? = null
+        var codeAppender: TextAppender? = null
+
+        golemOutputs.filterIsInstance<GolemOutput.Cognition>().filter {
+            it.cognitionId == cognitionId
+            true
+        }.map {
+            it.event
+        }.onEach {
+            logger.info { "$it" }
+            when (it) {
+                is CognitionEvent.ExpressionInitiation -> {
+                    expressionAppenderMap[it.expressionId] = view.starExpression(it.agent)
                 }
+                is CognitionEvent.TextInitiation -> {
+                    textAppender = expressionAppenderMap[it.expressionId]!!.textAppender()
+                }
+                is CognitionEvent.TextUnfolding -> {
+                    textAppender!!(it.textDelta)
+                }
+                is CognitionEvent.IntentInitiation -> {
+                    intentAppender = expressionAppenderMap[it.expressionId]!!.intentAppender()
+                }
+                is CognitionEvent.IntentPurposeInitiation -> {
+                    purposeAppender = intentAppender!!.purposeAppender()
+                }
+                is CognitionEvent.IntentPurposeUnfolding -> {
+                    purposeAppender!!(it.purposeDelta)
+                }
+                is CognitionEvent.IntentCodeInitiation -> {
+                    codeAppender = intentAppender!!.codeAppender()
+                }
+                is CognitionEvent.IntentCodeUnfolding -> {
+                    codeAppender!!(it.codeDelta)
+                }
+                else -> {}
             }
-        }
+        }.launchIn(scope)
 
     }
 
@@ -168,11 +167,12 @@ class CognitionPresenter(
         scope.cancel()
     }
 
-    private suspend fun sendPrompt() {
+    private suspend fun sendPhenomena() {
         view.sendDisabled = true
         view.clearPromptInput()
         if (cognitionId == null) {
             cognitionId = initiateCognition()
+            navigation.navigateTo(Navigation.Target.Cognition(id = cognitionId!!))
         } else {
             continueCognition()
         }

@@ -19,7 +19,7 @@ import com.xemantic.ai.golem.core.Golem
 import com.xemantic.ai.golem.core.cognition.DefaultCognitionRepository
 import com.xemantic.ai.golem.core.script.service.DefaultFiles
 import com.xemantic.ai.golem.core.service
-import com.xemantic.ai.golem.neo4j.Neo4JCognitiveMemory
+import com.xemantic.ai.golem.neo4j.Neo4jCognitiveMemory
 import com.xemantic.ai.golem.neo4j.Neo4jAgentIdentity
 import com.xemantic.ai.golem.neo4j.Neo4jMemory
 import com.xemantic.ai.golem.storage.file.FileCognitionStorage
@@ -83,7 +83,7 @@ fun Application.module() {
     val identity = Neo4jAgentIdentity(driver = neo4j)
 
     val repository = DefaultCognitionRepository(
-        memory = Neo4JCognitiveMemory(
+        memory = Neo4jCognitiveMemory(
             driver = neo4j
         ),
         storage = FileCognitionStorage(File("var/cognitions"))

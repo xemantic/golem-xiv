@@ -36,6 +36,7 @@ import io.ktor.client.plugins.websocket.webSocket
 import io.ktor.http.URLProtocol
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.websocket.WebSocketSession
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -61,11 +62,12 @@ interface ScreenView
 
 class MainPresenter(
     private val scope: CoroutineScope,
+    ioDispatcher: CoroutineDispatcher,
     private val config: Config,
     private val view: MainView,
     headerView: HeaderView,
     private val sidebarView: SidebarView,
-    navigation: Navigation,
+    private val navigation: Navigation,
     navigationTargets: Flow<Navigation.Target>,
     private val memoryViewProvider: () -> MemoryView,
     private val notFoundViewProvider: () -> NotFoundView,
@@ -103,6 +105,8 @@ class MainPresenter(
 
     private val notFoundView by lazy { notFoundViewProvider() }
 
+    private var currentNavigationTarget: Navigation.Target? = null
+
     val headerPresenter = HeaderPresenter(
         scope,
         headerView,
@@ -139,22 +143,24 @@ class MainPresenter(
             logger.info { "Navigation target in main presenter: $target" }
             when (target) {
                 is Navigation.Target.InitiateCognition -> {
-                    initContex()
+                    resetCognition()
                 }
                 is Navigation.Target.Cognition -> {
-                    initContex()
-                    try {
-                        cognitionService.emitCognition(id = target.id)
-                    } catch (e: GolemServiceException) {
-                        if (e.error is GolemError.NoSuchCognition) {
-                            navigation.navigateTo(Navigation.Target.NotFound(
-                                message = "Cognition not found",
-                                pathname = "/cognitions/${target.id}"
-                            ))
-                        } else {
-                            throw e
+                    if ((currentNavigationTarget == null) || (currentNavigationTarget !is Navigation.Target.InitiateCognition)) {
+                        resetCognition(cognitionId = target.id)
+                        try {
+                            cognitionService.emitCognition(id = target.id)
+                        } catch (e: GolemServiceException) {
+                            if (e.error is GolemError.NoSuchCognition) {
+                                navigation.navigateTo(Navigation.Target.NotFound(
+                                    message = "Cognition not found",
+                                    pathname = "/cognitions/${target.id}"
+                                ))
+                            } else {
+                                throw e
+                            }
                         }
-                    }
+                    } // else we keep the same view, just the pathname has changed
                 }
                 is Navigation.Target.Memory -> {
                     view.display(memoryView)
@@ -164,6 +170,7 @@ class MainPresenter(
                     view.display(notFoundView)
                 }
             }
+            currentNavigationTarget = target
             sidebarView.opened = false
         }.launchIn(scope)
 
@@ -208,30 +215,26 @@ class MainPresenter(
             }
         }
 
-//        initContex()
-
         logger.debug {
             "Context initiated"
         }
     }
 
-    fun initContex() {
+    fun resetCognition(cognitionId: Long? = null) {
         if (::cognitionPresenter.isInitialized) {
             cognitionPresenter.dispose()
         }
         cognitionView = view.cognitionView()
         cognitionPresenter = CognitionPresenter(
-            scope,
-            Dispatchers.Default,
-            cognitionService,
-            cognitionView,
-            golemOutputs
+            cognitionId = cognitionId,
+            view = cognitionView,
+            mainScope = scope,
+            ioDispatcher = Dispatchers.Default,
+            cognitionService = cognitionService,
+            golemOutputs = golemOutputs,
+            navigation = navigation
         )
         view.display(cognitionView)
-    }
-
-    fun onContextSelected() {
-
     }
 
     @OptIn(ExperimentalTime::class)

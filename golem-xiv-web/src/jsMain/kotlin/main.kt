@@ -25,6 +25,7 @@ import io.github.oshai.kotlinlogging.Level
 import io.ktor.http.URLProtocol
 import kotlinx.browser.document
 import kotlinx.browser.window
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
@@ -66,10 +67,10 @@ fun main() {
         defaultTheme = BrowserDefaultThemeProvider().defaultTheme
     )
 
-
     MainPresenter(
         scope = scope,
-        config,
+        ioDispatcher = Dispatchers.Default,
+        config = config,
         view,
         headerView,
         sidebarView,
