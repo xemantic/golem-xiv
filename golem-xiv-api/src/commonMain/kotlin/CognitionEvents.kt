@@ -9,15 +9,14 @@
 
 package com.xemantic.ai.golem.api
 
-import com.xemantic.ai.golem.serialization.time.InstantSerializer
+import com.xemantic.kotlin.core.time.InstantSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
 import kotlin.time.Instant
 
 /**
- * Cognition events are "broadcasted" from the cognitive process unfolding
- * over provided [Cognition].
+ * Cognition events are "broadcasted" from the unfolding cognitive process.
  */
 @Serializable
 sealed interface CognitionEvent {
