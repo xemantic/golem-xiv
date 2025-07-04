@@ -157,6 +157,12 @@ class CognitionPresenter(
                 is CognitionEvent.IntentCodeUnfolding -> {
                     codeAppender!!(it.codeDelta)
                 }
+                is CognitionEvent.FulfillmentInitiation -> {
+                    textAppender = expressionAppenderMap[it.expressionId]!!.textAppender()
+                }
+                is CognitionEvent.FulfillmentUnfolding -> {
+                    textAppender!!(it.textDelta)
+                }
                 else -> {}
             }
         }.launchIn(scope)
