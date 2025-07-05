@@ -7,7 +7,7 @@
 
 package com.xemantic.ai.golem.core.kotlin
 
-import com.xemantic.ai.golem.core.Golem
+import com.xemantic.ai.golem.core.GolemXiv
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -54,4 +54,4 @@ suspend fun <T> Collection<Deferred<T>>.awaitEach(
 @Suppress("RECEIVER_NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
 fun getClasspathResource(
     name: String
-) = Golem::class.java.getResource(name).readText()
+) = GolemXiv::class.java.getResource(name).readText()
