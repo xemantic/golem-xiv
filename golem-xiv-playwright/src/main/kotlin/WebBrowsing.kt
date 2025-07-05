@@ -10,7 +10,7 @@ import com.microsoft.playwright.Page
 import com.microsoft.playwright.options.WaitUntilState
 import com.vladsch.flexmark.html2md.converter.FlexmarkHtmlConverter
 import com.vladsch.flexmark.util.data.MutableDataSet
-import com.xemantic.ai.golem.api.backend.script.WebBrowser
+import com.xemantic.ai.golem.api.backend.script.incubation.WebBrowser
 
 class DefaultWebBrowser(
     val browser: Browser
