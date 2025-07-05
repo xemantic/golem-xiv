@@ -5,15 +5,10 @@
  * Unauthorized reproduction or distribution is prohibited.
  */
 
-// TODO remove with kotlin 2.2
-@file:UseSerializers(InstantSerializer::class)
-
 package com.xemantic.ai.golem.api
 
-import com.xemantic.kotlin.core.time.InstantSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.UseSerializers
 import kotlin.time.Instant
 
 @Serializable
