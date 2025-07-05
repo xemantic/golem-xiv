@@ -5,14 +5,10 @@
  * Unauthorized reproduction or distribution is prohibited.
  */
 
-@file:UseSerializers(InstantSerializer::class)
-
 package com.xemantic.ai.golem.api
 
-import com.xemantic.kotlin.core.time.InstantSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.UseSerializers
 import kotlin.time.Instant
 
 /**
