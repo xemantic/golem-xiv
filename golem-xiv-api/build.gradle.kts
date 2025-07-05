@@ -18,6 +18,7 @@ kotlin {
         commonMain {
             dependencies {
                 api(libs.xemantic.kotlin.core) // can be removed once Instant serialization is added in the new Kotlin release
+                api(libs.kotlinx.serialization.core)
                 api(libs.kotlinx.serialization.json)
             }
         }
