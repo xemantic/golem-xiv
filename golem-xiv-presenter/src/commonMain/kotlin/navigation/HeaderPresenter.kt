@@ -10,7 +10,8 @@ package com.xemantic.ai.golem.presenter.navigation
 import com.xemantic.ai.golem.presenter.util.Action
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 
 interface HeaderView {
 
@@ -25,11 +26,9 @@ class HeaderPresenter(
 ) {
 
     init {
-        scope.launch {
-            view.toggleMenuClicks.collect {
-                menuToggleHandler()
-            }
-        }
+        view.toggleMenuClicks.onEach {
+            menuToggleHandler()
+        }.launchIn(scope)
     }
 
 }
