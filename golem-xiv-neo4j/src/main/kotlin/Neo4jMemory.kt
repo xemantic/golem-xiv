@@ -14,13 +14,14 @@ import com.xemantic.ai.golem.api.backend.script.RelationshipBuilder
 import org.neo4j.driver.Driver
 import org.neo4j.driver.Result
 import org.neo4j.driver.TransactionContext
-import org.neo4j.driver.Values
 
 class Neo4jMemory(
-    private val driver: Driver
+    private val driver: Driver,
+    private val cognitionId: Long,
+    private val fulfillmentId: Long
 ) : Memory {
 
-    override fun remember(
+    override suspend fun remember(
         block: MemoryBuilder.() -> String
     ): String = driver.session().use { session ->
         session.executeWrite { tx ->
@@ -28,7 +29,7 @@ class Neo4jMemory(
         }
     }
 
-    override fun <T> query(
+    override suspend fun <T> query(
         cypher: String,
         block: (Result) -> T
     ): T = driver.session().use { session ->
@@ -38,7 +39,7 @@ class Neo4jMemory(
         }
     }
 
-    override fun <T> modify(
+    override suspend fun <T> modify(
         cypher: String,
         block: (Result) -> T
     ): T = driver.session().use { session ->
@@ -48,42 +49,43 @@ class Neo4jMemory(
         }
     }
 
-}
+    private inner class DefaultMemoryBuilder(
+        private val tx: TransactionContext
+    ) : MemoryBuilder {
 
-private class DefaultMemoryBuilder(
-    private val tx: TransactionContext
-) : MemoryBuilder {
+        override fun node(
+            block: NodeBuilder.() -> Unit
+        ): Long {
+            val builder = DefaultNodeBuilder().also(block)
+            builder.validate()
+            val nodeLabel = builder.label
+            val nodeQuery = $$"""
+                MATCH (phenomenon:Fulfillment) WHERE ID(phenomenon) = $fulfillmentId
+                CREATE (n:$$nodeLabel)
+                SET n += $props
+                CREATE (phenomenon)-[:actualizes]->(n)
+                RETURN ID(n) as id
+            """.trimIndent()
 
-    override fun node(
-        block: NodeBuilder.() -> Unit
-    ): Long {
-        val builder = DefaultNodeBuilder().also(block)
-        builder.validate()
-        builder.label
-        val nodeQuery = $$"""
-            CREATE (n$${builder.label})
-            SET n += $props
-            RETURN ID(n) as id
-        """.trimIndent()
-
-        val result = tx.run(
-            nodeQuery,
-            Values.parameters(
-                "props", builder.props
+            val result = tx.run(
+                nodeQuery,
+                mapOf(
+                    "fulfillmentId" to fulfillmentId,
+                    "props" to builder.props
+                )
             )
-        )
 
-        return result.single()["id"].asLong()
-    }
+            return result.single()["id"].asLong()
+        }
 
-    override fun relationship(
-        block: RelationshipBuilder.() -> Unit
-    ): Long {
-        val builder = DefaultRelationshipBuilder().also(block)
-        builder.validate()
+        override fun relationship(
+            block: RelationshipBuilder.() -> Unit
+        ): Long {
+            val builder = DefaultRelationshipBuilder().also(block)
+            builder.validate()
 
-        // Can predicate be set as variable, is it cached like a prepared statement?
-        val relationshipQuery = $$"""
+            // Can predicate be set as variable, is it cached like a prepared statement?
+            val relationshipQuery = $$"""
             MATCH (subject), (target)
             WHERE ID(subject) = $subjectId AND ID(target) = $targetId
             CREATE (subject)-[r:$${builder.predicate}]->(target)
@@ -91,18 +93,20 @@ private class DefaultMemoryBuilder(
             RETURN ID(r) AS id
         """.trimIndent()
 
-        val result = tx.run(
-            relationshipQuery,
-            mapOf(
-                "subjectId" to builder.subject,
-                "targetId" to builder.target,
-                "predicate" to builder.predicate,
-                "props" to builder.props
-                // TODO insert confidence
+            val result = tx.run(
+                relationshipQuery,
+                mapOf(
+                    "subjectId" to builder.subject,
+                    "targetId" to builder.target,
+                    "predicate" to builder.predicate,
+                    "props" to builder.props
+                    // TODO insert confidence
+                )
             )
-        )
 
-        return result.single()["id"].asLong()
+            return result.single()["id"].asLong()
+        }
+
     }
 
 }
@@ -125,7 +129,7 @@ private class DefaultNodeBuilder() : NodeBuilder {
         requireNotNull(props)
     }
 
-    val label get() = (listOfNotNull(type) + additionalTypes).joinToString(":", prefix = ":")
+    val label get() = (listOfNotNull(type) + additionalTypes).joinToString(":")
 
 }
 
