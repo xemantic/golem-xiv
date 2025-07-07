@@ -19,6 +19,7 @@ import com.xemantic.ai.golem.web.js.dom
 import com.xemantic.ai.golem.web.js.eventFlow
 import com.xemantic.ai.golem.web.js.inject
 import com.xemantic.ai.golem.web.ui.Div
+import com.xemantic.ai.golem.web.ui.Icon
 import com.xemantic.ai.golem.web.ui.IconButton
 import com.xemantic.ai.golem.web.view.HasRootHtmlElement
 import kotlinx.coroutines.flow.map
@@ -78,15 +79,18 @@ class HtmlCognitionView(
         agent: EpistemicAgent
     ): ExpressionAppender {
 
-        val role = if (agent is EpistemicAgent.AI) {
-            "assistant"
-        } else {
-            "user"
+        val messageDiv = dom.div("expression ${agent.cssClass()}") {
+            div("expression-header") {
+                when (agent) {
+                    is EpistemicAgent.Human -> { Icon("person"); +"You" }
+                    is EpistemicAgent.AI -> { Icon("smart_toy"); +"Golem XIV" }
+                    is EpistemicAgent.Computer -> { Icon("computer"); +"Computer" }
+                }
+            }
         }
 
-        // TODO this should be changed a lot
-        val messageDiv = dom.div("expression $role")
         phenomenaDiv.append(messageDiv)
+
         return object : ExpressionAppender {
 
             override fun textAppender(): TextAppender {
@@ -220,6 +224,12 @@ class HtmlCognitionView(
     private fun HTMLTextAreaElement.adjustHeight() {
         style.height = "auto"
         style.height = "${scrollHeight}px"
+    }
+
+    private fun EpistemicAgent.cssClass() = when (this) {
+        is EpistemicAgent.Human -> "human"
+        is EpistemicAgent.AI -> "ai"
+        is EpistemicAgent.Computer -> "computer"
     }
 
 }
