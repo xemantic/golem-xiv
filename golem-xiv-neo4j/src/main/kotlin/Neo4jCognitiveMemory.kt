@@ -47,7 +47,7 @@ class Neo4jCognitiveMemory(
                                 summary: "",
                                 initiationMoment: datetime()
                             })
-                            CREATE (parent)-[:superEvent]->(cognition)
+                            CREATE (parent)-[:hasChild]->(cognition)
                             RETURN
                                 id(cognition) as id,
                                 cognition.initiationMoment as initiationMoment
@@ -72,7 +72,8 @@ class Neo4jCognitiveMemory(
 
                 CognitionInfo(
                     id = record["id"].asLong(),
-                    initiationMoment = record["initiationMoment"].asInstant()
+                    parentId = parentId,
+                    initiationMoment = record["initiationMoment"].asInstant(),
                 )
             }
 
@@ -240,8 +241,10 @@ class Neo4jCognitiveMemory(
 
                 val result = tx.runCypher(query = $$"""
                     MATCH (cognition:Cognition) WHERE id(cognition) = $cognitionId
+                    OPTIONAL MATCH (parent:Cognition)-[:hasChild]->(cognition)
                     RETURN
                         id(cognition) as id,
+                        id(parent) as parentId,
                         cognition.initiationMoment as initiationMoment
                 """.trimIndent(),
                     parameters = mapOf(
@@ -253,6 +256,7 @@ class Neo4jCognitiveMemory(
 
                 CognitionInfo(
                     id = record["id"].asLong(),
+                    parentId = if (record["parentId"].isNull) null else record["parentId"].asLong(),
                     initiationMoment = record["initiationMoment"].asInstant()
                 )
             }
