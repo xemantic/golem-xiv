@@ -16,6 +16,7 @@ import kotlin.time.Instant
 
 data class CognitionInfo(
     val id: Long,
+    val parentId: Long?,
     val initiationMoment: Instant
 )
 
