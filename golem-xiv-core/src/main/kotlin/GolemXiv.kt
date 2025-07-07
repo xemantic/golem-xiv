@@ -19,6 +19,7 @@ import com.xemantic.ai.golem.core.kotlin.getClasspathResource
 import com.xemantic.ai.golem.core.script.GolemScriptExecutor
 import com.xemantic.ai.golem.core.kotlin.describeCurrentMoment
 import com.xemantic.ai.golem.core.os.operatingSystemName
+import com.xemantic.ai.golem.core.script.GolemScriptDependencyProvider
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -37,22 +38,13 @@ Host OS: ${operatingSystemName()}
 Current time: ${describeCurrentMoment()}
 """.trimIndent()
 
-inline fun <reified T : Any> service(
-    name: String,
-    value: T
-): GolemScriptExecutor.Dependency<T> = GolemScriptExecutor.Dependency(
-    name,
-    T::class,
-    value
-)
+val golemMainConditioning = getClasspathResource("/conditioning/GolemXivConditioning.md")
 
-val golemMainConditioning = getClasspathResource("/conditioning/GolemXIVConditioning.md")
-
-class Golem(
+class GolemXiv(
     private val identity: AgentIdentity,
     private val repository: CognitionRepository,
     private val cognizer: Cognizer,
-    private val golemScriptDependencies: List<GolemScriptExecutor.Dependency<*>>,
+    private val golemScriptDependencyProvider: GolemScriptDependencyProvider,
     private val outputs: FlowCollector<GolemOutput>
 ) : AutoCloseable {
 
@@ -167,7 +159,10 @@ class Golem(
 
                     val result = scriptExecutor.execute(
                         script = intent.code,
-                        dependencies = golemScriptDependencies
+                        dependencies = golemScriptDependencyProvider.dependencies(
+                            cognitionId = cognitionId,
+                            fulfillmentId = fulfillmentId
+                        )
                     )
 
                     val (text, impeded) = when (result) {
