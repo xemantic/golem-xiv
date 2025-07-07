@@ -81,13 +81,6 @@ interface Http {
     fun client(block: HttpClientConfig<*>.() -> Unit = {}): HttpClient
 }
 
-interface Secrets {
-    suspend fun save(key: String, value: String)
-    suspend fun get(key: String): String
-    /** Instead of returning all keys, try to find matching ones. */
-    fun listKeys(): Flow<String>
-}
-
 interface Memory {
     /**
      * Remembers facts.
