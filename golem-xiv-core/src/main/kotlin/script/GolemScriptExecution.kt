@@ -30,6 +30,7 @@ import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ScriptDiagnostic
 import kotlin.script.experimental.api.ScriptEvaluationConfiguration
 import kotlin.script.experimental.api.SourceCode
+import kotlin.script.experimental.api.compilerOptions
 import kotlin.script.experimental.api.defaultImports
 import kotlin.script.experimental.api.providedProperties
 import kotlin.script.experimental.host.toScriptSource
@@ -65,6 +66,11 @@ class GolemScriptExecutor {
         // Add helpful default imports
         defaultImports(
             "kotlinx.coroutines.*"
+        )
+        // TODO can be removed once the time API is stable?
+        // "-Xmulti-dollar-interpolation" probably not needed anymore
+        compilerOptions.append(
+            "-opt-in=kotlin.time.ExperimentalTime",
         )
     }
 

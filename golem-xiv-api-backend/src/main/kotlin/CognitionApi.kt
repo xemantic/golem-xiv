@@ -7,15 +7,16 @@
 
 package com.xemantic.ai.golem.api.backend
 
-import com.xemantic.ai.golem.api.Cognition
 import com.xemantic.ai.golem.api.EpistemicAgent
 import com.xemantic.ai.golem.api.PhenomenalExpression
 import com.xemantic.ai.golem.api.Phenomenon
+import com.xemantic.ai.golem.api.backend.script.Cognition
 import kotlinx.coroutines.flow.Flow
 import kotlin.time.Instant
 
 data class CognitionInfo(
     val id: Long,
+    val parentId: Long?,
     val initiationMoment: Instant
 )
 

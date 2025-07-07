@@ -12,13 +12,10 @@ import com.xemantic.ai.golem.api.GolemError
 import com.xemantic.ai.golem.api.GolemOutput
 import com.xemantic.ai.golem.api.Phenomenon
 import com.xemantic.ai.golem.api.backend.GolemException
-import com.xemantic.ai.golem.api.backend.script.Files
-import com.xemantic.ai.golem.api.backend.script.Memory
 import com.xemantic.ai.golem.cognizer.anthropic.AnthropicToolUseCognizer
-import com.xemantic.ai.golem.core.Golem
+import com.xemantic.ai.golem.core.GolemXiv
 import com.xemantic.ai.golem.core.cognition.DefaultCognitionRepository
-import com.xemantic.ai.golem.core.script.service.DefaultFiles
-import com.xemantic.ai.golem.core.service
+import com.xemantic.ai.golem.core.script.GolemScriptDependencyProvider
 import com.xemantic.ai.golem.neo4j.Neo4jCognitiveMemory
 import com.xemantic.ai.golem.neo4j.Neo4jAgentIdentity
 import com.xemantic.ai.golem.neo4j.Neo4jMemory
@@ -32,10 +29,9 @@ import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationStopPreparing
 import io.ktor.server.application.ApplicationStopped
 import io.ktor.server.application.install
-import io.ktor.server.engine.embeddedServer
+import io.ktor.server.config.property
 import io.ktor.server.http.content.CompressedFileType
 import io.ktor.server.http.content.staticResources
-import io.ktor.server.netty.Netty
 import io.ktor.server.plugins.calllogging.CallLogging
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.cors.routing.CORS
@@ -65,20 +61,22 @@ import java.io.File
 
 val logger = KotlinLogging.logger {}
 
-fun main() {
-    val server = embeddedServer(Netty, port = 8081) {
-        module()
-    }
-    server.start(wait = true)
-}
+fun main(args: Array<String>) = io.ktor.server.netty.EngineMain.main(args)
 
 fun Application.module() {
 
     logger.info { "Starting Golem XIV server" }
 
+    val neo4jConfig = property<Neo4jConfig>("neo4j")
+    val authToken = if (neo4jConfig.username == "golem" && neo4jConfig.password == "golem") {
+        AuthTokens.none()
+    } else {
+        AuthTokens.basic(neo4jConfig.username, neo4jConfig.password)
+    }
+
     val outputs = MutableSharedFlow<GolemOutput>() // TODO can we move outputs to Golem?
 
-    val neo4j = GraphDatabase.driver("bolt://localhost:7687", AuthTokens.none())
+    val neo4j = GraphDatabase.driver(neo4jConfig.uri, authToken)
 
     val identity = Neo4jAgentIdentity(driver = neo4j)
 
@@ -99,22 +97,23 @@ fun Application.module() {
         repository = repository
     )
 
-    val files = DefaultFiles()
 
-    val golemScriptDependencies = listOf(
-//            service<com.xemantic.ai.golem.server.script.Context>("phenomena", com.xemantic.ai.golem.server.script.service.DefaultContext(scope, outputs)),
-        service<Files>("files", files),
-        //service<WebBrowser>("browser", DefaultWebBrowser(browser)),
-        service<Memory>("memory", Neo4jMemory(neo4j))
-////            service<WebBrowserService>("webBrowserService", DefaultWebBrowserService())
-////                    service<StringEditorService>("stringEditorService", stringEditorService())
+    val golemScriptDependencyProvider = GolemScriptDependencyProvider(
+        repository = repository,
+        memoryProvider = { cognitionId, fulfillmentId ->
+            Neo4jMemory(
+                driver = neo4j,
+                cognitionId = cognitionId,
+                fulfillmentId = fulfillmentId
+            )
+        }
     )
 
-    val golem = Golem(
+    val golem = GolemXiv(
         identity = identity,
         repository = repository,
         cognizer = anthropicCognizer,
-        golemScriptDependencies = golemScriptDependencies,
+        golemScriptDependencyProvider = golemScriptDependencyProvider,
         outputs = outputs
     )
 
@@ -243,7 +242,7 @@ fun Application.module() {
 
 fun Route.golemApiRoute(
     logger: KLogger,
-    golem: Golem
+    golem: GolemXiv
 ) {
 
     get("/ping") {

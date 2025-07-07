@@ -6,7 +6,6 @@ pluginManagement {
 
 // TODO can it be a series of paths?
 include(
-    ":golem-xiv-serialization-time",
     ":golem-xiv-json",
     ":golem-xiv-api",
     ":golem-xiv-api-websocket",

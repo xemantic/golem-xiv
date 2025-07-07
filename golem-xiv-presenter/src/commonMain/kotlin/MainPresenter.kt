@@ -146,20 +146,21 @@ class MainPresenter(
                     resetCognition()
                 }
                 is Navigation.Target.Cognition -> {
-                    if ((currentNavigationTarget == null) || (currentNavigationTarget !is Navigation.Target.InitiateCognition)) {
-                        resetCognition(cognitionId = target.id)
-                        try {
-                            cognitionService.emitCognition(id = target.id)
-                        } catch (e: GolemServiceException) {
-                            if (e.error is GolemError.NoSuchCognition) {
-                                navigation.navigateTo(Navigation.Target.NotFound(
-                                    message = "Cognition not found",
-                                    pathname = "/cognitions/${target.id}"
-                                ))
-                            } else {
-                                throw e
-                            }
+                    resetCognition(cognitionId = target.id)
+                    try {
+                        cognitionService.emitCognition(id = target.id)
+                    } catch (e: GolemServiceException) {
+                        if (e.error is GolemError.NoSuchCognition) {
+                            navigation.navigateTo(Navigation.Target.NotFound(
+                                message = "Cognition not found",
+                                pathname = "/cognitions/${target.id}"
+                            ))
+                        } else {
+                            throw e
                         }
+                    }
+                    if ((currentNavigationTarget == null) || (currentNavigationTarget !is Navigation.Target.InitiateCognition)) {
+
                     } // else we keep the same view, just the pathname has changed
                 }
                 is Navigation.Target.Memory -> {

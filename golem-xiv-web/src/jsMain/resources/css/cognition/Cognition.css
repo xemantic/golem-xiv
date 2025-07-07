@@ -27,16 +27,29 @@
     border: 1px solid var(--border-color);
 }
 
-.expression.user {
+.expression.human {
     align-self: flex-end;
     background-color: var(--user-msg-bg);
     border-bottom-right-radius: 0;
 }
 
-.expression.assistant {
+.expression.ai {
     align-self: flex-start;
     background-color: var(--ai-msg-bg);
     border-bottom-left-radius: 0;
+}
+
+.expression.computer {
+    align-self: flex-end;
+    background-color: var(--user-msg-bg);
+    border-bottom-right-radius: 0;
+}
+
+.expression.computer .text {
+    background: black;
+    padding: .5rem;
+    font-family: monospace;
+    overflow-y: auto;
 }
 
 .messages {
@@ -71,14 +84,14 @@
     border-bottom-left-radius: 0;
 }
 
-.message-header {
+.expression-header {
     display: flex;
     align-items: center;
     margin-bottom: 0.5rem;
     font-weight: 600;
 }
 
-.message-header i {
+.expression-header span {
     margin-right: 0.5rem;
 }
 
@@ -179,12 +192,12 @@
 
 .purpose {
   background: blue;
-  padding: 1rem;
+  padding: .5rem;
 }
 
 .code {
   background: black;
-  padding: 1rem;
+  padding: .5rem;
   font-family: monospace;
   overflow-y: auto;
 }

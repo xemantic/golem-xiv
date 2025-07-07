@@ -28,12 +28,14 @@ $$GOLEM_SCRIPT_API
 Here are object instances injected to the script:
 
 <golem-script-api>
-val files: Files
+val mind: Mind
 val memory: Memory
+val files: Files
+val http: Http
 <golem-script-api>
 
 IMPORTANT: remember to add necessary imports.
-IMPORTANT: when writing multiline Kotlin strings containing dollar character, remember to escape them with ${'$'} (otherwise Kotlin compiler will try to resolve them as references)
+IMPORTANT: when writing multiline Kotlin strings, prefer multi-dollar string interpolation to avoid dollar sign escaping.
 IMPORTANT: always prefer to use `Files` service to list files (it will skip hidden and ignored files).
 
 The script execution is wrapped in a coroutine, therefore suspended functions can be called directly.

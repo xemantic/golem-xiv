@@ -24,11 +24,11 @@ import kotlinx.html.*
 
 class HtmlSidebarView() : SidebarView, HasRootHtmlElement {
 
-    private val conversationList = dom.ul("cognition-list") {
-        li("no-cognitions") {
-            +"No cognitions initiated"
-        }
-    }
+    private val cognitions = Button(
+        label = "Cognitions",
+        icon = "analytics",
+        ariaLabel = "Cognition overview"
+    )
 
     private val initiateCognitionButton = Button(
         label = "Initiate cognition",
@@ -42,14 +42,28 @@ class HtmlSidebarView() : SidebarView, HasRootHtmlElement {
         ariaLabel = "Open memory graph"
     )
 
+    private val settings = Button(
+        label = "Settings",
+        icon = "settings",
+        ariaLabel = "Settings"
+    )
+
+    private val conversationList = dom.ul("cognition-list") {
+        li("no-cognitions") {
+            +"No cognitions initiated"
+        }
+    }
+
     private val themeSwitcher = ThemeSwitcher()
 
     override val element = dom.aside("sidebar sidebar-hidden") {
         div("sidebar-header") {
             h2("Conversation")
             inject(
+                cognitions,
                 initiateCognitionButton,
-                memoryLink
+                memoryLink,
+                settings
             )
         }
         div("sidebar-content") {

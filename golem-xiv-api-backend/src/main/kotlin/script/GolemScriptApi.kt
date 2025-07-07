@@ -7,47 +7,92 @@
 
 package com.xemantic.ai.golem.api.backend.script
 
-import com.xemantic.ai.golem.api.Cognition
+import com.xemantic.ai.golem.api.PhenomenalExpression
+import io.ktor.client.HttpClient
+import io.ktor.client.HttpClientConfig
+import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable
 import org.neo4j.driver.Result
+import kotlin.time.Instant
 
 interface Mind {
     suspend fun currentCognition(): Cognition
     suspend fun getCognition(id: Long): Cognition
 }
 
+interface Cognition {
+    val id: Long
+    val initiationMoment: Instant
+    val parentId: Long?
+    //    suspend fun getConditioning()
+//    suspend fun setConditioning(conditioning: String)
+    suspend fun getTitle(): String?
+    suspend fun setTitle(title: String?)
+    suspend fun getSummary(): String?
+    suspend fun setSummary(summary: String?)
+    fun expressions(): Flow<PhenomenalExpression>
+
+    enum class State {
+        OPEN,
+        INTERACTION_PENDING,
+        CONCLUDED
+    }
+
+}
+
+data class RecursiveCognitionInitiator(
+    val conditioning: String,
+    val initialPhenomena: List<Any>
+)
+
 @Serializable
 data class FileEntry(val path: String, val isDirectory: Boolean)
 
-/** Note: create functions will also mkdirs parents. */
+/** Note: create functions will also create parent directories and delete will work recursively on directories */
 interface Files {
-    /** */
-    fun list(dir: String): List<FileEntry>
-    fun readText(vararg paths: String): List<String>
-    fun readBinary(vararg paths: String): List<ByteArray>
-    fun create(path: String, content: String)
-    fun create(path: String, content: ByteArray)
+    /** Note: if .gitignore files are present, then they will determine hidden files */
+    suspend fun list(
+        dir: String,
+        depth: Int = 0,
+        excludeHidden: Boolean = false
+    ): Flow<FileEntry>
+    suspend fun read(path: String): String
+    suspend fun readBinary(path: String): ByteArray
+    suspend fun create(path: String, content: String)
+    suspend fun create(path: String, content: ByteArray)
+    suspend fun exists(path: String): Boolean
+    suspend fun delete(path: String): Boolean
 }
 
-interface WebBrowser {
-    /** @return given [url] as Markdown. */
-    suspend fun open(url: String): String
+interface Http {
+    /**
+     * Example usage with resource closing:
+     *
+     * ```
+     * val json = http.client {
+     *     install(ContentNegotiation) {
+     *         json()
+     *     }
+     * }.use {
+     *     it.get("https://example.com/api/records").bodyAsText()
+     * }
+     * ```
+     */
+    fun client(block: HttpClientConfig<*>.() -> Unit = {}): HttpClient
 }
 
 interface Memory {
     /**
      * Remembers facts.
      *
-     * Example usage:
+     * Example use case:
+     *
+     * 1. initial intent - search for existing nodes.
+     * 2. following intent - remember the fact:
+     *
      * ```
      * memory.remember {
-     *     val john = node {
-     *         type = "Person"
-     *         properties(
-     *             "name" to "John Smith"
-     *             "email" to "john@exemaple.com"
-     *         )
-     *     }
+     *     val john = 42L // this entry was matched and id is used
      *     val acme = node {
      *         type = "Organization"
      *         properties(
@@ -62,16 +107,18 @@ interface Memory {
      *         source = "Conversation with John"
      *     }
      *     // return ids, so they can be referenced when storing subsequent facts or updating them
-     *     "john: $john, acme: $acme, worksFor: $worksFor"
+     *     "acme: $acme, worksFor: $worksFor"
      * }
      * ```
+     *
+     * Note: in case of an Exception, the whole transaction is rolled back.
      *
      * @param block the memory builder DSL.
      * @return the final String expression of the DSL.
      */
-    fun remember(block: MemoryBuilder.() -> String): String
-    fun <T: Any?> query(cypher: String, block: (Result) -> T): T
-    fun <T: Any?> modify(cypher: String, block: (Result) -> T): T
+    suspend fun remember(block: MemoryBuilder.() -> String): String
+    suspend fun <T: Any?> query(cypher: String, block: (Result) -> T): T
+    suspend fun <T: Any?> modify(cypher: String, block: (Result) -> T): T
 }
 
 interface MemoryBuilder {

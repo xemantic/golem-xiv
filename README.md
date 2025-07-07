@@ -2,6 +2,19 @@
 
 A meta-cognitive recursive AI agent with memory.
 
+## Features
+
+* **Cognition**: focus on rather reasoning than communication
+* **Metacognition**: ability to think about own thinking from the past
+* **Unlimited memory**: represented as Knowledge Graph
+* **Private context**: the memory is private to an organization
+* **Mass parallelism**: several automatic cognitions at the time
+* **Self-modification**: Golem is using own programming language
+* **Chain-of-code**: it is thinking in code more than in English
+* **Unix-omnipotence** full control over any machine
+* **Auto-science**: creating hypothesis and verifying them
+* **LLM-independence**: The cognition can be performed by any reasoning LLM: OpenAI (GPT), Anthropic (Claude), Google (Gemini), Mistral, Deepseek, Alibaba (Qwen) or any other reasoning model emerging in the future
+
 ## Starting Golem XIV
 
 > [!NOTE]

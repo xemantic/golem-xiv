@@ -22,6 +22,7 @@ dependencies {
     api(libs.kotlinx.serialization.core)
     api(libs.neo4j.java.driver)
     api(libs.xemantic.ai.tool.schema)
+    api(libs.ktor.client.core)
 
     implementation(project(":golem-xiv-json")) //
 

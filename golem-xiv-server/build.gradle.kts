@@ -1,7 +1,7 @@
 plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.ktor.plugin)
-    //alias(libs.plugins.kotlin.plugin.serialization)
+    alias(libs.plugins.kotlin.plugin.serialization)
     id("golem.convention")
 }
 
@@ -35,6 +35,7 @@ dependencies {
     implementation(libs.ktor.server.netty)
     implementation(libs.ktor.server.cors)
     implementation(libs.ktor.server.call.logging)
+    implementation(libs.ktor.server.config.yaml)
     implementation(libs.ktor.server.content.negotiation)
     implementation(libs.ktor.server.status.pages)
     implementation(libs.ktor.serialization.kotlinx.json)

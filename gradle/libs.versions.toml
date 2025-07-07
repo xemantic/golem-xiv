@@ -1,27 +1,28 @@
 [versions]
-kotlinTarget = "2.1"
+kotlinTarget = "2.2"
 javaTarget = "22"
 
-kotlin = "2.1.21"
-kotlinxSerialization = "1.8.1"
+kotlin = "2.2.0"
+kotlinxSerialization = "1.9.0"
 kotlinxCoroutines = "1.10.2"
 kotlinxHtml = "0.12.0"
 
 kotlinLogging = "7.0.7"
 
-anthropicSdkKotlin = "0.20.2"
+anthropicSdkKotlin = "0.22.0"
+xemanticKotlinCore = "0.2.0"
 xemanticKotlinTest = "1.9.0"
 xemanticAiToolSchema = "1.1.2"
 
-ktor = "3.1.3"
-playwright = "1.52.0"
+ktor = "3.2.1"
+playwright = "1.53.0"
 dashscope = "2.20.1"
-neo4j = "2025.04.0"
+neo4j = "2025.06.0"
 neo4jBrowser = "2025.2.0"
-neo4jDriver = "5.28.5"
+neo4jDriver = "5.28.6"
 
 log4j = "2.24.1"
-jackson = "2.19.0"
+jackson = "2.19.1"
 
 versionsPlugin = "0.52.0"
 dokkaPlugin = "2.0.0"
@@ -45,6 +46,9 @@ kotlinx-coroutines-rx2 = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-rx
 kotlinx-html = { module = "org.jetbrains.kotlinx:kotlinx-html", version.ref = "kotlinxHtml" }
 
 kotlin-logging  = { module = "io.github.oshai:kotlin-logging", version.ref = "kotlinLogging" }
+
+# xemantic
+xemantic-kotlin-core = { module = "com.xemantic.kotlin:xemantic-kotlin-core", version.ref = "xemanticKotlinCore" }
 xemantic-kotlin-test = { module = "com.xemantic.kotlin:xemantic-kotlin-test", version.ref = "xemanticKotlinTest" }
 anthropic-sdk-kotlin = { module = "com.xemantic.ai:anthropic-sdk-kotlin", version.ref = "anthropicSdkKotlin" }
 xemantic-ai-tool-schema = { module = "com.xemantic.ai:xemantic-ai-tool-schema", version.ref ="xemanticAiToolSchema" }
@@ -67,6 +71,7 @@ ktor-server-netty = { module = "io.ktor:ktor-server-netty", version.ref = "ktor"
 ktor-server-websockets = { module = "io.ktor:ktor-server-websockets", version.ref = "ktor" }
 ktor-server-cors = { module = "io.ktor:ktor-server-cors", version.ref = "ktor" }
 ktor-server-call-logging = { module = "io.ktor:ktor-server-call-logging", version.ref = "ktor" }
+ktor-server-config-yaml = { module = "io.ktor:ktor-server-config-yaml", version.ref = "ktor" }
 ktor-server-content-negotiation = { module = "io.ktor:ktor-server-content-negotiation", version.ref = "ktor" }
 ktor-server-status-pages = { module = "io.ktor:ktor-server-status-pages", version.ref = "ktor" }
 ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor"}

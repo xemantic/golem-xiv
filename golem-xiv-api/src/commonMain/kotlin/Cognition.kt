@@ -5,37 +5,11 @@
  * Unauthorized reproduction or distribution is prohibited.
  */
 
-// TODO remove with kotlin 2.2
-@file:UseSerializers(InstantSerializer::class)
-
 package com.xemantic.ai.golem.api
 
-import com.xemantic.ai.golem.serialization.time.InstantSerializer
-import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.UseSerializers
 import kotlin.time.Instant
-
-interface Cognition {
-    val id: Long
-    val initiationMoment: Instant
-    val parentId: Long?
-//    suspend fun getConditioning()
-//    suspend fun setConditioning(conditioning: String)
-    suspend fun getTitle(): String?
-    suspend fun setTitle(title: String?)
-    suspend fun getSummary(): String?
-    suspend fun setSummary(summary: String?)
-    fun expressions(): Flow<PhenomenalExpression>
-
-    enum class State {
-        OPEN,
-        INTERACTION_PENDING,
-        CONCLUDED
-    }
-
-}
 
 @Serializable
 sealed interface EpistemicAgent {

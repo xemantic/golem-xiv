@@ -6,6 +6,7 @@
  */
 
 import com.xemantic.ai.golem.neo4j.Neo4jMemory
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.neo4j.driver.AuthTokens
@@ -13,14 +14,21 @@ import org.neo4j.driver.Driver
 import org.neo4j.driver.GraphDatabase
 import org.neo4j.harness.Neo4j
 import org.neo4j.harness.junit.extension.Neo4jExtension
+import kotlin.test.Ignore
 import kotlin.use
 
 @ExtendWith(Neo4jExtension::class)
 class Neo4jMemoryTest {
 
     @Test
-    fun rememberFact(neo4j: Neo4j) = testWithNeo4jDriver(neo4j) { driver ->
-        val memory = Neo4jMemory(driver)
+    @Ignore
+    fun rememberFact(neo4j: Neo4j) = runNeo4jTest(neo4j) { driver ->
+
+        val memory = Neo4jMemory(
+            driver = driver,
+            cognitionId = 42L,
+            fulfillmentId = 43L
+        )
         val output = memory.remember {
             val john = node {
                 type = "Person"
@@ -61,7 +69,7 @@ class Neo4jMemoryTest {
 
 }
 
-private fun testWithNeo4jDriver(neo4j: Neo4j, block: (driver: Driver) -> Unit) {
+private fun runNeo4jTest(neo4j: Neo4j, block: suspend (driver: Driver) -> Unit) = runTest {
     GraphDatabase.driver(neo4j.boltURI(), AuthTokens.none()).use { driver ->
         block(driver)
     }

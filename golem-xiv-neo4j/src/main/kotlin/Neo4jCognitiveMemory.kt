@@ -47,8 +47,7 @@ class Neo4jCognitiveMemory(
                                 summary: "",
                                 initiationMoment: datetime()
                             })
-                            CREATE (parent)-[:superEvent]->(cognition)
-                            CREATE (cognition)-[:subEvent]->(parent)
+                            CREATE (parent)-[:hasChild]->(cognition)
                             RETURN
                                 id(cognition) as id,
                                 cognition.initiationMoment as initiationMoment
@@ -73,7 +72,8 @@ class Neo4jCognitiveMemory(
 
                 CognitionInfo(
                     id = record["id"].asLong(),
-                    initiationMoment = record["initiationMoment"].asInstant()
+                    parentId = parentId,
+                    initiationMoment = record["initiationMoment"].asInstant(),
                 )
             }
 
@@ -109,7 +109,6 @@ class Neo4jCognitiveMemory(
                         SET expression.title = expression.title + " " + id(expression)
                         CREATE (agent)-[:creator]->(expression)
                         CREATE (cognition)-[:hasPart]->(expression)
-                        CREATE (expression)-[:isPartOf]->(cognition)
                         RETURN
                             id(expression) as id,
                             expression.initiationMoment as initiationMoment
@@ -158,7 +157,6 @@ class Neo4jCognitiveMemory(
                         CREATE (phenomenon:Phenomenon:$$label)
                         SET phenomenon.title = "$$label " + id(phenomenon)
                         CREATE (expression)-[:hasPart]->(phenomenon)
-                        CREATE (phenomenon)-[:isPartOf]->(expression)
                         RETURN
                             id(phenomenon) as id
                     """.trimIndent(),
@@ -201,7 +199,6 @@ class Neo4jCognitiveMemory(
                         CREATE (fulfillment:Phenomenon:Fulfillment)
                         SET fulfillment.title = "Fulfillment " + id(fulfillment)
                         CREATE (expression)-[:hasPart]->(fulfillment)
-                        CREATE (fulfillment)-[:isPartOf]->(expression)
                         
                         WITH fulfillment
                         MATCH (intent:Phenomenon:Intent) WHERE id(intent) = $intentId
@@ -244,8 +241,10 @@ class Neo4jCognitiveMemory(
 
                 val result = tx.runCypher(query = $$"""
                     MATCH (cognition:Cognition) WHERE id(cognition) = $cognitionId
+                    OPTIONAL MATCH (parent:Cognition)-[:hasChild]->(cognition)
                     RETURN
                         id(cognition) as id,
+                        id(parent) as parentId,
                         cognition.initiationMoment as initiationMoment
                 """.trimIndent(),
                     parameters = mapOf(
@@ -257,6 +256,7 @@ class Neo4jCognitiveMemory(
 
                 CognitionInfo(
                     id = record["id"].asLong(),
+                    parentId = if (record["parentId"].isNull) null else record["parentId"].asLong(),
                     initiationMoment = record["initiationMoment"].asInstant()
                 )
             }
@@ -326,7 +326,7 @@ class Neo4jCognitiveMemory(
                         "cognitionId" to cognitionId,
                         "title" to title
                     )
-                )
+                ).consume()
             }
 
         }
@@ -387,7 +387,7 @@ class Neo4jCognitiveMemory(
                         "cognitionId" to cognitionId,
                         "summary" to summary
                     )
-                )
+                ).consume()
             }
 
         }

@@ -7,7 +7,6 @@
 
 package com.xemantic.ai.golem.core.cognition
 
-import com.xemantic.ai.golem.api.Cognition
 import com.xemantic.ai.golem.api.EpistemicAgent
 import com.xemantic.ai.golem.api.PhenomenalExpression
 import com.xemantic.ai.golem.api.Phenomenon
@@ -17,6 +16,7 @@ import com.xemantic.ai.golem.api.backend.CognitionRepository
 import com.xemantic.ai.golem.api.backend.CognitionStorage
 import com.xemantic.ai.golem.api.backend.PhenomenalExpressionInfo
 import com.xemantic.ai.golem.api.backend.StorageType
+import com.xemantic.ai.golem.api.backend.script.Cognition
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlin.time.Clock
@@ -217,8 +217,7 @@ class DefaultCognitionRepository(
 
             override val initiationMoment: Instant = info.initiationMoment
 
-            override val parentId: Long?
-                get() = TODO("Not yet implemented")
+            override val parentId: Long? = info.parentId
 
             override suspend fun getTitle(): String? = memory.getCognitionTitle(
                 cognitionId

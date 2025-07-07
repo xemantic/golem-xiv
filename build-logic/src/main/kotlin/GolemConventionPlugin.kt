@@ -116,7 +116,7 @@ fun KotlinCommonCompilerOptions.configureCommons(
     apiVersion.set(kotlinVersion)
     freeCompilerArgs.set(
         listOf(
-            "-Xmulti-dollar-interpolation",
+            "-Xcontext-sensitive-resolution",
             "-opt-in=kotlin.time.ExperimentalTime",
         )
     )

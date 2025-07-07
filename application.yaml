@@ -1,0 +1,13 @@
+# Golem XIV configuration
+
+ktor:
+  deployment:
+    port: 8081
+  application:
+    modules:
+      - com.xemantic.ai.golem.server.GolemServerKt.module
+
+neo4j:
+  uri: bolt://localhost:7687
+  username: golem
+  password: golem
