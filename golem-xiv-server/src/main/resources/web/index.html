@@ -11,9 +11,80 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Golem XIV</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="/css/main.css">
 </head>
 <body>
+<script type="x-shader/x-fragment" id="image">
+    precision highp float;
+
+    uniform vec2  iResolution;
+    uniform float iTime;
+    uniform float iScroll;
+
+    #define rot(a) mat2(cos(a + vec4(0,33,11,0)))
+    #define C(U,w) smoothstep( w, -w, sin(length(fract(U)*2.-1.) * 3.) *.5  -.118 )
+    #define O gl_FragColor
+
+    void main() {
+    vec2 u = gl_FragCoord.xy;
+    vec2  R = iResolution.xy, P,
+          U = ( u+u - R ) / min(R.x, R.y) * .5;
+    float d = length(U),
+          t = iTime,
+          blur = .4 + sin(t * .52) * .2,
+          luma = .5,
+          abber = .01;
+    U *= rot( sin(t * .14) * .3 )
+       * (sin(t * .15) + 2.) * .3;
+    U *= log(length(U)*.428) * 1.1;
+
+    for (float i = 0.; i < 3.; i++) {
+        P = U + vec2(sin(t*.12), cos(t*.13));
+        P.y -= iScroll;
+
+        O.rgb += vec3(
+            C( P - U * abber, blur),
+            C( P, blur),
+            C( P + U * abber, blur)
+        ) * luma;
+        O = min(O,1.);
+        U *= ( 1.1 + C(P,.04) * 1.2 )
+          *   rot( sin(t*.05) * 1.33 );
+        luma *= .6;
+        blur *= .63;
+    }
+
+    vec3 C = 1.+mix(  sin(t * vec3(1.13,1.23,1.33) * .3),
+                    - sin(t * vec3(1.43,1.53,1.63) * .3), d-.5) *.4*vec3(1,1,-1);
+    O = vec4(pow(O.rgb, C), 1) * smoothstep(2.1, .7, d / .5);
+    O = O * O;
+}
+</script>
+<script src="/js/shader-web-background.js"></script>
+<script>
+    const PARALLAX_SCROLLING_RATE = .0003;
+    const randomSeed = Math.random() * 100;
+
+    let scroll = 0;
+    shaderWebBackground.shade((ctx) => ({
+      onResize: (width, height) => {
+        minDimension = Math.min(width, height);
+      },
+      onBeforeFrame: () => {
+        time = performance.now() / 10000 + randomSeed;
+        scroll = (window.scrollY * ctx.cssPixelRatio) * -PARALLAX_SCROLLING_RATE;
+      },
+      shaders: {
+        image: {
+          uniforms: {
+            iResolution:           () => ctx.resolution,
+            iTime:                 () => time,
+            iScroll:               () => scroll,
+          }
+        }
+      }
+    }));
+</script>
 <script src="golem-xiv-web.js"></script>
 </body>
 </html>
