@@ -40,7 +40,11 @@ fun main() {
     val protocol = URLProtocol.byName[currentProtocol]
     requireNotNull(protocol) { "protocol cannot be null" }
     val host = window.location.hostname
-    val port = if (window.location.port.isEmpty()) 80 else window.location.port.toInt()
+    val port = if (window.location.port.isEmpty()) {
+        if (currentProtocol == "http") 80 else 443
+    } else {
+        window.location.port.toInt()
+    }
     val config =  MainPresenter.Config(
         apiHost = host,
         apiPort = if (devMode) 8081 else port,
