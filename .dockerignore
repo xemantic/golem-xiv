@@ -1,0 +1,6 @@
+# Exclude everything
+*
+
+# Include only specific uberjar and deployment config
+!golem-xiv-server/build/libs/golem-xiv-server-all.jar
+!application-deployment.yaml
