@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.ktor.plugin)
@@ -90,5 +92,15 @@ listOf(
 ).forEach {
     tasks.named(it) {
         enabled = false
+    }
+}
+
+tasks.withType<KotlinCompile> {
+    doFirst {
+        println("Kotlin JVM target: ${compilerOptions.jvmTarget.get()}")
+        println("Kotlin language version: ${compilerOptions.languageVersion.get()}")
+        println("Kotlin API version: ${compilerOptions.apiVersion.get()}")
+        println("Using JDK: ${System.getProperty("java.home")}")
+        println("Kotlin compiler args: ${compilerOptions.freeCompilerArgs.get()}")
     }
 }

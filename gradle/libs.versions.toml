@@ -1,8 +1,8 @@
 [versions]
 kotlinTarget = "2.2"
-javaTarget = "22"
+javaTarget = "21"
 
-kotlin = "2.2.0"
+kotlin = "2.2.21"
 kotlinxSerialization = "1.9.0"
 kotlinxCoroutines = "1.10.2"
 kotlinxHtml = "0.12.0"
@@ -11,8 +11,8 @@ kotlinLogging = "7.0.7"
 
 anthropicSdkKotlin = "0.22.0"
 xemanticKotlinCore = "0.2.0"
-xemanticKotlinTest = "1.9.0"
-xemanticAiToolSchema = "1.1.2"
+xemanticKotlinTest = "1.14.2"
+xemanticAiToolSchema = "1.2.0"
 
 ktor = "3.2.1"
 playwright = "1.53.0"
