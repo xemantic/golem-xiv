@@ -16,7 +16,7 @@ class ParseNavigationTargetTest {
 
     @Test
     fun `should parse cognition target`() {
-        parseNavigationTarget("/cognition/42") should {
+        parseNavigationTarget("/cognitions/42") should {
             be<Navigation.Target.Cognition>()
             have(id == 42L)
         }
