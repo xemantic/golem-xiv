@@ -1,0 +1,13 @@
+# Golem XIV deployment configuration
+
+ktor:
+  deployment:
+    port: 8080
+  application:
+    modules:
+      - com.xemantic.ai.golem.server.GolemServerKt.module
+
+neo4j:
+  uri: ${NEO4J_URI}
+  username: ${NEO4J_USERNAME}
+  password: ${NEO4J_PASSWORD}

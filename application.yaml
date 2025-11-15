@@ -1,4 +1,4 @@
-# Golem XIV configuration
+# Golem XIV development configuration
 
 ktor:
   deployment:
