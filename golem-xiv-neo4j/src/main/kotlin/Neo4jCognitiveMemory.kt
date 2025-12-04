@@ -14,127 +14,91 @@ import com.xemantic.ai.golem.api.backend.CognitionInfo
 import com.xemantic.ai.golem.api.backend.CognitiveMemory
 import com.xemantic.ai.golem.api.backend.CulminatedWithIntent
 import com.xemantic.ai.golem.api.backend.PhenomenalExpressionInfo
+import com.xemantic.neo4j.driver.Neo4jOperations
+import com.xemantic.neo4j.driver.asInstant
+import com.xemantic.neo4j.driver.singleOrNull
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
-import org.neo4j.driver.Driver
+import kotlinx.coroutines.flow.map
 import org.neo4j.driver.types.Node
 
 class Neo4jCognitiveMemory(
-    private val driver: Driver
+    private val neo4j: Neo4jOperations
 ) : CognitiveMemory {
 
     private val logger = KotlinLogging.logger {}
 
     override suspend fun createCognition(
-        parentId: Long?
-    ): CognitionInfo {
-
-        logger.debug {
-            "Cognition[parentId=$parentId]: creating"
-        }
-
-        val cognitionInfo = driver.session().use { session ->
-
-            session.executeWrite { tx ->
-
-                val result = if (parentId != null) {
-                    tx.runCypher(
-                        query = $$"""
-                            MATCH (parent:Cognition) WHERE id(parent) = $parentId
-                            CREATE (cognition:Cognition {
-                                title: "Untitled",
-                                summary: "",
-                                initiationMoment: datetime()
-                            })
-                            CREATE (parent)-[:hasChild]->(cognition)
-                            RETURN
-                                id(cognition) as id,
-                                cognition.initiationMoment as initiationMoment
-                        """.trimIndent(),
-                        parameters = mapOf(
-                            "parentId" to parentId
-                        )
-                    )
-                } else {
-                    tx.runCypher(query = """
-                        CREATE (cognition:Cognition {
-                            initiationMoment: datetime()
-                        })
-                        RETURN
-                            id(cognition) as id,
-                            cognition.initiationMoment as initiationMoment
-                    """.trimIndent()
-                    )
-                }
-
-                val record = result.single()
-
-                CognitionInfo(
-                    id = record["id"].asLong(),
-                    parentId = parentId,
-                    initiationMoment = record["initiationMoment"].asInstant(),
+        parentId: Long?,
+    ): CognitionInfo = neo4j.write { tx ->
+        if (parentId != null) {
+            //tx.createCognitionWithParent(parentId)
+            tx.run(
+                query = $$"""
+                    MATCH (parent:Cognition) WHERE id(parent) = $parentId
+                    CREATE (cognition:Cognition {
+                        title: 'Untitled',
+                        summary: '',
+                        initiationMoment: datetime()
+                    })
+                    CREATE (parent)-[:hasChild]->(cognition)
+                    RETURN
+                        id(cognition) AS id,
+                        cognition.initiationMoment AS initiationMoment
+                """.trimIndent(),
+                parameters = mapOf(
+                    "parentId" to parentId
                 )
-            }
-
+            ).single()
+        } else {
+            tx.run(
+                query = $$"""
+                CREATE (cognition:Cognition {
+                    initiationMoment: datetime()
+                })
+                RETURN
+                    id(cognition) AS id,
+                    cognition.initiationMoment AS initiationMoment
+            """.trimIndent()
+            ).single()
+        }.let {
+            CognitionInfo(
+                id = it["id"].asLong(),
+                parentId = parentId,
+                initiationMoment = it["initiationMoment"].asInstant(),
+            )
         }
-
-        logger.debug {
-            "Cognition[${cognitionInfo.id}}]: created"
-        }
-
-        return cognitionInfo
     }
 
     override suspend fun createExpression(
         cognitionId: Long,
         agentId: Long,
-    ): PhenomenalExpressionInfo {
-
-        logger.debug {
-            "Cognition[$cognitionId]: creating PhenomenalExpression of agentId: $agentId"
+    ): PhenomenalExpressionInfo = neo4j.write { tx ->
+        tx.run(
+            query = $$"""
+                MATCH (cognition:Cognition) WHERE id(cognition) = $cognitionId
+                MATCH (agent:EpistemicAgent) WHERE id(agent) = $agentId
+                CREATE (expression:PhenomenalExpression {
+                    title: 'Expression',
+                    initiationMoment: datetime()
+                })
+                SET expression.title = expression.title + ' ' + id(expression)
+                CREATE (agent)-[:creator]->(expression)
+                CREATE (cognition)-[:hasPart]->(expression)
+                RETURN
+                    id(expression) AS id,
+                    expression.initiationMoment AS initiationMoment
+            """.trimIndent(),
+            parameters = mapOf(
+                "cognitionId" to cognitionId,
+                "agentId" to agentId
+            )
+        ).single().let {
+            PhenomenalExpressionInfo(
+                id = it["id"].asLong(),
+                initiationMoment = it["initiationMoment"].asInstant()
+            )
         }
-
-        val expressionInfo = driver.session().use { session ->
-
-            session.executeWrite { tx ->
-                val result = tx.runCypher(
-                    query = $$"""
-                        MATCH (cognition:Cognition) WHERE id(cognition) = $cognitionId
-                        MATCH (agent:EpistemicAgent) WHERE id(agent) = $agentId
-                        CREATE (expression:PhenomenalExpression {
-                            title: "Expression",
-                            initiationMoment: datetime()
-                        })
-                        SET expression.title = expression.title + " " + id(expression)
-                        CREATE (agent)-[:creator]->(expression)
-                        CREATE (cognition)-[:hasPart]->(expression)
-                        RETURN
-                            id(expression) as id,
-                            expression.initiationMoment as initiationMoment
-                    """.trimIndent(),
-                    parameters = mapOf(
-                        "cognitionId" to cognitionId,
-                        "agentId" to agentId
-                    )
-                )
-
-                val record = result.single()
-
-                PhenomenalExpressionInfo(
-                    id = record["id"].asLong(),
-                    initiationMoment = record["initiationMoment"].asInstant()
-                )
-
-            }
-
-        }
-
-        logger.debug {
-            "Cognition[$cognitionId]: created PhenomenalExpression[${expressionInfo.id}] of agentId: $agentId"
-        }
-
-        return expressionInfo
     }
 
     override suspend fun createPhenomenon(
@@ -147,29 +111,20 @@ class Neo4jCognitiveMemory(
             "Cognition[$cognitionId]/Expression[$expressionId]: creating Phenomenon ($label)"
         }
 
-        val phenomenonId = driver.session().use { session ->
-
-            session.executeWrite { tx ->
-
-                val result = tx.runCypher(
-                    query = $$"""
-                        MATCH (expression:PhenomenalExpression) WHERE id(expression) = $expressionId
-                        CREATE (phenomenon:Phenomenon:$$label)
-                        SET phenomenon.title = "$$label " + id(phenomenon)
-                        CREATE (expression)-[:hasPart]->(phenomenon)
-                        RETURN
-                            id(phenomenon) as id
-                    """.trimIndent(),
-                    parameters = mapOf(
-                        "expressionId" to expressionId
-                    )
+        val phenomenonId = neo4j.write { tx ->
+            tx.run(
+                query = $$"""
+                    MATCH (expression:PhenomenalExpression) WHERE id(expression) = $expressionId
+                    CREATE (phenomenon:Phenomenon:$$label)
+                    SET phenomenon.title = '$$label ' + id(phenomenon)
+                    CREATE (expression)-[:hasPart]->(phenomenon)
+                    RETURN
+                        id(phenomenon) AS id
+                """.trimIndent(),
+                parameters = mapOf(
+                    "expressionId" to expressionId
                 )
-
-                val record = result.single()
-
-                record["id"].asLong()
-            }
-
+            ).single()["id"].asLong()
         }
 
         logger.debug {
@@ -189,35 +144,26 @@ class Neo4jCognitiveMemory(
             "Cognition[$cognitionId]/Expression[$expressionId]: creating Phenomenon(Fulfillment)"
         }
 
-        val phenomenonId = driver.session().use { session ->
-
-            session.executeWrite { tx ->
-
-                val result = tx.runCypher(
-                    query = $$"""
-                        MATCH (expression:PhenomenalExpression) WHERE id(expression) = $expressionId
-                        CREATE (fulfillment:Phenomenon:Fulfillment)
-                        SET fulfillment.title = "Fulfillment " + id(fulfillment)
-                        CREATE (expression)-[:hasPart]->(fulfillment)
-                        
-                        WITH fulfillment
-                        MATCH (intent:Phenomenon:Intent) WHERE id(intent) = $intentId
-                        CREATE (fulfillment)-[:fulfills]->(intent)
-                        
-                        RETURN
-                            id(fulfillment) as id
-                    """.trimIndent(),
-                    parameters = mapOf(
-                        "expressionId" to expressionId,
-                        "intentId" to intentId
-                    )
+        val phenomenonId = neo4j.write { tx ->
+            tx.run(
+                query = $$"""
+                    MATCH (expression:PhenomenalExpression) WHERE id(expression) = $expressionId
+                    CREATE (fulfillment:Phenomenon:Fulfillment)
+                    SET fulfillment.title = 'Fulfillment ' + id(fulfillment)
+                    CREATE (expression)-[:hasPart]->(fulfillment)
+                    
+                    WITH fulfillment
+                    MATCH (intent:Phenomenon:Intent) WHERE id(intent) = $intentId
+                    CREATE (fulfillment)-[:fulfills]->(intent)
+                    
+                    RETURN
+                        id(fulfillment) AS id
+                """.trimIndent(),
+                parameters = mapOf(
+                    "expressionId" to expressionId,
+                    "intentId" to intentId
                 )
-
-                val record = result.single()
-
-                record["id"].asLong()
-            }
-
+            ).single()["id"].asLong()
         }
 
         logger.debug {
@@ -235,32 +181,26 @@ class Neo4jCognitiveMemory(
             "Cognition[$cognitionId]: getting CognitionInfo"
         }
 
-        val cognitionInfo = driver.session().use { session ->
-
-            session.executeRead { tx ->
-
-                val result = tx.runCypher(query = $$"""
-                    MATCH (cognition:Cognition) WHERE id(cognition) = $cognitionId
-                    OPTIONAL MATCH (parent:Cognition)-[:hasChild]->(cognition)
-                    RETURN
-                        id(cognition) as id,
-                        id(parent) as parentId,
-                        cognition.initiationMoment as initiationMoment
-                """.trimIndent(),
-                    parameters = mapOf(
-                        "cognitionId" to cognitionId
-                    )
+        val cognitionInfo = neo4j.read { tx ->
+            val record = tx.run(
+                query = $$"""
+                MATCH (cognition:Cognition) WHERE id(cognition) = $cognitionId
+                OPTIONAL MATCH (parent:Cognition)-[:hasChild]->(cognition)
+                RETURN
+                    id(cognition) AS id,
+                    id(parent) AS parentId,
+                    cognition.initiationMoment AS initiationMoment
+            """.trimIndent(),
+                parameters = mapOf(
+                    "cognitionId" to cognitionId
                 )
+            ).single()
 
-                val record = result.single()
-
-                CognitionInfo(
-                    id = record["id"].asLong(),
-                    parentId = if (record["parentId"].isNull) null else record["parentId"].asLong(),
-                    initiationMoment = record["initiationMoment"].asInstant()
-                )
-            }
-
+            CognitionInfo(
+                id = record["id"].asLong(),
+                parentId = if (record["parentId"].isNull) null else record["parentId"].asLong(),
+                initiationMoment = record["initiationMoment"].asInstant()
+            )
         }
 
         logger.debug {
@@ -272,265 +212,182 @@ class Neo4jCognitiveMemory(
 
     override suspend fun getCognitionTitle(
         cognitionId: Long
-    ): String? {
-
-        logger.debug {
-            "Cognition[$cognitionId]: getting title"
-        }
-
-        val title = driver.session().use { session ->
-
-            session.executeRead { tx ->
-
-                val result = tx.runCypher(query = $$"""
-                    MATCH (cognition:Cognition) WHERE id(cognition) = $cognitionId
-                    RETURN
-                        cognition.title as title
-                    """.trimIndent(),
-                    parameters = mapOf(
-                        "cognitionId" to cognitionId
-                    )
-                )
-
-                val record = result.single()
-
-                record["title"]?.asString()
-            }
-        }
-
-        logger.debug {
-            "Cognition[$cognitionId]: retrieved title: $title"
-        }
-
-        return title
+    ): String? = neo4j.read { tx ->
+        tx.run(
+            query = $$"""
+            MATCH (cognition:Cognition) WHERE id(cognition) = $cognitionId
+            RETURN
+                cognition.title AS title
+            """.trimIndent(),
+            parameters = mapOf(
+                "cognitionId" to cognitionId
+            )
+        ).single()["title"].asString()
     }
 
     override suspend fun setCognitionTitle(
         cognitionId: Long,
         title: String?
     ) {
-
-        logger.debug {
-            "Cognition[$cognitionId]: setting title: $title"
-        }
-
-        driver.session().use { session ->
-
-            session.executeWrite { tx ->
-                tx.runCypher(
-                    query = $$"""
-                        MATCH (cognition:Cognition) WHERE id(cognition) = $cognitionId
-                        SET cognition.title = $title
-                    """.trimIndent(),
-                    parameters = mapOf(
-                        "cognitionId" to cognitionId,
-                        "title" to title
-                    )
-                ).consume()
-            }
-
+        neo4j.write { tx ->
+            tx.run(
+                query = $$"""
+                    MATCH (cognition:Cognition) WHERE id(cognition) = $cognitionId
+                    SET cognition.title = $title
+                """.trimIndent(),
+                parameters = mapOf(
+                    "cognitionId" to cognitionId,
+                    "title" to title
+                )
+            )
         }
     }
 
     override suspend fun getCognitionSummary(
         cognitionId: Long
-    ): String? {
-
-        logger.debug {
-            "Cognition[$cognitionId]: getting summary"
-        }
-
-        val summary = driver.session().use { session ->
-
-            session.executeRead { tx ->
-
-                val result = tx.runCypher(
-                    query = $$"""
-                        MATCH (cognition:Cognition) WHERE id(cognition) = $cognitionId
-                        RETURN
-                            cognition.summary as summary
-                    """.trimIndent(), mapOf(
-                        "cognitionId" to cognitionId
-                    )
-                )
-
-                val record = result.single()
-
-                record["summary"]?.asString()
-            }
-        }
-
-        logger.debug {
-            "Cognition[$cognitionId]: retrieved summary: $summary"
-        }
-
-        return summary
+    ): String? = neo4j.read { tx ->
+        tx.run(
+            query = $$"""
+                MATCH (cognition:Cognition) WHERE id(cognition) = $cognitionId
+                RETURN
+                    cognition.summary AS summary
+            """.trimIndent(), mapOf(
+                "cognitionId" to cognitionId
+            )
+        ).singleOrNull()?.get("summary")?.asString()
     }
 
     override suspend fun setCognitionSummary(
         cognitionId: Long,
         summary: String?
     ) {
-
-        logger.debug {
-            "Cognition[$cognitionId]: setting summary: $summary"
-        }
-
-        driver.session().use { session ->
-
-            session.executeWrite { tx ->
-                tx.runCypher(
-                    query = $$"""
-                        MATCH (cognition:Cognition) WHERE id(cognition) = $cognitionId
-                        SET cognition.summary = $summary
-                    """.trimIndent(), mapOf(
-                        "cognitionId" to cognitionId,
-                        "summary" to summary
-                    )
-                ).consume()
-            }
-
+        neo4j.write { tx ->
+            tx.run(
+                query = $$"""
+                    MATCH (cognition:Cognition) WHERE id(cognition) = $cognitionId
+                    SET cognition.summary = $summary
+                """.trimIndent(), mapOf(
+                    "cognitionId" to cognitionId,
+                    "summary" to summary
+                )
+            )
         }
     }
 
     override fun expressions(
         cognitionId: Long
-    ): Flow<PhenomenalExpression> = flow {
+    ): Flow<PhenomenalExpression> = neo4j.flow(
+        query = $$"""
+            MATCH (cognition:Cognition)-[:hasPart]->(expression:PhenomenalExpression)
+            MATCH (agent:EpistemicAgent)-[:creator]->(expression)
+            WHERE id(cognition) = $cognitionId
+            
+            OPTIONAL MATCH (expression)-[:hasPart]->(phenomenon:Phenomenon)
+            OPTIONAL MATCH (phenomenon)-[:fulfills]->(intent:Phenomenon:Intent)
+            
+            WITH expression, agent, phenomenon, intent
+            ORDER BY id(expression), id(phenomenon)
+            
+            RETURN
+                id(expression) AS expressionId,
+                expression.initiationMoment AS initiationMoment,
+                id(agent) AS agentId,
+                agent AS agent,
+                labels(agent) AS agentLabels,
+                collect({
+                    phenomenon: phenomenon,
+                    intent: intent
+                }) AS phenomenaWithIntents
+            ORDER BY id(expression)
+        """.trimIndent(),
+        parameters = mapOf(
+            "cognitionId" to cognitionId
+        )
+    ).map { record ->
 
-        logger.debug {
-            "Cognition[$cognitionId]: flowing PhenomenalExpressions"
-        }
+        val epistemicAgent = toEpistemicAgent(
+            id = record["agentId"].asLong(),
+            agent = record["agent"].asNode(),
+            agentLabels = record["agentLabels"].asList {
+                it.asString()
+            }.toSet()
+        )
 
-        val list = driver.session().use { session ->
-            session.executeRead { tx ->
-                val result = tx.runCypher(
-                    query = $$"""
-                        MATCH (cognition:Cognition)-[:hasPart]->(expression:PhenomenalExpression)
-                        MATCH (agent:EpistemicAgent)-[:creator]->(expression)
-                        WHERE id(cognition) = $cognitionId
-                        
-                        OPTIONAL MATCH (expression)-[:hasPart]->(phenomenon:Phenomenon)
-                        OPTIONAL MATCH (phenomenon)-[:fulfills]->(intent:Phenomenon:Intent)
-                        
-                        WITH expression, agent, phenomenon, intent
-                        ORDER BY id(expression), id(phenomenon)
-                        
-                        RETURN
-                            id(expression) as expressionId,
-                            expression.initiationMoment as initiationMoment,
-                            id(agent) as agentId,
-                            agent as agent,
-                            labels(agent) as agentLabels,
-                            collect({
-                                phenomenon: phenomenon,
-                                intent: intent
-                            }) as phenomenaWithIntents
-                        ORDER BY id(expression)
-                    """.trimIndent(),
-                    parameters = mapOf(
-                        "cognitionId" to cognitionId
-                    )
+        val phenomena = record["phenomenaWithIntents"].asList {
+            val itemMap = it.asMap()
+            val phenomenonValue = itemMap["phenomenon"]
+            val node = phenomenonValue as Node
+            val labels = node.labels()
+            when {
+                labels.contains("Text") -> Phenomenon.Text(
+                    id = node.id(),
+                    text = "" // will be filled from storage
                 )
-                result.stream().map { record ->
 
-                    val epistemicAgent = toEpistemicAgent(
-                        id = record["agentId"].asLong(),
-                        agent = record["agent"].asNode(),
-                        agentLabels = record["agentLabels"].asList {
-                            it.asString()
-                        }.toSet()
-                    )
+                labels.contains("Intent") -> Phenomenon.Intent(
+                    id = node.id(),
+                    systemId = "",
+                    purpose = "",
+                    code = ""
+                )// will be filled from storage
+                labels.contains("Fulfillment") -> Phenomenon.Fulfillment(
+                    id = node.id(),
+                    intentId = (itemMap["intent"] as Node).id(),
+                    intentSystemId = "",
+                    result = ""
+                )
 
-                    val phenomena = record["phenomenaWithIntents"].asList {
-                        val itemMap = it.asMap()
-                        val phenomenonValue = itemMap["phenomenon"]
-                        val node = phenomenonValue as Node
-                        val labels = node.labels()
-                        when {
-                            labels.contains("Text") -> Phenomenon.Text(
-                                id = node.id(),
-                                text = "" // will be filled from storage
-                            )
-                            labels.contains("Intent") -> Phenomenon.Intent(
-                                id = node.id(),
-                                systemId = "",
-                                purpose = "",
-                                code = ""
-                            )// will be filled from storage
-                            labels.contains("Fulfillment") -> Phenomenon.Fulfillment(
-                                id = node.id(),
-                                intentId = (itemMap["intent"] as Node).id(),
-                                intentSystemId = "",
-                                result = ""
-                            )
-                            else -> throw java.lang.IllegalStateException("Unsupported phenomenon: $labels")
-                        }
-                    }
-
-                    PhenomenalExpression(
-                        id = record["expressionId"].asLong(),
-                        agent = epistemicAgent,
-                        phenomena = phenomena,
-                        initiationMoment = record["initiationMoment"].asInstant()
-                    )
-
-                }.toList()
+                else -> throw java.lang.IllegalStateException(
+                    "Unsupported phenomenon: $labels"
+                )
             }
         }
-        list.forEach {
-            emit(it)
-        }
+
+        PhenomenalExpression(
+            id = record["expressionId"].asLong(),
+            agent = epistemicAgent,
+            phenomena = phenomena,
+            initiationMoment = record["initiationMoment"].asInstant()
+        )
+
     }
 
     override suspend fun maybeCulminatedWithIntent(
         cognitionId: Long
     ): CulminatedWithIntent? {
 
-        logger.debug {
-            "Cognition[$cognitionId]: checking if culminated with an Intent"
-        }
-
-        val culminatedWithIntent = driver.session().use { session ->
-            session.executeRead { tx ->
-
-                // TODO for sure there is easier way of doing it
-                val result = tx.runCypher(
-                    query = $$"""
-                        MATCH (cognition:Cognition)-[:hasPart]->(expression:PhenomenalExpression)
-                        WHERE id(cognition) = $cognitionId
-                        
-                        WITH max(id(expression)) AS maxExpressionId
-                        
-                        MATCH (cognition:Cognition)-[:hasPart]->(expression:PhenomenalExpression)-[:hasPart]->(phenomenon:Phenomenon)
-                        WHERE id(cognition) = $cognitionId AND id(expression) = maxExpressionId
-                        
-                        WITH expression, max(id(phenomenon)) AS maxPhenomenonId
-                        
-                        OPTIONAL MATCH (expression)-[:hasPart]->(maxPhenomenon:Phenomenon:Intent)
-                        WHERE id(maxPhenomenon) = maxPhenomenonId
-                        
-                        RETURN
-                            id(expression) AS expressionId,
-                            id(maxPhenomenon) AS phenomenonId
-                    """.trimIndent(),
-                    parameters = mapOf(
-                        "cognitionId" to cognitionId
-                    )
+        val culminatedWithIntent = neo4j.read { tx ->
+            tx.run(
+                query = $$"""
+                    MATCH (cognition:Cognition)-[:hasPart]->(expression:PhenomenalExpression)
+                    WHERE id(cognition) = $cognitionId
+                    
+                    WITH max(id(expression)) AS maxExpressionId
+                    
+                    MATCH (cognition:Cognition)-[:hasPart]->(expression:PhenomenalExpression)-[:hasPart]->(phenomenon:Phenomenon)
+                    WHERE id(cognition) = $cognitionId AND id(expression) = maxExpressionId
+                    
+                    WITH expression, max(id(phenomenon)) AS maxPhenomenonId
+                    
+                    OPTIONAL MATCH (expression)-[:hasPart]->(maxPhenomenon:Phenomenon:Intent)
+                    WHERE id(maxPhenomenon) = maxPhenomenonId
+                    
+                    RETURN
+                        id(expression) AS expressionId,
+                        id(maxPhenomenon) AS phenomenonId
+                """.trimIndent(),
+                parameters = mapOf(
+                    "cognitionId" to cognitionId
                 )
-
-                if (result.hasNext()) {
-                    val record = result.single()
-                    val idValue = record["phenomenonId"]
-                    if (idValue.isNull) {
-                        null
-                    } else {
-                        CulminatedWithIntent(
-                            expressionId = record["expressionId"].asLong(),
-                            phenomenonId = idValue.asLong()
-                        )
-                    }
-                } else {
+            ).singleOrNull()?.let { record ->
+                val idValue = record["phenomenonId"]
+                if (idValue.isNull) {
                     null
+                } else {
+                    CulminatedWithIntent(
+                        expressionId = record["expressionId"].asLong(),
+                        phenomenonId = idValue.asLong()
+                    )
                 }
             }
         }

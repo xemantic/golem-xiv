@@ -11,87 +11,81 @@ import com.xemantic.ai.golem.api.backend.script.Memory
 import com.xemantic.ai.golem.api.backend.script.MemoryBuilder
 import com.xemantic.ai.golem.api.backend.script.NodeBuilder
 import com.xemantic.ai.golem.api.backend.script.RelationshipBuilder
-import org.neo4j.driver.Driver
-import org.neo4j.driver.Result
-import org.neo4j.driver.TransactionContext
+import com.xemantic.neo4j.driver.Neo4jOperations
+import com.xemantic.neo4j.driver.TransactionContext
+import kotlinx.coroutines.flow.Flow
+import org.neo4j.driver.Record
 
 class Neo4jMemory(
-    private val driver: Driver,
+    private val neo4j: Neo4jOperations,
     private val cognitionId: Long,
     private val fulfillmentId: Long
 ) : Memory {
 
     override suspend fun remember(
-        block: MemoryBuilder.() -> String
-    ): String = driver.session().use { session ->
-        session.executeWrite { tx ->
-            DefaultMemoryBuilder(tx).run(block)
+        block: suspend MemoryBuilder.() -> String
+    ): String = neo4j.write {  tx ->
+        DefaultMemoryBuilder(tx).run {
+            block()
         }
     }
 
-    override suspend fun <T> query(
-        cypher: String,
-        block: (Result) -> T
-    ): T = driver.session().use { session ->
-        session.executeRead { tx ->
-            val result = tx.run(cypher)
-            block(result)
-        }
-    }
+    override suspend fun query(
+        cypher: String
+    ): Flow<Record> = neo4j.flow(cypher)
 
     override suspend fun <T> modify(
         cypher: String,
-        block: (Result) -> T
-    ): T = driver.session().use { session ->
-        session.executeWrite { tx ->
-            val result = tx.run(cypher)
-            block(result)
-        }
+        block: suspend (com.xemantic.neo4j.driver.Result) -> T
+    ): T = neo4j.write { tx ->
+        val result = tx.run(cypher)
+        block(result)
     }
 
     private inner class DefaultMemoryBuilder(
         private val tx: TransactionContext
     ) : MemoryBuilder {
 
-        override fun node(
-            block: NodeBuilder.() -> Unit
+        override suspend fun node(
+            block: suspend NodeBuilder.() -> Unit
         ): Long {
-            val builder = DefaultNodeBuilder().also(block)
+            val builder = DefaultNodeBuilder().apply {
+                block()
+            }
             builder.validate()
             val nodeLabel = builder.label
-            val nodeQuery = $$"""
-                MATCH (phenomenon:Fulfillment) WHERE ID(phenomenon) = $fulfillmentId
-                CREATE (n:$$nodeLabel)
-                SET n += $props
-                CREATE (phenomenon)-[:actualizes]->(n)
-                RETURN ID(n) as id
-            """.trimIndent()
 
-            val result = tx.run(
-                nodeQuery,
-                mapOf(
+            return tx.run(
+                query = $$"""
+                    MATCH (phenomenon:Fulfillment) WHERE ID(phenomenon) = $fulfillmentId
+                    CREATE (n:$$nodeLabel)
+                    SET n += $props
+                    CREATE (phenomenon)-[:actualizes]->(n)
+                    RETURN ID(n) as id
+                """.trimIndent(),
+                parameters = mapOf(
                     "fulfillmentId" to fulfillmentId,
                     "props" to builder.props
                 )
-            )
-
-            return result.single()["id"].asLong()
+            ).single()["id"].asLong()
         }
 
-        override fun relationship(
-            block: RelationshipBuilder.() -> Unit
+        override suspend fun relationship(
+            block: suspend RelationshipBuilder.() -> Unit
         ): Long {
-            val builder = DefaultRelationshipBuilder().also(block)
+            val builder = DefaultRelationshipBuilder().apply {
+                block()
+            }
             builder.validate()
 
             // Can predicate be set as variable, is it cached like a prepared statement?
             val relationshipQuery = $$"""
-            MATCH (subject), (target)
-            WHERE ID(subject) = $subjectId AND ID(target) = $targetId
-            CREATE (subject)-[r:$${builder.predicate}]->(target)
-            SET r += $props
-            RETURN ID(r) AS id
-        """.trimIndent()
+                MATCH (subject), (target)
+                WHERE ID(subject) = $subjectId AND ID(target) = $targetId
+                CREATE (subject)-[r:$${builder.predicate}]->(target)
+                SET r += $props
+                RETURN ID(r) AS id
+            """.trimIndent()
 
             val result = tx.run(
                 relationshipQuery,

@@ -20,7 +20,7 @@ dependencies {
     api(project(":golem-xiv-api"))
     api(libs.kotlinx.coroutines.core)
     api(libs.kotlinx.serialization.core)
-    api(libs.neo4j.java.driver)
+    api(libs.xemantic.neo4j.kotlin.driver)
     api(libs.xemantic.ai.tool.schema)
     api(libs.ktor.client.core)
 

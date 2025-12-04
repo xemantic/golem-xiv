@@ -8,6 +8,7 @@ dependencies {
     api(libs.neo4j.java.driver)
 
     implementation(libs.kotlin.logging)
+    implementation(libs.xemantic.neo4j.kotlin.driver)
 
     testImplementation(libs.kotlin.test)
     testImplementation(libs.kotlinx.coroutines.test)

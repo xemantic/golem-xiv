@@ -20,6 +20,7 @@ import com.xemantic.ai.golem.neo4j.Neo4jCognitiveMemory
 import com.xemantic.ai.golem.neo4j.Neo4jAgentIdentity
 import com.xemantic.ai.golem.neo4j.Neo4jMemory
 import com.xemantic.ai.golem.storage.file.FileCognitionStorage
+import com.xemantic.neo4j.driver.DispatchedNeo4jOperations
 import io.github.oshai.kotlinlogging.KLogger
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.HttpHeaders
@@ -51,6 +52,7 @@ import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import io.ktor.server.websocket.WebSockets
 import io.ktor.server.websocket.webSocket
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -76,13 +78,17 @@ fun Application.module() {
 
     val outputs = MutableSharedFlow<GolemOutput>() // TODO can we move outputs to Golem?
 
-    val neo4j = GraphDatabase.driver(neo4jConfig.uri, authToken)
+    val driver = GraphDatabase.driver(neo4jConfig.uri, authToken)
 
-    val identity = Neo4jAgentIdentity(driver = neo4j)
+    val neo4j = DispatchedNeo4jOperations(
+        driver = driver,
+        dispatcher = Dispatchers.IO.limitedParallelism(90)
+    )
+    val identity = Neo4jAgentIdentity(neo4j = neo4j)
 
     val repository = DefaultCognitionRepository(
         memory = Neo4jCognitiveMemory(
-            driver = neo4j
+            neo4j = neo4j
         ),
         storage = FileCognitionStorage(File("var/cognitions"))
     )
@@ -102,7 +108,7 @@ fun Application.module() {
         repository = repository,
         memoryProvider = { cognitionId, fulfillmentId ->
             Neo4jMemory(
-                driver = neo4j,
+                neo4j = neo4j,
                 cognitionId = cognitionId,
                 fulfillmentId = fulfillmentId
             )
@@ -120,7 +126,7 @@ fun Application.module() {
     monitor.subscribe(ApplicationStopPreparing) {
         logger.info { "Stopping Golem XIV server" }
         golem.close()
-        neo4j.close()
+        driver.close()
     }
 
     monitor.subscribe(ApplicationStopped) {
