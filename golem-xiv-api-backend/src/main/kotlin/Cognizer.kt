@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.Flow
 interface Cognizer {
 
     fun reason(
-        conditioning: List<String>,
+        constitution: List<String>,
         cognitionId: Long,
         phenomenalFlow: List<PhenomenalExpression>,
         hints: Map<String, String>

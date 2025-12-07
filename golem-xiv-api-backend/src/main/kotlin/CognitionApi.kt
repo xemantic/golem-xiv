@@ -28,7 +28,7 @@ data class PhenomenalExpressionInfo(
 interface CognitionRepository {
 
     suspend fun initiateCognition(
-        conditioning: List<String>,
+        constitution: List<String>,
         parentId: Long? = null
     ): CognitionInfo
 
@@ -166,7 +166,7 @@ interface CognitionStorage {
 
     suspend fun createCognition(
         cognitionId: Long,
-        conditioning: List<String>
+        constitution: List<String>
     )
 
     suspend fun createExpression(

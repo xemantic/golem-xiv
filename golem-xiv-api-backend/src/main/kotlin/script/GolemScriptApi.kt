@@ -24,8 +24,8 @@ interface Cognition {
     val id: Long
     val initiationMoment: Instant
     val parentId: Long?
-    //    suspend fun getConditioning()
-//    suspend fun setConditioning(conditioning: String)
+    //    suspend fun getConstitution()
+//    suspend fun setConstitution(constitution: String)
     suspend fun getTitle(): String?
     suspend fun setTitle(title: String?)
     suspend fun getSummary(): String?
@@ -41,7 +41,7 @@ interface Cognition {
 }
 
 data class RecursiveCognitionInitiator(
-    val conditioning: String,
+    val constitution: String,
     val initialPhenomena: List<Any>
 )
 

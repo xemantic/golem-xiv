@@ -28,13 +28,13 @@ class DefaultCognitionRepository(
 ) : CognitionRepository {
 
     override suspend fun initiateCognition(
-        conditioning: List<String>,
+        constitution: List<String>,
         parentId: Long?
     ): CognitionInfo {
         val cognitionInfo = memory.createCognition(parentId)
         storage.createCognition(
             cognitionId = cognitionInfo.id,
-            conditioning = conditioning
+            constitution = constitution
         )
         return cognitionInfo
     }

@@ -44,7 +44,7 @@ class AnthropicToolUseCognizer(
     private val golemTools = listOf(Tool<ExecuteGolemScript>())
 
     override fun reason(
-        conditioning: List<String>,
+        constitution: List<String>,
         cognitionId: Long,
         phenomenalFlow: List<PhenomenalExpression>,
         hints: Map<String, String>
@@ -71,7 +71,7 @@ class AnthropicToolUseCognizer(
         }
 
         val flow = anthropic.messages.stream {
-            system = conditioning.toAnthropicSystem()
+            system = constitution.toAnthropicSystem()
             messages = messageFlow
             tools = golemTools
         }.transform { event ->

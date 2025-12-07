@@ -32,17 +32,17 @@ class FileCognitionStorage(
 
     override suspend fun createCognition(
         cognitionId: Long,
-        conditioning: List<String>
+        constitution: List<String>
     ) {
         logger.debug {
-            "Cognition[$cognitionId]: creating storage dirs and writing conditioning"
+            "Cognition[$cognitionId]: creating storage dirs and writing constitution"
         }
         val cognitionDir = File(storageDir, cognitionId.pad())
         cognitionDir.mkdir()
-        val conditioningDir = File(cognitionDir, "000000_conditioning")
-        conditioningDir.mkdir()
-        conditioning.forEachIndexed { index, prompt ->
-            val promptFile = File(conditioningDir, "${index.pad()}.md")
+        val constitutionDir = File(cognitionDir, "000000_constitution")
+        constitutionDir.mkdir()
+        constitution.forEachIndexed { index, prompt ->
+            val promptFile = File(constitutionDir, "${index.pad()}.md")
             promptFile.writeText(prompt)
         }
     }

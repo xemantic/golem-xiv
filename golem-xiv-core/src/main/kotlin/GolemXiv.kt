@@ -38,7 +38,7 @@ Host OS: ${operatingSystemName()}
 Current time: ${describeCurrentMoment()}
 """.trimIndent()
 
-val golemMainConditioning = getClasspathResource("/conditioning/GolemXivConditioning.md")
+val golemMainConstitution = getClasspathResource("/constitution/GolemXivConstitution.md")
 
 class GolemXiv(
     private val identity: AgentIdentity,
@@ -57,9 +57,9 @@ class GolemXiv(
 
     private val scriptExecutor = GolemScriptExecutor()
 
-    val golemConditioning = buildList {
+    val golemConstitution = buildList {
         //val coreSystem = systemPrompt + if (golemScriptApi != null) GOLEM_SCRIPT_SYSTEM_PROMPT else ""
-        add(golemMainConditioning)
+        add(golemMainConstitution)
         add(environmentalContext())
 //            if (additionalSystemPrompt != null) {
 //                add(System(text = additionalSystemPrompt)) // TODO cache control
@@ -68,7 +68,7 @@ class GolemXiv(
 
     suspend fun initiateCognition(): Long {
         val info = repository.initiateCognition(
-            conditioning = golemConditioning
+            constitution = golemConstitution
         )
         return info.id
     }
@@ -105,7 +105,7 @@ class GolemXiv(
                 val cognition = repository.getCognition(cognitionId)
 
                 cognizer.reason(
-                    conditioning = golemConditioning,
+                    constitution = golemConstitution,
                     cognitionId = cognitionId,
                     phenomenalFlow = cognition.expressions().toList(),
                     hints = emptyMap()
