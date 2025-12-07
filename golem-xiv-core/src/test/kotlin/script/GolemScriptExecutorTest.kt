@@ -19,6 +19,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
+import kotlin.time.measureTimedValue
 
 class GolemScriptExecutorTest {
 
@@ -730,6 +731,26 @@ class GolemScriptExecutorTest {
                 </golem:impediment>
 
             """.trimIndent()
+        }
+    }
+
+    @Test
+    fun `should execute 100 scripts in a loop`() = runTest {
+        // given
+        val executor = GolemScriptExecutor()
+
+        // when/then
+        repeat(100) { i ->
+            val script = $$"""
+                val index = $$i
+                "result-$index"
+            """.trimIndent()
+
+            val result = executor.execute(script)
+            result should {
+                be<ExecuteGolemScript.Result.Value>()
+                have(value == "result-$i")
+            }
         }
     }
 

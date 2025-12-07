@@ -59,9 +59,18 @@ data class ExecuteGolemScript(
 
     sealed interface Result {
 
-        class Error(val message: String) : Result
+        // TODO add duration in the future, so it goes into meta information regarding intent execution time
+//        val duration: Duration
 
-        class Value(val value: Any?) : Result
+        class Error(
+            val message: String,
+//            override val duration: Duration
+        ) : Result
+
+        class Value(
+            val value: Any?,
+//            override val duration: Duration
+        ) : Result
 
     }
 
