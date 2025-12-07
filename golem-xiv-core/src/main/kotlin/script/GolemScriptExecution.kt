@@ -17,6 +17,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.job
 import kotlinx.coroutines.runBlocking
+import org.intellij.lang.annotations.Language
 import kotlin.concurrent.atomics.AtomicInt
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.concurrent.atomics.fetchAndIncrement
@@ -75,7 +76,7 @@ class GolemScriptExecutor {
     }
 
     suspend fun execute(
-        script: String,
+        @Language("kotlin") script: String,
         dependencies: List<Dependency<*>> = emptyList(),
     ): ExecuteGolemScript.Result {
 
@@ -129,13 +130,10 @@ class GolemScriptExecutor {
             scriptParts.imports.joinToString(separator = "\n") + "\n"
         } else {
             ""
-        } + "_golemScriptScope.async {\n${scriptParts.body.joinToString(separator = "\n")}\n}"
+        } + "_golemScriptScope.async<Any?> {\n${scriptParts.body.joinToString(separator = "\n")}\n}"
 
         suspend fun handle(): ExecuteGolemScript.Result {
-
-            val compilationResult = compile()
-
-            val result = when (compilationResult) {
+            val result = when (val compilationResult = compile()) {
                 is ResultWithDiagnostics.Success -> {
                     val compiledScript = compilationResult.value
                     evaluate(compiledScript)
@@ -277,16 +275,11 @@ class GolemScriptExecutor {
 }
 
 private fun Iterable<ScriptDiagnostic>.filterNonIgnorable() = filterNot {
-    it.ignorable
-}
-
-private val ScriptDiagnostic.ignorable
-    get() = (severity == ScriptDiagnostic.Severity.DEBUG && message.startsWithAnyOf(
+    it.severity == ScriptDiagnostic.Severity.DEBUG && it.message.startsWithAnyOf(
         "Using JDK home inferred from java.home",
         "Loading modules:"
-    )) || (severity == ScriptDiagnostic.Severity.ERROR && message.startsWith(
-        "Cannot infer type for this parameter. Specify it explicitly."
-    ))
+    )
+}
 
 private class GolemScriptErrorReporter(
     private val scriptLines: List<String>,
@@ -297,18 +290,19 @@ private class GolemScriptErrorReporter(
         phase: ExecuteGolemScript.ExecutionPhase,
         failure: ResultWithDiagnostics.Failure
     ) = buildString {
-        append("<golem-script> execution failed during phase: ${phase.name}\n")
+        append("<golem:impediment phase=\"${phase.name}\">\n")
         failure.reports.filterNonIgnorable().forEach {
             appendScriptDiagnostic(it)
         }
+        append("</golem:impediment>\n")
     }
 
     fun toFailureMessage(
         throwable: Throwable
     ) = buildString {
-        append("<golem-script> execution failed during phase: ${ExecuteGolemScript.ExecutionPhase.EVALUATION.name}\n")
+        append("<golem:impediment phase=\"${ExecuteGolemScript.ExecutionPhase.EVALUATION.name}\">\n")
         appendException(error = throwable)
-        append("\n")
+        append("</golem:impediment>\n")
     }
 
     private fun StringBuilder.appendException(
@@ -386,12 +380,10 @@ private class GolemScriptErrorReporter(
 
     private fun adjustLineNumber(
         line: Int
-    ): Int = if (line <= lastImportLine) {
-        line
-    } else if (line == scriptLines.size){
-        line - 2
-    } else {
-        line - 1
+    ): Int = when {
+        line <= lastImportLine -> line
+        line == scriptLines.size -> maxOf(1, line - 2)
+        else -> maxOf(1, line - 1)
     }
 
     private fun StringBuilder.appendLocation(
@@ -416,19 +408,28 @@ private class GolemScriptErrorReporter(
         (startLine..endLine).forEach { line ->
             append("  | ")
             val lineIndexOffset = if ((line <= lastImportLine) || (startLine == (scriptLines.size - 1))) 1 else 0
-            val scriptLine = scriptLines[line - lineIndexOffset]
+            val lineIndex = line - lineIndexOffset
+            // Guard against out of bounds access
+            if (lineIndex < 0 || lineIndex >= scriptLines.size) {
+                append("<error>Unable to display source line</error>\n")
+                return@forEach
+            }
+            val scriptLine = scriptLines[lineIndex]
             val lineBuilder = StringBuilder(scriptLine)
             if (location.start.line == scriptLines.size) {
-                lineBuilder.append("<error/>")
+                lineBuilder.append("<error></error>")
             } else {
                 if (line == startLine) {
-                    lineBuilder.insert(location.start.col - 1, "<error>")
+                    val startCol = (location.start.col - 1).coerceIn(0, lineBuilder.length)
+                    lineBuilder.insert(startCol, "<error>")
                     if ((line == endLine) && (location.end != null)) {
-                        lineBuilder.insert(location.end!!.col + 6, "</error>")
+                        val endCol = (location.end!!.col + 6).coerceIn(0, lineBuilder.length)
+                        lineBuilder.insert(endCol, "</error>")
                     }
                 }
                 if ((line != startLine) && (line == endLine)) { // TODO should it be else without first expression?
-                    lineBuilder.insert(location.end!!.col - 1, "</error>")
+                    val endCol = (location.end!!.col - 1).coerceIn(0, lineBuilder.length)
+                    lineBuilder.insert(endCol, "</error>")
                 }
             }
 
