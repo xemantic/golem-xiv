@@ -11,6 +11,7 @@ include(
     ":golem-xiv-api-websocket",
     ":golem-xiv-api-backend",
     ":golem-xiv-api-client",
+    ":golem-xiv-logging",
     ":golem-xiv-core",
     ":golem-xiv-storage-file",
     ":golem-xiv-neo4j",

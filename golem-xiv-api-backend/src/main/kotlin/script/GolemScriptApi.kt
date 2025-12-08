@@ -117,7 +117,7 @@ interface Memory {
      * @param block the memory builder DSL.
      * @return the final String expression of the DSL.
      */
-    suspend fun remember(block: suspend MemoryBuilder.() -> String): String
+    suspend fun <T> remember(block: suspend MemoryBuilder.() -> T): T
 
     /**
      * Example usage:

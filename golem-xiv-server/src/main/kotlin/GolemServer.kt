@@ -16,6 +16,7 @@ import com.xemantic.ai.golem.cognizer.anthropic.AnthropicToolUseCognizer
 import com.xemantic.ai.golem.core.GolemXiv
 import com.xemantic.ai.golem.core.cognition.DefaultCognitionRepository
 import com.xemantic.ai.golem.core.script.GolemScriptDependencyProvider
+import com.xemantic.ai.golem.logging.initializeLogging
 import com.xemantic.ai.golem.neo4j.Neo4jCognitiveMemory
 import com.xemantic.ai.golem.neo4j.Neo4jAgentIdentity
 import com.xemantic.ai.golem.neo4j.Neo4jMemory
@@ -28,7 +29,7 @@ import io.ktor.http.HttpMethod
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationStopPreparing
-import io.ktor.server.application.ApplicationStopped
+//import io.ktor.server.application.ApplicationStopped
 import io.ktor.server.application.install
 import io.ktor.server.config.property
 import io.ktor.server.http.content.CompressedFileType
@@ -56,14 +57,16 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import org.apache.logging.log4j.LogManager
 import org.neo4j.driver.AuthTokens
 import org.neo4j.driver.GraphDatabase
 import java.io.File
 
 val logger = KotlinLogging.logger {}
 
-fun main(args: Array<String>) = io.ktor.server.netty.EngineMain.main(args)
+fun main(args: Array<String>) {
+    initializeLogging()
+    io.ktor.server.netty.EngineMain.main(args)
+}
 
 fun Application.module() {
 
@@ -129,9 +132,10 @@ fun Application.module() {
         driver.close()
     }
 
-    monitor.subscribe(ApplicationStopped) {
-        LogManager.shutdown()
-    }
+    // TODO do we need to shutdown logback?
+//    monitor.subscribe(ApplicationStopped) {
+//        LogManager.shutdown()
+//    }
 
     install(CallLogging) {
         level = org.slf4j.event.Level.DEBUG

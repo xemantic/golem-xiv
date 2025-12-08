@@ -105,6 +105,7 @@ interface CognitionRepository {
 interface CognitiveMemory {
 
     suspend fun createCognition(
+        constitution: List<String>,
         parentId: Long? = null
     ): CognitionInfo
 

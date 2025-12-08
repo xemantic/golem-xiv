@@ -30,14 +30,10 @@ class DefaultCognitionRepository(
     override suspend fun initiateCognition(
         constitution: List<String>,
         parentId: Long?
-    ): CognitionInfo {
-        val cognitionInfo = memory.createCognition(parentId)
-        storage.createCognition(
-            cognitionId = cognitionInfo.id,
-            constitution = constitution
-        )
-        return cognitionInfo
-    }
+    ): CognitionInfo = memory.createCognition(
+        constitution = constitution,
+        parentId = parentId
+    )
 
     override suspend fun appendPhenomena(
         cognitionId: Long,
