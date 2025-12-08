@@ -14,6 +14,7 @@ import com.xemantic.ai.golem.api.backend.CognitionInfo
 import com.xemantic.ai.golem.api.backend.CognitiveMemory
 import com.xemantic.ai.golem.api.backend.CulminatedWithIntent
 import com.xemantic.ai.golem.api.backend.PhenomenalExpressionInfo
+import com.xemantic.ai.golem.api.backend.StorageType
 import com.xemantic.neo4j.driver.Neo4jOperations
 import com.xemantic.neo4j.driver.asInstant
 import com.xemantic.neo4j.driver.singleOrNull
@@ -410,6 +411,53 @@ class Neo4jCognitiveMemory(
         return culminatedWithIntent
     }
 
+    override suspend fun appendPhenomenonContent(
+        phenomenonId: Long,
+        content: String,
+        type: StorageType
+    ) {
+        val propertyName = type.toPropertyName()
+        neo4j.write { tx ->
+            tx.run(
+                query = $$"""
+                    MATCH (phenomenon:Phenomenon) WHERE id(phenomenon) = $phenomenonId
+                    SET phenomenon.$$propertyName = coalesce(phenomenon.$$propertyName, '') + $content
+                """.trimIndent(),
+                parameters = mapOf(
+                    "phenomenonId" to phenomenonId,
+                    "content" to content
+                )
+            )
+        }
+    }
+
+    override suspend fun readPhenomenonContent(
+        phenomenonId: Long,
+        type: StorageType
+    ): String {
+        val propertyName = type.toPropertyName()
+        return neo4j.read { tx ->
+            tx.run(
+                query = $$"""
+                    MATCH (phenomenon:Phenomenon) WHERE id(phenomenon) = $phenomenonId
+                    RETURN phenomenon.$$propertyName AS content
+                """.trimIndent(),
+                parameters = mapOf(
+                    "phenomenonId" to phenomenonId
+                )
+            ).single()["content"].let { value ->
+                if (value.isNull) "" else value.asString()
+            }
+        }
+    }
+
+}
+
+private fun StorageType.toPropertyName(): String = when (this) {
+    StorageType.TEXT -> "text"
+    StorageType.SYSTEM_ID -> "systemId"
+    StorageType.INTENT_PURPOSE -> "purpose"
+    StorageType.INTENT_CODE -> "code"
 }
 
 private fun toEpistemicAgent(

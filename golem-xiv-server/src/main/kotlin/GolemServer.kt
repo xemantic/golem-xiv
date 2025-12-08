@@ -20,7 +20,6 @@ import com.xemantic.ai.golem.logging.initializeLogging
 import com.xemantic.ai.golem.neo4j.Neo4jCognitiveMemory
 import com.xemantic.ai.golem.neo4j.Neo4jAgentIdentity
 import com.xemantic.ai.golem.neo4j.Neo4jMemory
-import com.xemantic.ai.golem.storage.file.FileCognitionStorage
 import com.xemantic.neo4j.driver.DispatchedNeo4jOperations
 import io.github.oshai.kotlinlogging.KLogger
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -59,7 +58,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.neo4j.driver.AuthTokens
 import org.neo4j.driver.GraphDatabase
-import java.io.File
 
 val logger = KotlinLogging.logger {}
 
@@ -92,8 +90,7 @@ fun Application.module() {
     val repository = DefaultCognitionRepository(
         memory = Neo4jCognitiveMemory(
             neo4j = neo4j
-        ),
-        storage = FileCognitionStorage(File("var/cognitions"))
+        )
     )
 
     val anthropic = Anthropic()

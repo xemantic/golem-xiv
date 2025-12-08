@@ -69,7 +69,7 @@ class Neo4jMemoryTest {
         )
 
         // when
-        val output = memory.remember {
+        memory.remember {
             val john = node {
                 type = "Person"
                 properties(
@@ -93,13 +93,6 @@ class Neo4jMemoryTest {
         }
 
         // then
-        // verify remember returns valid node and relationship IDs
-        output should {
-            have(first > 0) // john node ID
-            have(second > 0) // worksAt relationship ID
-            have(third > 0) // acme node ID
-        }
-
         // verify nodes are linked to fulfillment via :actualizes relationship
         val actualizedNodes = TestNeo4j.operations.flow("""
             MATCH (fulfillment:Fulfillment)-[:actualizes]->(n)

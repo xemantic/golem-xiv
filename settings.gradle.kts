@@ -13,7 +13,6 @@ include(
     ":golem-xiv-api-client",
     ":golem-xiv-logging",
     ":golem-xiv-core",
-    ":golem-xiv-storage-file",
     ":golem-xiv-neo4j",
     ":golem-xiv-cognizer-anthropic",
 //    ":golem-xiv-cognizer-dashscope",

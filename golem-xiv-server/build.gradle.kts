@@ -16,7 +16,6 @@ dependencies {
     implementation(project(":golem-xiv-api"))
     implementation(project(":golem-xiv-api-websocket"))
     implementation(project(":golem-xiv-api-backend"))
-    implementation(project(":golem-xiv-storage-file"))
     implementation(project(":golem-xiv-neo4j"))
     implementation(project(":golem-xiv-cognizer-anthropic"))
     implementation(project(":golem-xiv-playwright"))

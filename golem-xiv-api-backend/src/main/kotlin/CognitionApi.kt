@@ -156,6 +156,17 @@ interface CognitiveMemory {
         cognitionId: Long
     ): CulminatedWithIntent?
 
+    suspend fun appendPhenomenonContent(
+        phenomenonId: Long,
+        content: String,
+        type: StorageType
+    )
+
+    suspend fun readPhenomenonContent(
+        phenomenonId: Long,
+        type: StorageType
+    ): String
+
 }
 
 data class CulminatedWithIntent(
