@@ -22,9 +22,9 @@ class Neo4jMemory(
     private val fulfillmentId: Long
 ) : Memory {
 
-    override suspend fun remember(
-        block: suspend MemoryBuilder.() -> String
-    ): String = neo4j.write {  tx ->
+    override suspend fun <T> remember(
+        block: suspend MemoryBuilder.() -> T
+    ): T = neo4j.write { tx ->
         DefaultMemoryBuilder(tx).run {
             block()
         }

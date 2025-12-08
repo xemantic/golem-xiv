@@ -29,16 +29,17 @@ class Neo4jCognitiveMemory(
     private val logger = KotlinLogging.logger {}
 
     override suspend fun createCognition(
+        constitution: List<String>,
         parentId: Long?,
     ): CognitionInfo = neo4j.write { tx ->
         if (parentId != null) {
-            //tx.createCognitionWithParent(parentId)
             tx.run(
                 query = $$"""
                     MATCH (parent:Cognition) WHERE id(parent) = $parentId
                     CREATE (cognition:Cognition {
                         title: 'Untitled',
                         summary: '',
+                        constitution: $constitution,
                         initiationMoment: datetime()
                     })
                     CREATE (parent)-[:hasChild]->(cognition)
@@ -47,19 +48,24 @@ class Neo4jCognitiveMemory(
                         cognition.initiationMoment AS initiationMoment
                 """.trimIndent(),
                 parameters = mapOf(
-                    "parentId" to parentId
+                    "parentId" to parentId,
+                    "constitution" to constitution
                 )
             ).single()
         } else {
             tx.run(
                 query = $$"""
                 CREATE (cognition:Cognition {
+                    constitution: $constitution,
                     initiationMoment: datetime()
                 })
                 RETURN
                     id(cognition) AS id,
                     cognition.initiationMoment AS initiationMoment
-            """.trimIndent()
+            """.trimIndent(),
+                parameters = mapOf(
+                    "constitution" to constitution
+                )
             ).single()
         }.let {
             CognitionInfo(

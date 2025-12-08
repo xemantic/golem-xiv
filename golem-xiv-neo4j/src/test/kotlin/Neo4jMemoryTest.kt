@@ -5,30 +5,70 @@
  * Unauthorized reproduction or distribution is prohibited.
  */
 
-import com.xemantic.ai.golem.neo4j.Neo4jMemory
-import kotlinx.coroutines.test.runTest
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
-import org.neo4j.driver.AuthTokens
-import org.neo4j.driver.Driver
-import org.neo4j.driver.GraphDatabase
-import org.neo4j.harness.Neo4j
-import org.neo4j.harness.junit.extension.Neo4jExtension
-import kotlin.test.Ignore
-import kotlin.use
+package com.xemantic.ai.golem.neo4j
 
-@ExtendWith(Neo4jExtension::class)
+import com.xemantic.kotlin.test.have
+import com.xemantic.kotlin.test.should
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.test.runTest
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Test
+
 class Neo4jMemoryTest {
 
+    @AfterEach
+    fun cleanDatabase() {
+        TestNeo4j.cleanDatabase()
+    }
+
     @Test
-    @Ignore
-    fun rememberFact(neo4j: Neo4j) = runNeo4jTest(neo4j) { driver ->
+    fun `should remember fact`() = runTest {
+        // given
+        TestNeo4j.populate("""
+            CREATE (cognition:Cognition {
+                title: 'Test Cognition',
+                summary: '',
+                constitution: ['test constitution'],
+                initiationMoment: datetime()
+            })
+            CREATE (agent:EpistemicAgent:AI {
+                model: 'test-model',
+                vendor: 'test-vendor'
+            })
+            CREATE (expression:PhenomenalExpression {
+                title: 'Expression 1',
+                initiationMoment: datetime()
+            })
+            CREATE (intent:Phenomenon:Intent {
+                title: 'Intent 1'
+            })
+            CREATE (fulfillment:Phenomenon:Fulfillment {
+                title: 'Fulfillment 1'
+            })
+            CREATE (agent)-[:creator]->(expression)
+            CREATE (cognition)-[:hasPart]->(expression)
+            CREATE (expression)-[:hasPart]->(intent)
+            CREATE (expression)-[:hasPart]->(fulfillment)
+            CREATE (fulfillment)-[:fulfills]->(intent)
+        """.trimIndent())
+
+        val (cognitionId, fulfillmentId) = TestNeo4j.operations.read { tx ->
+            tx.run("""
+                MATCH (cognition:Cognition)
+                MATCH (fulfillment:Phenomenon:Fulfillment)
+                RETURN id(cognition) AS cognitionId, id(fulfillment) AS fulfillmentId
+            """.trimIndent()).single().let { record ->
+                record["cognitionId"].asLong() to record["fulfillmentId"].asLong()
+            }
+        }
 
         val memory = Neo4jMemory(
-            driver = driver,
-            cognitionId = 42L,
-            fulfillmentId = 43L
+            neo4j = TestNeo4j.operations,
+            cognitionId = cognitionId,
+            fulfillmentId = fulfillmentId
         )
+
+        // when
         val output = memory.remember {
             val john = node {
                 type = "Person"
@@ -49,28 +89,50 @@ class Neo4jMemoryTest {
                 source = "Conversation with John"
                 confidence = 1.0
             }
-            "john: $john, acme: $acme, worksAt: $worksAt"
+            Triple(john, worksAt, acme)
         }
-        println(output)
 
-        val output2 = memory.query("""
-            MATCH (subject)-[predicate]->(target) 
-            RETURN predicate, subject, target
-        """.trimIndent()) { result ->
-            val record = result.single()
-
-            val relationship = record["predicate"].asRelationship()
-            val subject = record["subject"].asNode()
-            val target = record["target"].asNode()
-            Triple(subject, relationship, target)
+        // then
+        // verify remember returns valid node and relationship IDs
+        output should {
+            have(first > 0) // john node ID
+            have(second > 0) // worksAt relationship ID
+            have(third > 0) // acme node ID
         }
-        println(output2)
+
+        // verify nodes are linked to fulfillment via :actualizes relationship
+        val actualizedNodes = TestNeo4j.operations.flow("""
+            MATCH (fulfillment:Fulfillment)-[:actualizes]->(n)
+            RETURN labels(n) AS labels, n.name AS name
+            ORDER BY name
+        """.trimIndent()).toList()
+
+        actualizedNodes should {
+            have(size == 2)
+            this[0] should {
+                have(get("labels").asList { it.asString() } == listOf("Organization"))
+                have(get("name").asString() == "Acme")
+            }
+            this[1] should {
+                have(get("labels").asList { it.asString() } == listOf("Person"))
+                have(get("name").asString() == "John Smith")
+            }
+        }
+
+        // verify the worksAt relationship was created
+        val relationships = TestNeo4j.operations.flow("""
+            MATCH (person:Person)-[r:worksAt]->(org:Organization)
+            RETURN person.name AS personName, org.name AS orgName
+        """.trimIndent()).toList()
+
+        relationships should {
+            have(size == 1)
+            this[0] should {
+                have(get("personName").asString() == "John Smith")
+                have(get("orgName").asString() == "Acme")
+            }
+        }
+
     }
 
-}
-
-private fun runNeo4jTest(neo4j: Neo4j, block: suspend (driver: Driver) -> Unit) = runTest {
-    GraphDatabase.driver(neo4j.boltURI(), AuthTokens.none()).use { driver ->
-        block(driver)
-    }
 }
