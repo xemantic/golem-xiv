@@ -19,7 +19,7 @@ import com.xemantic.ai.golem.web.memory.HtmlMemoryView
 import com.xemantic.ai.golem.web.navigation.HtmlHeaderView
 import com.xemantic.ai.golem.web.navigation.HtmlNavigation
 import com.xemantic.ai.golem.web.navigation.HtmlNotFoundView
-import com.xemantic.ai.golem.web.navigation.HtmlSidebarView
+import com.xemantic.ai.golem.web.navigation.HtmlNavigationRailView
 import io.github.oshai.kotlinlogging.KotlinLoggingConfiguration
 import io.github.oshai.kotlinlogging.Level
 import io.ktor.http.URLProtocol
@@ -57,12 +57,12 @@ fun main() {
         navigationTargetSink = navigationTargets
     )
 
-    val sidebarView = HtmlSidebarView()
+    val navigationRailView = HtmlNavigationRailView()
     val headerView = HtmlHeaderView()
     val view = HtmlMainView(
         document.body!!,
         headerView,
-        sidebarView
+        navigationRailView
     )
 
     val localStorage = BrowserLocalStorage()
@@ -77,7 +77,7 @@ fun main() {
         config = config,
         view,
         headerView,
-        sidebarView,
+        navigationRailView,
         navigation,
         navigationTargets = navigationTargets,
         memoryViewProvider = { HtmlMemoryView() },

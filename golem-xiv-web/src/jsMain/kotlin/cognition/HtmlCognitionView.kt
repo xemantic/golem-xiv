@@ -24,12 +24,14 @@ import com.xemantic.ai.golem.web.ui.Icon
 import com.xemantic.ai.golem.web.view.HasRootHtmlElement
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
+import kotlinx.html.article
 import kotlinx.html.div
 import kotlinx.html.dom.append
 import kotlinx.html.js.details
 import kotlinx.html.js.div
 import kotlinx.html.js.summary
 import kotlinx.html.js.textArea
+import kotlinx.html.nav
 import org.w3c.dom.HTMLDivElement
 import org.w3c.dom.HTMLTextAreaElement
 import org.w3c.dom.events.InputEvent
@@ -78,7 +80,7 @@ class HtmlCognitionView(
         agent: EpistemicAgent
     ): ExpressionAppender {
 
-        val messageDiv = dom.div("expression round ${agent.cssClass()}") {
+        val messageDiv = dom.div("expression surface-container round ${agent.cssClass()}") {
             div("expression-header") {
                 when (agent) {
                     is EpistemicAgent.Human -> { Icon("person"); +"You" }
@@ -106,9 +108,19 @@ class HtmlCognitionView(
                 return object : IntentAppender {
 
                     override fun purposeAppender(): TextAppender {
-                        val purposeDiv = dom.summary("purpose round")
+                        val purposeTextDiv = dom.div("max") {
+
+                        }
+                        val purposeDiv = dom.summary {
+                            article("round primary no-elevate") {
+                                nav {
+                                    inject(purposeTextDiv)
+                                    Icon("keyboard_arrow_down")
+                                }
+                            }
+                        }
                         intentDiv.append(purposeDiv)
-                        return { purposeDiv.append(it) }
+                        return { purposeTextDiv.append(it) }
                     }
 
                     override fun codeAppender(): TextAppender {

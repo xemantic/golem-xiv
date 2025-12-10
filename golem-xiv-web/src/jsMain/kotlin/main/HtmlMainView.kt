@@ -15,7 +15,7 @@ import com.xemantic.ai.golem.presenter.util.Action
 import com.xemantic.ai.golem.web.js.dom
 import com.xemantic.ai.golem.web.js.eventFlow
 import com.xemantic.ai.golem.web.navigation.HtmlHeaderView
-import com.xemantic.ai.golem.web.navigation.HtmlSidebarView
+import com.xemantic.ai.golem.web.navigation.HtmlNavigationRailView
 import com.xemantic.ai.golem.web.cognition.HtmlCognitionView
 import com.xemantic.ai.golem.web.view.HasRootHtmlElement
 import kotlinx.browser.window
@@ -28,7 +28,7 @@ import org.w3c.dom.events.Event
 class HtmlMainView(
     private val body: HTMLElement,
     headerView: HtmlHeaderView,
-    sidebarView: HtmlSidebarView,
+    navigationRailView: HtmlNavigationRailView,
 ): MainView {
 
     private val mainElement = dom.main()
@@ -37,8 +37,8 @@ class HtmlMainView(
 
     init {
         body.append(
+            navigationRailView.element,
             headerView.element,
-            sidebarView.element,
             mainElement,
             overlayElement
         )

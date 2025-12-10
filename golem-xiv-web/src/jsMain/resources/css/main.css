@@ -1,9 +1,37 @@
-@import url('https://fonts.googleapis.com/css2?family=Libertinus+Sans:ital,wght@0,400;0,700;1,400&family=Libertinus+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Ubuntu+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined&icon_names=analytics,close,computer,dark_mode,graph_3,light_mode,menu,menu_open,mic,network_intel_node,person,send,settings,smart_toy&display=block');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined&icon_names=analytics,close,computer,dark_mode,graph_3,home,keyboard_arrow_down,light_mode,menu,menu_open,mic,network_intel_node,person,send,settings,smart_toy&display=block');
 
 :root {
-    --font: "Libertinus Serif", sans-serif;
     --cognition-width: 50rem;
+}
+
+/* Semi-transparent blurred surface containers - Light theme */
+:root, body.light {
+    --surface-container-lowest: rgba(255, 255, 255, 0.7);
+    --surface-container-low: rgba(247, 242, 247, 0.7);
+    --surface-container: rgba(242, 236, 241, 0.7);
+    --surface-container-high: rgba(236, 231, 235, 0.7);
+    --surface-container-highest: rgba(230, 225, 230, 0.7);
+}
+
+/* Semi-transparent blurred surface containers - Dark theme */
+body.dark {
+    --surface-container-lowest: rgba(15, 14, 17, 0.7);
+    --surface-container-low: rgba(28, 27, 30, 0.7);
+    --surface-container: rgba(32, 31, 34, 0.7);
+    --surface-container-high: rgba(43, 41, 45, 0.7);
+    --surface-container-highest: rgba(54, 52, 56, 0.7);
+}
+
+/* Apply backdrop blur to surface container elements */
+.surface-container,
+.surface-container-low,
+.surface-container-high,
+.surface-container-lowest,
+.surface-container-highest,
+nav.surface-container,
+.prompt.surface-container {
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
 }
 
 code {

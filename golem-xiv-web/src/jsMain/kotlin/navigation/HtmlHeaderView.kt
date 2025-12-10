@@ -24,11 +24,8 @@ class HtmlHeaderView() : HeaderView, HasRootHtmlElement {
         i { +"menu" }
     }
 
-    override val element = dom.nav(classes = "app-navigation-bar top left-align surface-container") {
+    override val element = dom.nav(classes = "app-navigation-bar top s left-align") {
         inject(menuButton)
-        h6(classes = "max center-align") {
-            +"Golem XIV"
-        }
     }
 
     override val toggleMenuClicks: Flow<Action> = menuButton.actions()
