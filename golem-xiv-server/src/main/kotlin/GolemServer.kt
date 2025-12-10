@@ -93,7 +93,13 @@ fun Application.module() {
         )
     )
 
-    val anthropic = Anthropic()
+    val anthropic = Anthropic {
+        anthropicBeta = listOf(
+            "fine-grained-tool-streaming-2025-05-14",
+            "token-efficient-tools-2025-02-19",
+            "prompt-caching-2024-07-31"
+        )
+    }
 
     val anthropicCognizer = AnthropicToolUseCognizer(
         anthropic = anthropic,

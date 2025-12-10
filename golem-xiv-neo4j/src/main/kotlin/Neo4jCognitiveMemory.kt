@@ -222,14 +222,13 @@ class Neo4jCognitiveMemory(
     ): String? = neo4j.read { tx ->
         tx.run(
             query = $$"""
-            MATCH (cognition:Cognition) WHERE id(cognition) = $cognitionId
-            RETURN
-                cognition.title AS title
+                MATCH (cognition:Cognition) WHERE id(cognition) = $cognitionId
+                RETURN cognition.title AS title
             """.trimIndent(),
             parameters = mapOf(
                 "cognitionId" to cognitionId
             )
-        ).single()["title"].asString()
+        ).singleOrNull()?.get("title")?.asString()
     }
 
     override suspend fun setCognitionTitle(
@@ -320,10 +319,10 @@ class Neo4jCognitiveMemory(
             }.toSet()
         )
 
-        val phenomena = record["phenomenaWithIntents"].asList {
-            val itemMap = it.asMap()
+        val phenomena = record["phenomenaWithIntents"].asList { item ->
+            val itemMap = item.asMap()
             val phenomenonValue = itemMap["phenomenon"]
-            val node = phenomenonValue as Node
+            val node = phenomenonValue as? Node ?: return@asList null
             val labels = node.labels()
             when {
                 labels.contains("Text") -> Phenomenon.Text(
@@ -348,7 +347,7 @@ class Neo4jCognitiveMemory(
                     "Unsupported phenomenon: $labels"
                 )
             }
-        }
+        }.filterNotNull()
 
         PhenomenalExpression(
             id = record["expressionId"].asLong(),

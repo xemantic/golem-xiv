@@ -54,7 +54,7 @@ class HtmlCognitionView(
     )
 
     private val promptInput = dom.textArea {
-        placeholder = "Ask me anything..."
+        placeholder = "Another question from the carbon side..."
     }
 
     private val promptDiv = dom.div(classes = "prompt surface-container round") {
