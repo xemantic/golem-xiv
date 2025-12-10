@@ -18,9 +18,9 @@ import com.xemantic.ai.golem.web.js.actions
 import com.xemantic.ai.golem.web.js.dom
 import com.xemantic.ai.golem.web.js.eventFlow
 import com.xemantic.ai.golem.web.js.inject
+import com.xemantic.ai.golem.web.ui.IconButton
 import com.xemantic.ai.golem.web.ui.Div
 import com.xemantic.ai.golem.web.ui.Icon
-import com.xemantic.ai.golem.web.ui.IconButton
 import com.xemantic.ai.golem.web.view.HasRootHtmlElement
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
@@ -55,23 +55,22 @@ class HtmlCognitionView(
         placeholder = "Ask me anything..."
     }
 
-    private val promptDiv = dom.div("prompt") {
+    private val promptDiv = dom.div(classes = "prompt surface-container round") {
         inject(promptInput)
         div("prompt-controls") {
             div("prompt-options") {
-                inject(
-                    micButton,
-                    expressButton
-                )
+                inject(micButton)
             }
-            div("prompt-actions")
+            div("prompt-actions") {
+                inject(expressButton)
+            }
         }
     }
 
     override val element = dom.div("cognition") {
         inject(
             phenomenaDiv,
-                    promptDiv
+            promptDiv
         )
     }
 
@@ -79,7 +78,7 @@ class HtmlCognitionView(
         agent: EpistemicAgent
     ): ExpressionAppender {
 
-        val messageDiv = dom.div("expression ${agent.cssClass()}") {
+        val messageDiv = dom.div("expression round ${agent.cssClass()}") {
             div("expression-header") {
                 when (agent) {
                     is EpistemicAgent.Human -> { Icon("person"); +"You" }
@@ -94,7 +93,7 @@ class HtmlCognitionView(
         return object : ExpressionAppender {
 
             override fun textAppender(): TextAppender {
-                val textDiv = dom.div("text")
+                val textDiv = Div("text")
                 messageDiv.append(textDiv)
                 return  { textDiv.append(it) }
             }
@@ -107,13 +106,13 @@ class HtmlCognitionView(
                 return object : IntentAppender {
 
                     override fun purposeAppender(): TextAppender {
-                        val purposeDiv = dom.summary("purpose")
+                        val purposeDiv = dom.summary("purpose round")
                         intentDiv.append(purposeDiv)
                         return { purposeDiv.append(it) }
                     }
 
                     override fun codeAppender(): TextAppender {
-                        val codeDiv = dom.div("code")
+                        val codeDiv = dom.div("code round")
                         intentDiv.append(codeDiv)
                         return { codeDiv.append(it) }
                     }
@@ -130,12 +129,11 @@ class HtmlCognitionView(
         println("adding expression: $expression")
         phenomenaDiv.append {
             val role = if (expression.agent is EpistemicAgent.AI) {
-                "assistant"
+                "ai"
             } else {
-                "user"
+                "human"
             }
-            // TODO this should be changed a lot
-            div("message $role") {
+            div("expression round $role") {
                 expression.phenomena.forEach {
                     div("content") {
                         when (it) {

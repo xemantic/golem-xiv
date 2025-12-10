@@ -46,8 +46,14 @@ class HtmlMainView(
 
     override fun theme(theme: Theme) {
         when (theme) {
-            Theme.LIGHT -> body.classList.remove("dark-theme")
-            Theme.DARK -> body.classList.add("dark-theme")
+            Theme.LIGHT -> {
+                body.classList.remove("dark")
+                body.classList.add("light")
+            }
+            Theme.DARK -> {
+                body.classList.remove("light")
+                body.classList.add("dark")
+            }
         }
     }
 

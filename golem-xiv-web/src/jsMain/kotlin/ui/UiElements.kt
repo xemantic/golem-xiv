@@ -12,10 +12,10 @@ import kotlinx.browser.document
 import kotlinx.html.FlowContent
 import kotlinx.html.a
 import kotlinx.html.dom.create
+import kotlinx.html.i
 import kotlinx.html.js.button
 import kotlinx.html.js.div
 import kotlinx.html.js.span
-import kotlinx.html.span
 import org.w3c.dom.HTMLAnchorElement
 import org.w3c.dom.HTMLButtonElement
 import org.w3c.dom.HTMLDivElement
@@ -23,7 +23,7 @@ import org.w3c.dom.HTMLSpanElement
 
 @Suppress("FunctionName")
 fun FlowContent.Icon(name: String) {
-    span("material-symbols-outlined") {
+    i {
         +name
     }
 }
@@ -31,10 +31,10 @@ fun FlowContent.Icon(name: String) {
 @Suppress("FunctionName")
 fun Icon(
     name: String
-): HTMLSpanElement = document.create.span(
-    classes = "material-symbols-outlined"
-) {
-    +name
+): HTMLSpanElement = document.create.span {
+    i {
+        +name
+    }
 }
 
 @Suppress("FunctionName")
@@ -43,10 +43,10 @@ fun Button(
     icon: String? = null,
     ariaLabel: String
 ): HTMLButtonElement = document.create.button(
-    classes = "action-button"
+    classes = "round"
 ) {
     if (icon != null) {
-        Icon(icon)
+        i { +icon }
     }
     +label
     this.ariaLabel = ariaLabel
@@ -57,10 +57,10 @@ fun IconButton(
     icon: String? = null,
     ariaLabel: String
 ): HTMLButtonElement = document.create.button(
-    classes = "icon-button"
+    classes = "circle transparent"
 ) {
     if (icon != null) {
-        Icon(icon)
+        i { +icon }
     }
     this.ariaLabel = ariaLabel
 }
@@ -70,9 +70,9 @@ fun Link(
     label: String,
     icon: String? = null,
     ariaLabel: String
-): HTMLAnchorElement = document.create.a(classes = "navigation-link") {
+): HTMLAnchorElement = document.create.a(classes = "wave round") {
     if (icon != null) {
-        Icon(icon)
+        i { +icon }
     }
     +label
     this.ariaLabel = ariaLabel

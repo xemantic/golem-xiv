@@ -11,70 +11,79 @@ import com.xemantic.ai.golem.presenter.environment.Theme
 import com.xemantic.ai.golem.presenter.navigation.SidebarView
 import com.xemantic.ai.golem.presenter.util.Action
 import com.xemantic.ai.golem.web.js.actions
+import com.xemantic.ai.golem.web.js.ariaLabel
 import com.xemantic.ai.golem.web.js.dom
 import com.xemantic.ai.golem.web.js.inject
 import com.xemantic.ai.golem.web.js.resizes
-import com.xemantic.ai.golem.web.ui.Button
-import com.xemantic.ai.golem.web.ui.Link
 import com.xemantic.ai.golem.web.view.HasRootHtmlElement
 import kotlinx.browser.window
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.html.*
+import org.w3c.dom.HTMLDialogElement
 
 class HtmlSidebarView() : SidebarView, HasRootHtmlElement {
 
-    private val cognitions = Button(
-        label = "Cognitions",
-        icon = "analytics",
+    private val cognitionsItem = dom.li(classes = "wave round") {
+        role = "button"
         ariaLabel = "Cognition overview"
-    )
+        i { +"analytics" }
+        span { +"Cognitions" }
+    }
 
-    private val initiateCognitionButton = Button(
-        label = "Initiate cognition",
-        icon = "network_intel_node",
+    private val initiateCognitionItem = dom.li(classes = "wave round") {
+        role = "button"
         ariaLabel = "Initiate cognitive process"
-    )
+        i { +"network_intel_node" }
+        span { +"Initiate cognition" }
+    }
 
-    private val memoryLink = Link(
-        label = "Memory",
-        icon = "graph_3",
+    private val memoryItem = dom.li(classes = "wave round") {
+        role = "button"
         ariaLabel = "Open memory graph"
-    )
+        i { +"graph_3" }
+        span { +"Memory" }
+    }
 
-    private val settings = Button(
-        label = "Settings",
-        icon = "settings",
+    private val settingsItem = dom.li(classes = "wave round") {
+        role = "button"
         ariaLabel = "Settings"
-    )
-
-    private val conversationList = dom.ul("cognition-list") {
-        li("no-cognitions") {
-            +"No cognitions initiated"
-        }
+        i { +"settings" }
+        span { +"Settings" }
     }
 
     private val themeSwitcher = ThemeSwitcher()
 
-    override val element = dom.aside("sidebar sidebar-hidden") {
-        div("sidebar-header") {
-            h2("Conversation")
-            inject(
-                cognitions,
-                initiateCognitionButton,
-                memoryLink,
-                settings
-            )
-        }
-        div("sidebar-content") {
-            inject(conversationList)
-        }
-        div("sidebar-footer") {
-            inject(themeSwitcher.element)
-        }
+    private val menuCloseButton = dom.button(classes = "app-menu circle transparent") {
+        ariaLabel = "Close menu"
+        i { +"menu_open" }
     }
 
-    override val memoryActions: Flow<Action> = memoryLink.actions()
+    override val element = dom.dialog(classes = "app-navigation-drawer left") {
+        role = "navigation"
+        ariaLabel = "Main navigation"
+        header {
+            nav {
+                inject(menuCloseButton)
+                h6(classes = "max") { +"Golem XIV" }
+            }
+        }
+        div(classes = "space")
+        ul(classes = "list") {
+            inject(
+                cognitionsItem,
+                initiateCognitionItem,
+                memoryItem,
+                settingsItem
+            )
+        }
+        div(classes = "max")
+        ul(classes = "list") {
+            inject(themeSwitcher.element)
+        }
+    } as HTMLDialogElement
+
+    override val memoryActions: Flow<Action> = memoryItem.actions()
 
     override var opened: Boolean = false
         get() = field
@@ -88,19 +97,19 @@ class HtmlSidebarView() : SidebarView, HasRootHtmlElement {
     }
 
     private fun updateVisibility() {
-        element.classList.remove(
-            "sidebar-hidden",
-            "sidebar-visible"
-        )
-        element.classList.add(
-            if (!opened) "sidebar-hidden" else "sidebar-visible"
-        )
+        if (opened) {
+            element.show()
+        } else {
+            element.close()
+        }
     }
 
-    override val initiateCognitionActions: Flow<Action> = initiateCognitionButton.actions()
+    override val initiateCognitionActions: Flow<Action> = initiateCognitionItem.actions()
 
     override val themeChanges: Flow<Action> = themeSwitcher.themeChanges
 
     override val resizes: Flow<Action> = window.resizes().map { Action }
+
+    val closeMenuClicks: Flow<Action> = menuCloseButton.actions()
 
 }
