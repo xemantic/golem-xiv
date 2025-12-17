@@ -12,10 +12,10 @@ application {
 }
 
 dependencies {
+    implementation(project(":golem-xiv-logging"))
     implementation(project(":golem-xiv-api"))
     implementation(project(":golem-xiv-api-websocket"))
     implementation(project(":golem-xiv-api-backend"))
-    implementation(project(":golem-xiv-storage-file"))
     implementation(project(":golem-xiv-neo4j"))
     implementation(project(":golem-xiv-cognizer-anthropic"))
     implementation(project(":golem-xiv-playwright"))
@@ -43,12 +43,6 @@ dependencies {
     implementation(libs.ktor.serialization.kotlinx.json)
 
     implementation(libs.anthropic.sdk.kotlin)
-
-    implementation(libs.log4j.api)
-
-    runtimeOnly(libs.log4j.slf4j2)
-    runtimeOnly(libs.jackson.databind)
-    runtimeOnly(libs.jackson.dataformat.yaml)
 
     testImplementation(libs.kotlin.test)
     testImplementation(libs.kotlinx.coroutines.test)

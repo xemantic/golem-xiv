@@ -7,13 +7,13 @@
 
 package com.xemantic.ai.golem.neo4j
 
-import com.xemantic.ai.golem.api.EpistemicAgent
 import com.xemantic.ai.golem.api.backend.AgentIdentity
+import com.xemantic.neo4j.driver.Neo4jOperations
+import com.xemantic.neo4j.driver.singleOrNull
 import io.github.oshai.kotlinlogging.KotlinLogging
-import org.neo4j.driver.Driver
 
 class Neo4jAgentIdentity(
-    private val driver: Driver
+    private val neo4j: Neo4jOperations
 ) : AgentIdentity {
 
     private val logger = KotlinLogging.logger {}
@@ -25,22 +25,13 @@ class Neo4jAgentIdentity(
             "AgentIdentity: getting self id"
         }
 
-        val id = driver.session().use { session ->
+        val id = neo4j.withSession { session ->
 
             val maybeId = session.executeRead { tx ->
-
-                val result = tx.run("""
+                tx.run("""
                     MATCH (self:EpistemicAgent:AI:Self)
                     RETURN id(self) as id
-                """.trimIndent())
-
-                if (result.hasNext()) {
-                    result.single()["id"].asLong()
-                } else {
-                    null
-
-
-                }
+                """.trimIndent()).singleOrNull()?.get("id")?.asLong()
             }
 
             if (maybeId != null) {
@@ -52,13 +43,12 @@ class Neo4jAgentIdentity(
                 }
 
                 session.executeWrite { tx ->
-                    val result = tx.run("""
+                    tx.run("""
                         CREATE (self:EpistemicAgent:AI:Self {
                             initiationMoment: datetime()
                         })
                         RETURN id(self) as id
-                    """.trimIndent())
-                    result.single()["id"].asLong()
+                    """.trimIndent()).single()["id"].asLong()
                 }
 
             }
@@ -79,22 +69,13 @@ class Neo4jAgentIdentity(
             "AgentIdentity: getting user id"
         }
 
-        val id = driver.session().use { session ->
+        val id = neo4j.withSession { session ->
 
             val maybeId = session.executeRead { tx ->
-
-                val result = tx.run("""
+                tx.run("""
                     MATCH (human:EpistemicAgent:Human)
                     RETURN id(human) as id
-                """.trimIndent())
-
-                if (result.hasNext()) {
-                    result.single()["id"].asLong()
-                } else {
-                    null
-
-
-                }
+                """.trimIndent()).singleOrNull()?.get("id")?.asLong()
             }
 
             if (maybeId != null) {
@@ -132,22 +113,13 @@ class Neo4jAgentIdentity(
             "AgentIdentity: getting computer id"
         }
 
-        val id = driver.session().use { session ->
+        val id = neo4j.withSession { session ->
 
             val maybeId = session.executeRead { tx ->
-
-                val result = tx.run("""
+                tx.run("""
                     MATCH (computer:EpistemicAgent:Computer)
                     RETURN id(computer) as id
-                """.trimIndent())
-
-                if (result.hasNext()) {
-                    result.single()["id"].asLong()
-                } else {
-                    null
-
-
-                }
+                """.trimIndent()).singleOrNull()?.get("id")?.asLong()
             }
 
             if (maybeId != null) {

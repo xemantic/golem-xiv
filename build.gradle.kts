@@ -6,24 +6,18 @@ plugins {
 ////    alias(libs.plugins.kotlinx.binary.compatibility.validator)
 //    alias(libs.plugins.dokka)
     alias(libs.plugins.versions)
-    `maven-publish`
-    signing
+    alias(libs.plugins.xemantic.conventions)
 }
 
 // TODO change the group
 group = "com.xemantic.ai.golem"
 
 //// TODO fill up the details
-//xemantic {
-//    description = "A template repository for Xemantic's Kotlin multiplatform projects"
-//    inceptionYear = 2025
-//    license = License.APACHE
-//    developer(
-//        id = "morisil",
-//        name = "Kazik Pogoda",
-//        email = "morisil@xemantic.com"
-//    )
-//}
+xemantic {
+    description = "An autonomous metacognitive AI system"
+    inceptionYear = "2025"
+    applyAxTestReporting()
+}
 
 
 //val javaTarget = libs.versions.javaTarget.get()

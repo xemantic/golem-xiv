@@ -39,7 +39,12 @@ class LocalStorageThemeManager(
     private var currentTheme = localStorage.getItem(
         key = "theme"
     )?.let {
-        Theme.valueOf(it)
+        try {
+            Theme.valueOf(it)
+        } catch (e : IllegalArgumentException) {
+            // TODO logger here
+            null
+        }
     } ?: defaultTheme
 
     override var theme: Theme

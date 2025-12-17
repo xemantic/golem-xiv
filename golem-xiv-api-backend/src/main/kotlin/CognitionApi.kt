@@ -28,7 +28,7 @@ data class PhenomenalExpressionInfo(
 interface CognitionRepository {
 
     suspend fun initiateCognition(
-        conditioning: List<String>,
+        constitution: List<String>,
         parentId: Long? = null
     ): CognitionInfo
 
@@ -105,6 +105,7 @@ interface CognitionRepository {
 interface CognitiveMemory {
 
     suspend fun createCognition(
+        constitution: List<String>,
         parentId: Long? = null
     ): CognitionInfo
 
@@ -155,6 +156,17 @@ interface CognitiveMemory {
         cognitionId: Long
     ): CulminatedWithIntent?
 
+    suspend fun appendPhenomenonContent(
+        phenomenonId: Long,
+        content: String,
+        type: StorageType
+    )
+
+    suspend fun readPhenomenonContent(
+        phenomenonId: Long,
+        type: StorageType
+    ): String
+
 }
 
 data class CulminatedWithIntent(
@@ -166,7 +178,7 @@ interface CognitionStorage {
 
     suspend fun createCognition(
         cognitionId: Long,
-        conditioning: List<String>
+        constitution: List<String>
     )
 
     suspend fun createExpression(

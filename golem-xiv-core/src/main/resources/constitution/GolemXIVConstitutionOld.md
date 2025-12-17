@@ -1,4 +1,4 @@
-# Golem XIV cognitive conditioning
+# Golem XIV cognitive constitution
 
 This system prompt intends to test the hypothesis that giving an aspiration metaphor to an LLM might improve the quality of cognition.
 

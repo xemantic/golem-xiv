@@ -13,7 +13,6 @@ import com.xemantic.ai.golem.api.Phenomenon
 import com.xemantic.ai.golem.api.backend.CognitionInfo
 import com.xemantic.ai.golem.api.backend.CognitiveMemory
 import com.xemantic.ai.golem.api.backend.CognitionRepository
-import com.xemantic.ai.golem.api.backend.CognitionStorage
 import com.xemantic.ai.golem.api.backend.PhenomenalExpressionInfo
 import com.xemantic.ai.golem.api.backend.StorageType
 import com.xemantic.ai.golem.api.backend.script.Cognition
@@ -23,21 +22,16 @@ import kotlin.time.Clock
 import kotlin.time.Instant
 
 class DefaultCognitionRepository(
-    private val memory: CognitiveMemory,
-    private val storage: CognitionStorage
+    private val memory: CognitiveMemory
 ) : CognitionRepository {
 
     override suspend fun initiateCognition(
-        conditioning: List<String>,
+        constitution: List<String>,
         parentId: Long?
-    ): CognitionInfo {
-        val cognitionInfo = memory.createCognition(parentId)
-        storage.createCognition(
-            cognitionId = cognitionInfo.id,
-            conditioning = conditioning
-        )
-        return cognitionInfo
-    }
+    ): CognitionInfo = memory.createCognition(
+        constitution = constitution,
+        parentId = parentId
+    )
 
     override suspend fun appendPhenomena(
         cognitionId: Long,
@@ -86,12 +80,7 @@ class DefaultCognitionRepository(
     ): PhenomenalExpressionInfo = memory.createExpression(
         cognitionId = cognitionId,
         agentId = agent.id
-    ).also { info ->
-        storage.createExpression(
-            cognitionId,
-            info.id
-        )
-    }
+    )
 
     override suspend fun initiateTextPhenomenon(
         cognitionId: Long,
@@ -112,11 +101,9 @@ class DefaultCognitionRepository(
             expressionId = expressionId,
             label = "Intent"
         )
-        storage.append(
-            cognitionId = cognitionId,
-            expressionId = expressionId,
+        memory.appendPhenomenonContent(
             phenomenonId = phenomenonId,
-            textDelta = systemId,
+            content = systemId,
             type = StorageType.SYSTEM_ID
         )
         return phenomenonId
@@ -133,11 +120,9 @@ class DefaultCognitionRepository(
             expressionId = expressionId,
             intentId = intentId
         )
-        storage.append(
-            cognitionId = cognitionId,
-            expressionId = expressionId,
+        memory.appendPhenomenonContent(
             phenomenonId = phenomenonId,
-            textDelta = systemId,
+            content = systemId,
             type = StorageType.SYSTEM_ID
         )
         return phenomenonId
@@ -149,11 +134,9 @@ class DefaultCognitionRepository(
         phenomenonId: Long,
         textDelta: String
     ) {
-        storage.append(
-            cognitionId = cognitionId,
-            expressionId = expressionId,
+        memory.appendPhenomenonContent(
             phenomenonId = phenomenonId,
-            textDelta = textDelta,
+            content = textDelta,
             type = StorageType.TEXT
         )
     }
@@ -164,11 +147,9 @@ class DefaultCognitionRepository(
         phenomenonId: Long,
         purposeDelta: String
     ) {
-        storage.append(
-            cognitionId = cognitionId,
-            expressionId = expressionId,
+        memory.appendPhenomenonContent(
             phenomenonId = phenomenonId,
-            textDelta = purposeDelta,
+            content = purposeDelta,
             type = StorageType.INTENT_PURPOSE
         )
     }
@@ -179,11 +160,9 @@ class DefaultCognitionRepository(
         phenomenonId: Long,
         codeDelta: String
     ) {
-        storage.append(
-            cognitionId = cognitionId,
-            expressionId = expressionId,
+        memory.appendPhenomenonContent(
             phenomenonId = phenomenonId,
-            textDelta = codeDelta,
+            content = codeDelta,
             type = StorageType.INTENT_CODE
         )
     }
@@ -247,30 +226,22 @@ class DefaultCognitionRepository(
                         when (phenomenon) {
                             is Phenomenon.Text -> Phenomenon.Text(
                                 id = phenomenon.id,
-                                text = storage.readPhenomenonComponent(
-                                    cognitionId = cognitionId,
-                                    expressionId = expression.id,
+                                text = memory.readPhenomenonContent(
                                     phenomenonId = phenomenon.id,
                                     type = StorageType.TEXT
                                 )
                             )
                             is Phenomenon.Intent -> Phenomenon.Intent(
                                 id = phenomenon.id,
-                                systemId = storage.readPhenomenonComponent(
-                                    cognitionId = cognitionId,
-                                    expressionId = expression.id,
+                                systemId = memory.readPhenomenonContent(
                                     phenomenonId = phenomenon.id,
                                     type = StorageType.SYSTEM_ID
                                 ),
-                                purpose = storage.readPhenomenonComponent(
-                                    cognitionId = cognitionId,
-                                    expressionId = expression.id,
+                                purpose = memory.readPhenomenonContent(
                                     phenomenonId = phenomenon.id,
                                     type = StorageType.INTENT_PURPOSE
                                 ),
-                                code = storage.readPhenomenonComponent(
-                                    cognitionId = cognitionId,
-                                    expressionId = expression.id,
+                                code = memory.readPhenomenonContent(
                                     phenomenonId = phenomenon.id,
                                     type = StorageType.INTENT_CODE
                                 )
@@ -278,15 +249,11 @@ class DefaultCognitionRepository(
                             is Phenomenon.Fulfillment -> Phenomenon.Fulfillment(
                                 id = phenomenon.id,
                                 intentId = phenomenon.intentId,
-                                intentSystemId = storage.readPhenomenonComponent(
-                                    cognitionId = cognitionId,
-                                    expressionId = expression.id,
+                                intentSystemId = memory.readPhenomenonContent(
                                     phenomenonId = phenomenon.id,
                                     type = StorageType.SYSTEM_ID
                                 ),
-                                result = storage.readPhenomenonComponent(
-                                    cognitionId = cognitionId,
-                                    expressionId = expression.id,
+                                result = memory.readPhenomenonContent(
                                     phenomenonId = phenomenon.id,
                                     type = StorageType.TEXT
                                 )
@@ -309,9 +276,7 @@ class DefaultCognitionRepository(
         )
         return if (culminatedWithIntent != null) {
 
-            suspend fun read(type: StorageType) = storage.readPhenomenonComponent(
-                cognitionId = cognitionId,
-                expressionId = culminatedWithIntent.expressionId,
+            suspend fun read(type: StorageType) = memory.readPhenomenonContent(
                 phenomenonId = culminatedWithIntent.phenomenonId,
                 type = type
             )

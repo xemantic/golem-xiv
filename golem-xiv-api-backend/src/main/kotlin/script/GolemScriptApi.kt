@@ -8,11 +8,11 @@
 package com.xemantic.ai.golem.api.backend.script
 
 import com.xemantic.ai.golem.api.PhenomenalExpression
-import io.ktor.client.HttpClient
-import io.ktor.client.HttpClientConfig
+import com.xemantic.neo4j.driver.Result
+import io.ktor.client.statement.HttpResponse
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable
-import org.neo4j.driver.Result
+import org.neo4j.driver.Record
 import kotlin.time.Instant
 
 interface Mind {
@@ -24,8 +24,8 @@ interface Cognition {
     val id: Long
     val initiationMoment: Instant
     val parentId: Long?
-    //    suspend fun getConditioning()
-//    suspend fun setConditioning(conditioning: String)
+    //    suspend fun getConstitution()
+//    suspend fun setConstitution(constitution: String)
     suspend fun getTitle(): String?
     suspend fun setTitle(title: String?)
     suspend fun getSummary(): String?
@@ -41,7 +41,7 @@ interface Cognition {
 }
 
 data class RecursiveCognitionInitiator(
-    val conditioning: String,
+    val constitution: String,
     val initialPhenomena: List<Any>
 )
 
@@ -64,21 +64,22 @@ interface Files {
     suspend fun delete(path: String): Boolean
 }
 
+/**
+ * If you need custom client, here is example usage of Ktor client with resource closing:
+ * ```
+ * val json = HttpClient().client {
+ *     install(ContentNegotiation) {
+ *         json()
+ *     }
+ * }.use {
+ *     it.get("https://example.com/api/records").bodyAsText()
+ * }
+ * ```
+*/
 interface Http {
-    /**
-     * Example usage with resource closing:
-     *
-     * ```
-     * val json = http.client {
-     *     install(ContentNegotiation) {
-     *         json()
-     *     }
-     * }.use {
-     *     it.get("https://example.com/api/records").bodyAsText()
-     * }
-     * ```
-     */
-    fun client(block: HttpClientConfig<*>.() -> Unit = {}): HttpClient
+
+    suspend fun get(url: String): HttpResponse
+
 }
 
 interface Memory {
@@ -116,9 +117,26 @@ interface Memory {
      * @param block the memory builder DSL.
      * @return the final String expression of the DSL.
      */
-    suspend fun remember(block: MemoryBuilder.() -> String): String
-    suspend fun <T: Any?> query(cypher: String, block: (Result) -> T): T
-    suspend fun <T: Any?> modify(cypher: String, block: (Result) -> T): T
+    suspend fun <T> remember(block: suspend MemoryBuilder.() -> T): T
+
+    /**
+     * Example usage:
+     *
+     * val result = buildString {
+     *     append("=== Node Types in Memory ===\n")
+     *     memory.query("""
+     *         MATCH (n)
+     *         RETURN DISTINCT labels(n) as labels, count(n) as count
+     *         ORDER BY count DESC
+     *     """.trimIndent()).collect { record ->
+     *         val labels = record["labels"].asList { it.asString() }
+     *         val count = record["count"].asInt()
+     *         appendLine("${labels.joinToString(":")} - $count nodes")
+     *    }
+     * }
+     */
+    suspend fun query(cypher: String): Flow<Record>
+    suspend fun <T: Any?> modify(cypher: String, block: suspend (Result) -> T): T
 }
 
 interface MemoryBuilder {
@@ -126,12 +144,12 @@ interface MemoryBuilder {
      * Creates a node.
      * @return node id.
      */
-    fun node(block: NodeBuilder.() -> Unit): Long
+    suspend fun node(block: suspend NodeBuilder.() -> Unit): Long
     /**
      * Creates a relationship.
      * @return relationship id.
      */
-    fun relationship(block: RelationshipBuilder.() -> Unit): Long
+    suspend fun relationship(block: suspend RelationshipBuilder.() -> Unit): Long
 }
 
 interface WithProperties {

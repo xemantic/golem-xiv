@@ -13,12 +13,6 @@ dependencies {
 
     implementation(libs.kotlin.logging)
 
-    implementation(libs.log4j.api)
-
-    runtimeOnly(libs.log4j.slf4j2)
-    runtimeOnly(libs.jackson.databind)
-    runtimeOnly(libs.jackson.dataformat.yaml)
-
     testImplementation(libs.kotlin.test)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.xemantic.kotlin.test)

@@ -16,10 +16,11 @@ import com.xemantic.ai.golem.cognizer.anthropic.AnthropicToolUseCognizer
 import com.xemantic.ai.golem.core.GolemXiv
 import com.xemantic.ai.golem.core.cognition.DefaultCognitionRepository
 import com.xemantic.ai.golem.core.script.GolemScriptDependencyProvider
+import com.xemantic.ai.golem.logging.initializeLogging
 import com.xemantic.ai.golem.neo4j.Neo4jCognitiveMemory
 import com.xemantic.ai.golem.neo4j.Neo4jAgentIdentity
 import com.xemantic.ai.golem.neo4j.Neo4jMemory
-import com.xemantic.ai.golem.storage.file.FileCognitionStorage
+import com.xemantic.neo4j.driver.DispatchedNeo4jOperations
 import io.github.oshai.kotlinlogging.KLogger
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.HttpHeaders
@@ -27,7 +28,7 @@ import io.ktor.http.HttpMethod
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationStopPreparing
-import io.ktor.server.application.ApplicationStopped
+//import io.ktor.server.application.ApplicationStopped
 import io.ktor.server.application.install
 import io.ktor.server.config.property
 import io.ktor.server.http.content.CompressedFileType
@@ -51,17 +52,19 @@ import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import io.ktor.server.websocket.WebSockets
 import io.ktor.server.websocket.webSocket
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import org.apache.logging.log4j.LogManager
 import org.neo4j.driver.AuthTokens
 import org.neo4j.driver.GraphDatabase
-import java.io.File
 
 val logger = KotlinLogging.logger {}
 
-fun main(args: Array<String>) = io.ktor.server.netty.EngineMain.main(args)
+fun main(args: Array<String>) {
+    initializeLogging()
+    io.ktor.server.netty.EngineMain.main(args)
+}
 
 fun Application.module() {
 
@@ -76,18 +79,27 @@ fun Application.module() {
 
     val outputs = MutableSharedFlow<GolemOutput>() // TODO can we move outputs to Golem?
 
-    val neo4j = GraphDatabase.driver(neo4jConfig.uri, authToken)
+    val driver = GraphDatabase.driver(neo4jConfig.uri, authToken)
 
-    val identity = Neo4jAgentIdentity(driver = neo4j)
+    val neo4j = DispatchedNeo4jOperations(
+        driver = driver,
+        dispatcher = Dispatchers.IO.limitedParallelism(90)
+    )
+    val identity = Neo4jAgentIdentity(neo4j = neo4j)
 
     val repository = DefaultCognitionRepository(
         memory = Neo4jCognitiveMemory(
-            driver = neo4j
-        ),
-        storage = FileCognitionStorage(File("var/cognitions"))
+            neo4j = neo4j
+        )
     )
 
-    val anthropic = Anthropic()
+    val anthropic = Anthropic {
+        anthropicBeta = listOf(
+            "fine-grained-tool-streaming-2025-05-14",
+            "token-efficient-tools-2025-02-19",
+            "prompt-caching-2024-07-31"
+        )
+    }
 
     val anthropicCognizer = AnthropicToolUseCognizer(
         anthropic = anthropic,
@@ -102,7 +114,7 @@ fun Application.module() {
         repository = repository,
         memoryProvider = { cognitionId, fulfillmentId ->
             Neo4jMemory(
-                driver = neo4j,
+                neo4j = neo4j,
                 cognitionId = cognitionId,
                 fulfillmentId = fulfillmentId
             )
@@ -120,12 +132,13 @@ fun Application.module() {
     monitor.subscribe(ApplicationStopPreparing) {
         logger.info { "Stopping Golem XIV server" }
         golem.close()
-        neo4j.close()
+        driver.close()
     }
 
-    monitor.subscribe(ApplicationStopped) {
-        LogManager.shutdown()
-    }
+    // TODO do we need to shutdown logback?
+//    monitor.subscribe(ApplicationStopped) {
+//        LogManager.shutdown()
+//    }
 
     install(CallLogging) {
         level = org.slf4j.event.Level.DEBUG

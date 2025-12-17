@@ -34,12 +34,12 @@ class DashscopeToolUseCognizer(
 
 
     override fun reason(
-        conditioning: List<String>,
+        constitution: List<String>,
         cognitionId: Long,
         phenomenalFlow: List<PhenomenalExpression>,
         hints: Map<String, String>
     ): Flow<CognitionEvent> {
-        val system = conditioning.toDashscopeMessage(Role.SYSTEM)
+        val system = constitution.toDashscopeMessage(Role.SYSTEM)
         val messages = phenomenalFlow.map { it.toDashscopeMessage() }
         val fullMessages = buildList {
             add(system)

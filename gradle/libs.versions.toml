@@ -7,28 +7,30 @@ kotlinxSerialization = "1.9.0"
 kotlinxCoroutines = "1.10.2"
 kotlinxHtml = "0.12.0"
 
-kotlinLogging = "7.0.7"
+kotlinLogging = "7.0.13"
 
-anthropicSdkKotlin = "0.22.0"
-xemanticKotlinCore = "0.2.0"
-xemanticKotlinTest = "1.14.2"
+anthropicSdkKotlin = "0.25.2"
+xemanticKotlinCore = "0.5.0"
+xemanticKotlinTest = "1.15.2"
 xemanticAiToolSchema = "1.2.0"
+xemanticNeo4jKotlinDriver = "1.0.0"
 
-ktor = "3.2.1"
-playwright = "1.53.0"
+ktor = "3.3.3"
+playwright = "1.57.0"
 dashscope = "2.20.1"
-neo4j = "2025.06.0"
+neo4j = "2025.10.1"
 neo4jBrowser = "2025.2.0"
-neo4jDriver = "5.28.6"
+neo4jDriver = "6.0.2"
+neo4jMigrations = "2.20.1"
 
-log4j = "2.24.1"
-jackson = "2.19.1"
+slf4j = "2.0.17"
+logback = "1.5.21"
 
-versionsPlugin = "0.52.0"
-dokkaPlugin = "2.0.0"
+versionsPlugin = "0.53.0"
+dokkaPlugin = "2.1.0"
 jreleaserPlugin = "1.16.0"
 binaryCompatibilityValidatorPlugin = "0.17.0"
-xemanticConventionsPlugin = "0.3.1"
+xemanticConventionsPlugin = "0.6.8"
 nodeGradle = "7.1.0"
 
 
@@ -45,13 +47,17 @@ kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-t
 kotlinx-coroutines-rx2 = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-rx2", version.ref = "kotlinxCoroutines" }
 kotlinx-html = { module = "org.jetbrains.kotlinx:kotlinx-html", version.ref = "kotlinxHtml" }
 
+# logging
 kotlin-logging  = { module = "io.github.oshai:kotlin-logging", version.ref = "kotlinLogging" }
+jul-to-slf4j = { module = "org.slf4j:jul-to-slf4j", version.ref = "slf4j" }
+logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 
 # xemantic
 xemantic-kotlin-core = { module = "com.xemantic.kotlin:xemantic-kotlin-core", version.ref = "xemanticKotlinCore" }
 xemantic-kotlin-test = { module = "com.xemantic.kotlin:xemantic-kotlin-test", version.ref = "xemanticKotlinTest" }
 anthropic-sdk-kotlin = { module = "com.xemantic.ai:anthropic-sdk-kotlin", version.ref = "anthropicSdkKotlin" }
 xemantic-ai-tool-schema = { module = "com.xemantic.ai:xemantic-ai-tool-schema", version.ref ="xemanticAiToolSchema" }
+xemantic-neo4j-kotlin-driver = { module = "com.xemantic.neo4j:xemantic-neo4j-kotlin-driver", version.ref = "xemanticNeo4jKotlinDriver" }
 
 playwright = { module = "com.microsoft.playwright:playwright", version.ref = "playwright" }
 
@@ -60,6 +66,7 @@ dashscope = { module = "com.alibaba:dashscope-sdk-java", version.ref = "dashscop
 neo4j = { module = "org.neo4j:neo4j", version.ref = "neo4j" }
 neo4j-harness = { module = "org.neo4j.test:neo4j-harness", version.ref = "neo4j" }
 neo4j-java-driver = { module = "org.neo4j.driver:neo4j-java-driver", version.ref = "neo4jDriver" }
+neo4j-migrations = { module = "eu.michael-simons.neo4j:neo4j-migrations", version.ref = "neo4jMigrations" }
 
 ktor-websockets = { module = "io.ktor:ktor-websockets", version.ref = "ktor" }
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
@@ -76,14 +83,8 @@ ktor-server-content-negotiation = { module = "io.ktor:ktor-server-content-negoti
 ktor-server-status-pages = { module = "io.ktor:ktor-server-status-pages", version.ref = "ktor" }
 ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor"}
 
-log4j-api = { group = "org.apache.logging.log4j", name = "log4j-api", version.ref = "log4j" }
-log4j-slf4j2 = { group = "org.apache.logging.log4j", name = "log4j-slf4j2-impl", version.ref = "log4j" }
-log4j-core = { group = "org.apache.logging.log4j", name = "log4j-core", version.ref = "log4j" }
-jackson-databind = { group = "com.fasterxml.jackson.core", name = "jackson-databind", version.ref = "jackson" }
-jackson-dataformat-yaml = { group = "com.fasterxml.jackson.dataformat", name = "jackson-dataformat-yaml", version.ref = "jackson" }
-
 # transitive dependency of dashscope
-jackson-core = { group = "com.fasterxml.jackson.core", name = "jackson-core", version.ref = "jackson" }
+#jackson-core = { group = "com.fasterxml.jackson.core", name = "jackson-core", version.ref = "jackson" }
 
 # build-logic plugins
 kotlin-gradle-plugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }

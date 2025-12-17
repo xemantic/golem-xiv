@@ -1,78 +1,238 @@
-/*
-TODO this should be locally served in the future, possibly constructed only out of the icons in use
-
-https://developers.google.com/fonts/docs/material_symbols
-
-*/
-@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined');
-@import url("ui/ActionButton.css");
-@import url("ui/IconButton.css");
-@import url("ui/NavigationLink.css");
-@import url("ui/Scrollbar.css");
-@import url("navigation/Header.css");
-@import url("navigation/Sidebar.css");
-@import url("cognition/Cognition.css");
-@import url("memory/Memory.css");
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined&icon_names=analytics,close,computer,dark_mode,graph_3,home,keyboard_arrow_down,light_mode,menu,menu_open,mic,network_intel_node,person,send,settings,smart_toy&display=block');
 
 :root {
-    --header-height: 3rem;
-    --main-height: calc(100vh - var(--header-height));
-    --inset-padding: .1rem;
-    --primary-color: #9b8aff; /* Obsidian purple accent */
-    --primary-hover: #b5a5ff; /* Lighter purple for hover states */
-    --text-color: #333;
-    --bg-color: #ffffff;
-    --border-color: #e0e0e0;
-    --shadow-color: rgba(0, 0, 0, 0.1);
-    --user-msg-bg: #e8e8fd;
-    --ai-msg-bg: #f9f9f9;
-    --hover-color: #f0f0f0;
-    --input-bg: #fff;
-    --sidebar-width: 280px;
-    --disabled-color: #c0c0c0;
-    --blur-scale: .3rem;
     --cognition-width: 50rem;
 }
 
-/* Dark theme - Obsidian inspired */
-.dark-theme {
-    --primary-color: #a88bfa; /* Obsidian purple in dark mode */
-    --primary-hover: #c4adff; /* Lighter shade for hover */
-    --text-color: #dcddde;
-    --bg-color: rgba(25, 25, 25, .7); /* Obsidian dark background */
-    --border-color: #333;
-    --shadow-color: rgba(0, 0, 0, 0.3);
-    --user-msg-bg: rgba(59, 54, 84, .7); /* Darker purple tint for user messages */
-    --ai-msg-bg: rgba(42, 42, 42, .7);
-    --hover-color: #303030;
-    --input-bg: rgba(37, 37, 37, .7);
-    --disabled-color: #606060;
+/* Semi-transparent blurred surface containers - Light theme */
+:root, body.light {
+    --surface-container-lowest: rgba(255, 255, 255, 0.7);
+    --surface-container-low: rgba(247, 242, 247, 0.7);
+    --surface-container: rgba(242, 236, 241, 0.7);
+    --surface-container-high: rgba(236, 231, 235, 0.7);
+    --surface-container-highest: rgba(230, 225, 230, 0.7);
 }
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    transition: background-color 0.3s, color 0.3s;
+/* Semi-transparent blurred surface containers - Dark theme */
+body.dark {
+    --surface-container-lowest: rgba(15, 14, 17, 0.7);
+    --surface-container-low: rgba(28, 27, 30, 0.7);
+    --surface-container: rgba(32, 31, 34, 0.7);
+    --surface-container-high: rgba(43, 41, 45, 0.7);
+    --surface-container-highest: rgba(54, 52, 56, 0.7);
+}
+
+/* Apply backdrop blur to surface container elements */
+.surface-container,
+.surface-container-low,
+.surface-container-high,
+.surface-container-lowest,
+.surface-container-highest,
+nav.surface-container,
+.prompt.surface-container {
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+code {
+    font-family: "Ubuntu Mono", monospace;
+    font-size: 1.1rem;
 }
 
 body {
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    background-color: var(--bg-color);
-    color: var(--text-color);
-    line-height: 1.6;
-    overflow: hidden;
+    scroll-behavior: smooth;
+}
+
+body, nav, header {
+    transition: background-color .7s;
+}
+
+h1 {
+    font-weight: bold;
 }
 
 main {
-    flex: 1;
-    display: flex;
-    overflow-y: hidden;
+    overflow-y: scroll;
+    scrollbar-width: thin;
+    padding-bottom: 4rem;
 }
 
+pre {
+    overflow-y: auto;
+}
+
+/* Navigation rail customizations */
+.app-navigation-rail .app-menu {
+    margin-top: .2rem;
+}
+
+.app-navigation-rail .app-theme-switcher {
+    margin-bottom: .9rem;
+}
+
+/* Navigation components */
+.app-navigation-bar {
+    z-index: 200 !important;
+}
+
+.app-navigation-drawer {
+    z-index: 200;
+}
+
+.overlay {
+    z-index: 200;
+}
+
+/* Cognition area */
+.cognition {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: var(--cognition-width);
+    max-width: 100%;
+    flex-shrink: 0;
+    padding: 1rem;
+}
+
+.phenomena {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    overflow-y: auto;
+    padding: 1rem;
+}
+
+.expression {
+    display: flex;
+    white-space: pre-wrap;
+    flex-direction: column;
+    max-width: 90%;
+    padding: 1rem;
+    border-radius: 1rem;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.expression.human {
+    align-self: flex-end;
+    background-color: var(--primary-container);
+    color: var(--on-primary-container);
+    border-bottom-right-radius: 0;
+}
+
+.expression.ai {
+    align-self: flex-start;
+    background-color: var(--surface-container);
+    color: var(--on-surface);
+    border-bottom-left-radius: 0;
+}
+
+.expression.computer {
+    align-self: flex-end;
+    background-color: var(--secondary-container);
+    color: var(--on-secondary-container);
+    border-bottom-right-radius: 0;
+}
+
+.expression.computer .text {
+    background: var(--surface-container-lowest);
+    padding: .5rem;
+    font-family: "Ubuntu Mono", monospace;
+    overflow-y: auto;
+    border-radius: .5rem;
+}
+
+.expression-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    gap: 0.5rem;
+}
+
+/* Prompt input area */
+.prompt {
+    border-radius: 1.5rem;
+    background-color: var(--surface-container);
+    padding: 0.75rem 1rem;
+    margin-top: auto;
+}
+
+.prompt textarea {
+    flex: 1;
+    width: 100%;
+    border: none;
+    background: none;
+    resize: none;
+    font-size: 1rem;
+    font-family: inherit;
+    color: var(--on-surface);
+    min-height: 1rem;
+    max-height: 150px;
+    overflow-y: scroll;
+    padding: 0.5rem;
+    outline: none;
+}
+
+.prompt .prompt-controls {
+    display: flex;
+    padding-bottom: 0.5rem;
+    justify-content: space-between;
+}
+
+.prompt .prompt-options {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.prompt .prompt-actions {
+    display: flex;
+}
+
+/* Intent/code display */
+.intent {
+    interpolate-size: allow-keywords;
+}
+
+.purpose {
+    background: var(--tertiary-container);
+    color: var(--on-tertiary-container);
+    padding: .5rem;
+    border-radius: .5rem;
+}
+
+.code {
+    background: var(--surface-container-lowest);
+    padding: .5rem;
+    font-family: "Ubuntu Mono", monospace;
+    overflow-y: auto;
+    border-radius: .5rem;
+}
+
+details::details-content {
+    block-size: 0;
+    overflow: hidden;
+    transition: content-visibility, block-size;
+    transition-duration: 750ms;
+    transition-behavior: allow-discrete;
+}
+
+details[open]::details-content {
+    block-size: auto;
+}
+
+summary {
+    cursor: pointer;
+}
+
+/* Memory iframe */
+.memory {
+    width: 100%;
+    height: 100%;
+    border: 0;
+}
+
+/* Animations */
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
@@ -90,24 +250,11 @@ main {
 
 /* Responsive design */
 @media (max-width: 768px) {
-
-    main {
-        padding: 1rem;
+    .cognition {
+        width: 100%;
     }
 
-    .message {
+    .expression {
         max-width: 100%;
     }
-
-    .chat-centered-mode + .welcome-text {
-        font-size: 1.3rem;
-        padding: 0 1rem;
-    }
-
-    /* Sidebar hidden state - mobile */
-    .sidebar-hidden {
-        left: 0;
-        transform: translateX(-100%);
-    }
-
 }

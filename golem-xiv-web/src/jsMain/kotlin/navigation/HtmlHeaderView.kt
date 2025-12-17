@@ -13,35 +13,19 @@ import com.xemantic.ai.golem.web.js.actions
 import com.xemantic.ai.golem.web.js.ariaLabel
 import com.xemantic.ai.golem.web.js.dom
 import com.xemantic.ai.golem.web.js.inject
-import com.xemantic.ai.golem.web.ui.IconButton
 import com.xemantic.ai.golem.web.view.HasRootHtmlElement
 import kotlinx.coroutines.flow.Flow
 import kotlinx.html.*
-import kotlinx.html.js.header
 
 class HtmlHeaderView() : HeaderView, HasRootHtmlElement {
 
-    private val menuButton = IconButton(
-        icon = "menu",
+    private val menuButton = dom.button(classes = "app-menu circle transparent") {
         ariaLabel = "Toggle sidebar menu"
-    )
+        i { +"menu" }
+    }
 
-    override val element = dom.header {
-        nav {
-            role = "navigation"
-            ariaLabel = "Main navigation"
-            div("nav-left") {
-                inject(menuButton)
-            }
-            div("nav-center") {
-                div("logo") {
-                    +"Golem XIV"
-                }
-            }
-            div("nav-right") {
-                // Empty div to keep the centered title balanced
-            }
-        }
+    override val element = dom.nav(classes = "app-navigation-bar top s left-align") {
+        inject(menuButton)
     }
 
     override val toggleMenuClicks: Flow<Action> = menuButton.actions()
