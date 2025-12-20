@@ -103,6 +103,8 @@ class KotlinMetadataTest {
             // from kotlin
             inline infix fun Comparable<T>.compareTo(other: T): Int
             // from kotlin.text
+            val CharSequence.indices: IntRange
+            val CharSequence.lastIndex: Int
             inline fun CharSequence.all(predicate: Function1<Char, Boolean>): Boolean
             fun CharSequence.any(): Boolean
             inline fun CharSequence.any(predicate: Function1<Char, Boolean>): Boolean
@@ -531,6 +533,8 @@ class KotlinMetadataTest {
             // from kotlin
             inline infix fun Comparable<T>.compareTo(other: T): Int
             // from kotlin.text
+            val CharSequence.indices: IntRange
+            val CharSequence.lastIndex: Int
             inline fun CharSequence.all(predicate: Function1<Char, Boolean>): Boolean
             fun CharSequence.any(): Boolean
             inline fun CharSequence.any(predicate: Function1<Char, Boolean>): Boolean
