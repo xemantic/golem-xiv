@@ -582,4 +582,246 @@ class KotlinMetadataTest {
         """.trimIndent()
     }
 
+    // TestClassTypes tests
+
+    @Test
+    fun `should resolve data class`() {
+        // when
+        val signature = resolver.resolve(
+            "com.xemantic.ai.golem.kotlin.metadata.test.DataTestClass"
+        )
+
+        // then - data classes include generated methods like componentN, copy, equals, hashCode, toString
+        signature sameAs /* language=kotlin */ """
+            // com.xemantic.ai.golem.kotlin.metadata.test.DataTestClass [page 1/1]
+            data class DataTestClass(val id: Int, val name: String) {
+                operator fun component1(): Int
+                operator fun component2(): String
+                fun copy(id: Int, name: String): DataTestClass
+                open operator fun equals(other: Any?): Boolean
+                open fun hashCode(): Int
+                open fun toString(): String
+            }
+        """.trimIndent()
+    }
+
+    @Test
+    fun `should resolve value class`() {
+        // when
+        val signature = resolver.resolve(
+            "com.xemantic.ai.golem.kotlin.metadata.test.ValueTestClass"
+        )
+
+        // then - value classes include generated methods equals, hashCode, toString
+        signature sameAs /* language=kotlin */ """
+            // com.xemantic.ai.golem.kotlin.metadata.test.ValueTestClass [page 1/1]
+            value class ValueTestClass(val value: String) {
+                open operator fun equals(other: Any?): Boolean
+                open fun hashCode(): Int
+                open fun toString(): String
+            }
+        """.trimIndent()
+    }
+
+    @Test
+    fun `should resolve object (singleton)`() {
+        // when
+        val signature = resolver.resolve(
+            "com.xemantic.ai.golem.kotlin.metadata.test.ObjectTestClass"
+        )
+
+        // then
+        signature sameAs /* language=kotlin */ """
+            // com.xemantic.ai.golem.kotlin.metadata.test.ObjectTestClass [page 1/1]
+            object ObjectTestClass {
+                val name: String
+                fun greet(): String
+            }
+        """.trimIndent()
+    }
+
+    @Test
+    fun `should resolve enum class`() {
+        // when
+        val signature = resolver.resolve(
+            "com.xemantic.ai.golem.kotlin.metadata.test.EnumTestClass"
+        )
+
+        // then - an LLM needs to see enum entries to know what values are available
+        signature sameAs /* language=kotlin */ """
+            // com.xemantic.ai.golem.kotlin.metadata.test.EnumTestClass [page 1/1]
+            enum class EnumTestClass {
+                FIRST,
+                SECOND,
+                THIRD
+            }
+        """.trimIndent()
+    }
+
+    @Test
+    fun `should resolve annotation class`() {
+        // when
+        val signature = resolver.resolve(
+            "com.xemantic.ai.golem.kotlin.metadata.test.AnnotationTestClass"
+        )
+
+        // then - an LLM needs to see annotation parameters to know how to use the annotation
+        signature sameAs /* language=kotlin */ """
+            // com.xemantic.ai.golem.kotlin.metadata.test.AnnotationTestClass [page 1/1]
+            annotation class AnnotationTestClass(val message: String = "")
+        """.trimIndent()
+    }
+
+    @Test
+    fun `should resolve class with companion object`() {
+        // when
+        val signature = resolver.resolve(
+            "com.xemantic.ai.golem.kotlin.metadata.test.CompanionTestClass"
+        )
+
+        // then - an LLM needs to see companion object members to access static-like functionality
+        signature sameAs /* language=kotlin */ """
+            // com.xemantic.ai.golem.kotlin.metadata.test.CompanionTestClass [page 1/1]
+            class CompanionTestClass {
+                companion object {
+                    const val CONSTANT: String
+                    fun create(): CompanionTestClass
+                }
+            }
+        """.trimIndent()
+    }
+
+    // TestFunctionModifiers tests
+
+    @Test
+    fun `should resolve class with function modifiers`() {
+        // when
+        val signature = resolver.resolve(
+            "com.xemantic.ai.golem.kotlin.metadata.test.FunctionModifiersTestClass"
+        )
+
+        // then - functions are output in declaration order
+        signature sameAs /* language=kotlin */ """
+            // com.xemantic.ai.golem.kotlin.metadata.test.FunctionModifiersTestClass [page 1/1]
+            class FunctionModifiersTestClass {
+                suspend fun fetchData(): String
+                inline fun processData(block: Function0<Unit>)
+                infix fun combine(other: String): String
+                operator fun plus(other: FunctionModifiersTestClass): FunctionModifiersTestClass
+                tailrec fun factorial(n: Int, acc: Int): Int
+            }
+        """.trimIndent()
+    }
+
+    @Test
+    fun `should resolve class with property modifiers`() {
+        // when
+        val signature = resolver.resolve(
+            "com.xemantic.ai.golem.kotlin.metadata.test.PropertyModifiersTestClass"
+        )
+
+        // then
+        signature sameAs /* language=kotlin */ """
+            // com.xemantic.ai.golem.kotlin.metadata.test.PropertyModifiersTestClass [page 1/1]
+            class PropertyModifiersTestClass {
+                var lateInitProperty: String
+                val lazyProperty: String
+            }
+        """.trimIndent()
+    }
+
+    // TestModifiers tests
+
+    @Test
+    fun `should resolve class with visibility modifiers`() {
+        // when
+        val signature = resolver.resolve(
+            "com.xemantic.ai.golem.kotlin.metadata.test.VisibilityTestClass"
+        )
+
+        // then - members are output in declaration order
+        signature sameAs /* language=kotlin */ """
+            // com.xemantic.ai.golem.kotlin.metadata.test.VisibilityTestClass [page 1/1]
+            class VisibilityTestClass {
+                val publicProperty: String
+                private val privateProperty: String
+                protected val protectedProperty: String
+                internal val internalProperty: String
+                fun publicFunction(): String
+                private fun privateFunction(): String
+                protected fun protectedFunction(): String
+                internal fun internalFunction(): String
+            }
+        """.trimIndent()
+    }
+
+    @Test
+    fun `should resolve open class`() {
+        // when
+        val signature = resolver.resolve(
+            "com.xemantic.ai.golem.kotlin.metadata.test.OpenTestClass"
+        )
+
+        // then
+        signature sameAs /* language=kotlin */ """
+            // com.xemantic.ai.golem.kotlin.metadata.test.OpenTestClass [page 1/1]
+            open class OpenTestClass {
+                open val openProperty: String
+                open fun openFunction(): String
+            }
+        """.trimIndent()
+    }
+
+    @Test
+    fun `should resolve sealed class`() {
+        // when
+        val signature = resolver.resolve(
+            "com.xemantic.ai.golem.kotlin.metadata.test.SealedTestClass"
+        )
+
+        // then - an LLM needs to see sealed subclasses to know what types are valid in when expressions
+        signature sameAs /* language=kotlin */ """
+            // com.xemantic.ai.golem.kotlin.metadata.test.SealedTestClass [page 1/1]
+            sealed class SealedTestClass {
+                class SubClass1 : SealedTestClass
+                class SubClass2 : SealedTestClass
+            }
+        """.trimIndent()
+    }
+
+    @Test
+    fun `should resolve abstract class`() {
+        // when
+        val signature = resolver.resolve(
+            "com.xemantic.ai.golem.kotlin.metadata.test.AbstractTestClass"
+        )
+
+        // then
+        signature sameAs /* language=kotlin */ """
+            // com.xemantic.ai.golem.kotlin.metadata.test.AbstractTestClass [page 1/1]
+            abstract class AbstractTestClass {
+                abstract val abstractProperty: String
+                open val openProperty: String
+                abstract fun abstractFunction(): String
+                open fun openFunction(): String
+            }
+        """.trimIndent()
+    }
+
+    @Test
+    fun `should resolve class with override modifier`() {
+        // when
+        val signature = resolver.resolve(
+            "com.xemantic.ai.golem.kotlin.metadata.test.OverrideTestClass"
+        )
+
+        // then - compareTo from Comparable is an operator function
+        signature sameAs /* language=kotlin */ """
+            // com.xemantic.ai.golem.kotlin.metadata.test.OverrideTestClass [page 1/1]
+            class OverrideTestClass : Comparable<OverrideTestClass> {
+                override operator fun compareTo(other: OverrideTestClass): Int
+            }
+        """.trimIndent()
+    }
+
 }
