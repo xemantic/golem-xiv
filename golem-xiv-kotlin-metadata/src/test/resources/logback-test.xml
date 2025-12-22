@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration>
+<configuration>
+
+    <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
+        <!-- reset all previous level configurations of all j.u.l. loggers -->
+        <resetJUL>true</resetJUL>
+    </contextListener>
+
+    <import class="ch.qos.logback.classic.encoder.PatternLayoutEncoder"/>
+    <import class="ch.qos.logback.core.ConsoleAppender"/>
+
+    <appender name="STDOUT" class="ConsoleAppender">
+        <encoder class="PatternLayoutEncoder">
+            <pattern>%d{HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="STDOUT"/>
+    </root>
+
+</configuration>

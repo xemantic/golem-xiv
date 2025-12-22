@@ -174,3 +174,40 @@ interface RelationshipBuilder : WithProperties {
     /** Optional confidence level in the 0-1 range, defaults to 1 if not specified */
     var confidence: Double?
 }
+
+/**
+ * Provides introspection capabilities for Kotlin APIs available in GolemScript.
+ * Use [resolve] to get detailed signatures for known types (e.g., extension functions of String).
+ * Use [search] to discover APIs when the exact name is unknown.
+ */
+interface KotlinMetadata {
+
+    /**
+     * Resolves metadata for a Kotlin declaration by its fully qualified name.
+     *
+     * @param name fully qualified name (e.g., "kotlin.collections.List")
+     * @param page 1-based page index
+     * @param pageSize number of items per page
+     * @return a Kotlin signature, including members (classes),
+     *      overloads (functions), or `null` if not found
+     */
+    fun resolve(
+        name: String,
+        page: Int = 1,
+        pageSize: Int = 10
+    ): String?
+
+    /**
+     * Searches for Kotlin declarations matching the query.
+     *
+     * @param query search term (case-insensitive substring match against declaration names)
+     * @param page 1-based page index
+     * @param pageSize number of items per page
+     * @return matching declarations as text, or `null` if none found
+     */
+    fun search(
+        query: String,
+        page: Int = 1,
+        pageSize: Int = 10
+    ): String?
+}

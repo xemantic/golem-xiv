@@ -1,13 +1,15 @@
 
 package com.xemantic.ai.golem.kotlin.metadata
 
+import com.xemantic.kotlin.test.assert
 import com.xemantic.kotlin.test.sameAs
 import org.junit.jupiter.api.Test
 
-class KotlinMetadataTest {
+// we keep this dependency statically initialized, so that classpath scanning happens only once
+// given
+val resolver = DefaultKotlinMetadata()
 
-    // given
-    val resolver = DefaultKotlinMetadata()
+class KotlinMetadataTest {
 
     @Test
     fun `should resolve String as known stdlib class`() {
@@ -20,14 +22,14 @@ class KotlinMetadataTest {
         signature sameAs /* language=kotlin */ """
             // kotlin.String [page 1/42]
             class String : Comparable<String>, CharSequence {
-                fun byteInputStream(charset: Charset): ByteArrayInputStream
+                fun byteInputStream(charset: java.nio.charset.Charset): java.io.ByteArrayInputStream
                 fun capitalize(): String
-                fun capitalize(locale: Locale): String
-                fun chars(): IntStream
+                fun capitalize(locale: java.util.Locale): String
+                fun chars(): java.util.stream.IntStream
                 fun codePointAt(index: Int): Int
                 fun codePointBefore(index: Int): Int
                 fun codePointCount(beginIndex: Int, endIndex: Int): Int
-                fun codePoints(): IntStream
+                fun codePoints(): java.util.stream.IntStream
                 operator fun compareTo(other: String): Int
                 fun compareTo(other: String, ignoreCase: Boolean): Int
             }
@@ -47,10 +49,10 @@ class KotlinMetadataTest {
             // kotlin.String [page 2/42]
             class String : Comparable<String>, CharSequence {
                 fun contentEquals(charSequence: CharSequence): Boolean
-                fun contentEquals(stringBuilder: StringBuffer): Boolean
+                fun contentEquals(stringBuilder: java.lang.StringBuffer): Boolean
                 fun decapitalize(): String
-                fun decapitalize(locale: Locale): String
-                fun describeConstable(): Optional<String>
+                fun decapitalize(locale: java.util.Locale): String
+                fun describeConstable(): java.util.Optional<String>
                 fun drop(n: Int): String
                 fun dropLast(n: Int): String
                 fun dropLastWhile(predicate: Function1<Char, Boolean>): String
@@ -80,7 +82,7 @@ class KotlinMetadataTest {
                 fun filterIndexed(predicate: Function2<Int, Char, Boolean>): String
                 fun filterNot(predicate: Function1<Char, Boolean>): String
                 fun format(args: Array<out Any?>): String
-                fun format(locale: Locale?, args: Array<out Any?>): String
+                fun format(locale: java.util.Locale?, args: Array<out Any?>): String
                 operator fun get(index: Int): Char
             }
         """.trimIndent()
@@ -98,7 +100,7 @@ class KotlinMetadataTest {
         signature sameAs /* language=kotlin */ """
             // kotlin.String [page 19/42]
             class String : Comparable<String>, CharSequence {
-                fun uppercase(locale: Locale): String
+                fun uppercase(locale: java.util.Locale): String
             }
             // from kotlin
             inline infix fun Comparable<T>.compareTo(other: T): Int
@@ -143,21 +145,21 @@ class KotlinMetadataTest {
         signature sameAs /* language=kotlin */ """
             // kotlin.String [page 1/1]
             class String : Comparable<String>, CharSequence {
-                fun byteInputStream(charset: Charset): ByteArrayInputStream
+                fun byteInputStream(charset: java.nio.charset.Charset): java.io.ByteArrayInputStream
                 fun capitalize(): String
-                fun capitalize(locale: Locale): String
-                fun chars(): IntStream
+                fun capitalize(locale: java.util.Locale): String
+                fun chars(): java.util.stream.IntStream
                 fun codePointAt(index: Int): Int
                 fun codePointBefore(index: Int): Int
                 fun codePointCount(beginIndex: Int, endIndex: Int): Int
-                fun codePoints(): IntStream
+                fun codePoints(): java.util.stream.IntStream
                 operator fun compareTo(other: String): Int
                 fun compareTo(other: String, ignoreCase: Boolean): Int
                 fun contentEquals(charSequence: CharSequence): Boolean
-                fun contentEquals(stringBuilder: StringBuffer): Boolean
+                fun contentEquals(stringBuilder: java.lang.StringBuffer): Boolean
                 fun decapitalize(): String
-                fun decapitalize(locale: Locale): String
-                fun describeConstable(): Optional<String>
+                fun decapitalize(locale: java.util.Locale): String
+                fun describeConstable(): java.util.Optional<String>
                 fun drop(n: Int): String
                 fun dropLast(n: Int): String
                 fun dropLastWhile(predicate: Function1<Char, Boolean>): String
@@ -171,7 +173,7 @@ class KotlinMetadataTest {
                 fun filterIndexed(predicate: Function2<Int, Char, Boolean>): String
                 fun filterNot(predicate: Function1<Char, Boolean>): String
                 fun format(args: Array<out Any?>): String
-                fun format(locale: Locale?, args: Array<out Any?>): String
+                fun format(locale: java.util.Locale?, args: Array<out Any?>): String
                 operator fun get(index: Int): Char
                 fun hashCode(): Int
                 fun hexToByte(format: HexFormat): Byte
@@ -189,7 +191,7 @@ class KotlinMetadataTest {
                 fun isLocalClassName(): Boolean
                 val length: Int
                 fun lowercase(): String
-                fun lowercase(locale: Locale): String
+                fun lowercase(locale: java.util.Locale): String
                 fun offsetByCodePoints(index: Int, codePointOffset: Int): Int
                 fun orEmpty(): String
                 fun padEnd(length: Int, padChar: Char): String
@@ -197,7 +199,7 @@ class KotlinMetadataTest {
                 fun partition(predicate: Function1<Char, Boolean>): Pair<String, String>
                 operator fun plus(other: Any?): String
                 fun prependIndent(indent: String): String
-                fun reader(): StringReader
+                fun reader(): java.io.StringReader
                 fun regionMatches(thisOffset: Int, other: String, otherOffset: Int, length: Int, ignoreCase: Boolean): Boolean
                 fun removePrefix(prefix: CharSequence): String
                 fun removeRange(startIndex: Int, endIndex: Int): String
@@ -249,20 +251,20 @@ class KotlinMetadataTest {
                 fun takeLast(n: Int): String
                 fun takeLastWhile(predicate: Function1<Char, Boolean>): String
                 fun takeWhile(predicate: Function1<Char, Boolean>): String
-                fun toBigDecimal(): BigDecimal
-                fun toBigDecimal(mathContext: MathContext): BigDecimal
-                fun toBigDecimalOrNull(): BigDecimal?
-                fun toBigDecimalOrNull(mathContext: MathContext): BigDecimal?
-                fun toBigInteger(): BigInteger
-                fun toBigInteger(radix: Int): BigInteger
-                fun toBigIntegerOrNull(): BigInteger?
-                fun toBigIntegerOrNull(radix: Int): BigInteger?
+                fun toBigDecimal(): java.math.BigDecimal
+                fun toBigDecimal(mathContext: java.math.MathContext): java.math.BigDecimal
+                fun toBigDecimalOrNull(): java.math.BigDecimal?
+                fun toBigDecimalOrNull(mathContext: java.math.MathContext): java.math.BigDecimal?
+                fun toBigInteger(): java.math.BigInteger
+                fun toBigInteger(radix: Int): java.math.BigInteger
+                fun toBigIntegerOrNull(): java.math.BigInteger?
+                fun toBigIntegerOrNull(radix: Int): java.math.BigInteger?
                 fun toBoolean(): Boolean
                 fun toBooleanStrict(): Boolean
                 fun toBooleanStrictOrNull(): Boolean?
                 fun toByte(): Byte
                 fun toByte(radix: Int): Byte
-                fun toByteArray(charset: Charset): ByteArray
+                fun toByteArray(charset: java.nio.charset.Charset): ByteArray
                 fun toByteOrNull(): Byte?
                 fun toByteOrNull(radix: Int): Byte?
                 fun toCharArray(startIndex: Int, endIndex: Int): CharArray
@@ -282,8 +284,8 @@ class KotlinMetadataTest {
                 fun toLongOrNull(): Long?
                 fun toLongOrNull(radix: Int): Long?
                 fun toLowerCase(): String
-                fun toLowerCase(locale: Locale): String
-                fun toPattern(flags: Int): Pattern
+                fun toLowerCase(locale: java.util.Locale): String
+                fun toPattern(flags: Int): java.util.regex.Pattern
                 fun toRegex(): Regex
                 fun toRegex(option: RegexOption): Regex
                 fun toRegex(options: Set<RegexOption>): Regex
@@ -309,7 +311,7 @@ class KotlinMetadataTest {
                 fun toUShortOrNull(): UShort?
                 fun toUShortOrNull(radix: Int): UShort?
                 fun toUpperCase(): String
-                fun toUpperCase(locale: Locale): String
+                fun toUpperCase(locale: java.util.Locale): String
                 fun translateEscapes(): String
                 fun trim(predicate: Function1<Char, Boolean>): String
                 fun trim(chars: CharArray): String
@@ -323,7 +325,7 @@ class KotlinMetadataTest {
                 fun trimStart(chars: CharArray): String
                 fun trimStart(): String
                 fun uppercase(): String
-                fun uppercase(locale: Locale): String
+                fun uppercase(locale: java.util.Locale): String
             }
             // from kotlin
             inline infix fun Comparable<T>.compareTo(other: T): Int
@@ -442,12 +444,12 @@ class KotlinMetadataTest {
             inline fun CharSequence.maxOfOrNull(selector: Function1<Char, Double>): Double?
             inline fun CharSequence.maxOfOrNull(selector: Function1<Char, Float>): Float?
             inline fun CharSequence.maxOfOrNull(selector: Function1<Char, T>): T?
-            inline fun CharSequence.maxOfWith(comparator: Comparator<in T>, selector: Function1<Char, T>): T
-            inline fun CharSequence.maxOfWithOrNull(comparator: Comparator<in T>, selector: Function1<Char, T>): T?
+            inline fun CharSequence.maxOfWith(comparator: java.util.Comparator<in T>, selector: Function1<Char, T>): T
+            inline fun CharSequence.maxOfWithOrNull(comparator: java.util.Comparator<in T>, selector: Function1<Char, T>): T?
             fun CharSequence.maxOrNull(): Char?
-            fun CharSequence.maxWith(comparator: Comparator<in Char>): Char?
-            fun CharSequence.maxWith(comparator: Comparator<in Char>): Char
-            fun CharSequence.maxWithOrNull(comparator: Comparator<in Char>): Char?
+            fun CharSequence.maxWith(comparator: java.util.Comparator<in Char>): Char?
+            fun CharSequence.maxWith(comparator: java.util.Comparator<in Char>): Char
+            fun CharSequence.maxWithOrNull(comparator: java.util.Comparator<in Char>): Char?
             fun CharSequence.min(): Char?
             fun CharSequence.min(): Char
             inline fun CharSequence.minBy(selector: Function1<Char, T>): Char?
@@ -459,12 +461,12 @@ class KotlinMetadataTest {
             inline fun CharSequence.minOfOrNull(selector: Function1<Char, Double>): Double?
             inline fun CharSequence.minOfOrNull(selector: Function1<Char, Float>): Float?
             inline fun CharSequence.minOfOrNull(selector: Function1<Char, T>): T?
-            inline fun CharSequence.minOfWith(comparator: Comparator<in T>, selector: Function1<Char, T>): T
-            inline fun CharSequence.minOfWithOrNull(comparator: Comparator<in T>, selector: Function1<Char, T>): T?
+            inline fun CharSequence.minOfWith(comparator: java.util.Comparator<in T>, selector: Function1<Char, T>): T
+            inline fun CharSequence.minOfWithOrNull(comparator: java.util.Comparator<in T>, selector: Function1<Char, T>): T?
             fun CharSequence.minOrNull(): Char?
-            fun CharSequence.minWith(comparator: Comparator<in Char>): Char?
-            fun CharSequence.minWith(comparator: Comparator<in Char>): Char
-            fun CharSequence.minWithOrNull(comparator: Comparator<in Char>): Char?
+            fun CharSequence.minWith(comparator: java.util.Comparator<in Char>): Char?
+            fun CharSequence.minWith(comparator: java.util.Comparator<in Char>): Char
+            fun CharSequence.minWithOrNull(comparator: java.util.Comparator<in Char>): Char?
             fun CharSequence.none(): Boolean
             inline fun CharSequence.none(predicate: Function1<Char, Boolean>): Boolean
             fun CharSequence.padEnd(length: Int, padChar: Char): CharSequence
@@ -508,7 +510,7 @@ class KotlinMetadataTest {
             inline fun CharSequence.singleOrNull(predicate: Function1<Char, Boolean>): Char?
             fun CharSequence.slice(indices: IntRange): CharSequence
             fun CharSequence.slice(indices: Iterable<Int>): CharSequence
-            fun CharSequence.split(regex: Pattern, limit: Int): List<String>
+            fun CharSequence.split(regex: java.util.regex.Pattern, limit: Int): List<String>
             fun CharSequence.split(delimiters: Array<out String>, ignoreCase: Boolean, limit: Int): List<String>
             fun CharSequence.split(delimiters: CharArray, ignoreCase: Boolean, limit: Int): List<String>
             inline fun CharSequence.split(regex: Regex, limit: Int): List<String>
@@ -523,8 +525,8 @@ class KotlinMetadataTest {
             fun CharSequence.substring(range: IntRange): String
             inline fun CharSequence.sumBy(selector: Function1<Char, Int>): Int
             inline fun CharSequence.sumByDouble(selector: Function1<Char, Double>): Double
-            inline fun CharSequence.sumOf(selector: Function1<Char, BigDecimal>): BigDecimal
-            inline fun CharSequence.sumOf(selector: Function1<Char, BigInteger>): BigInteger
+            inline fun CharSequence.sumOf(selector: Function1<Char, java.math.BigDecimal>): java.math.BigDecimal
+            inline fun CharSequence.sumOf(selector: Function1<Char, java.math.BigInteger>): java.math.BigInteger
             inline fun CharSequence.sumOf(selector: Function1<Char, Double>): Double
             inline fun CharSequence.sumOf(selector: Function1<Char, Int>): Int
             inline fun CharSequence.sumOf(selector: Function1<Char, Long>): Long
@@ -535,11 +537,11 @@ class KotlinMetadataTest {
             inline fun CharSequence.takeLastWhile(predicate: Function1<Char, Boolean>): CharSequence
             inline fun CharSequence.takeWhile(predicate: Function1<Char, Boolean>): CharSequence
             fun CharSequence.toCollection(destination: T): T
-            fun CharSequence.toHashSet(): HashSet<Char>
+            fun CharSequence.toHashSet(): java.util.HashSet<Char>
             fun CharSequence.toList(): List<Char>
             fun CharSequence.toMutableList(): MutableList<Char>
             fun CharSequence.toSet(): Set<Char>
-            fun CharSequence.toSortedSet(): SortedSet<Char>
+            fun CharSequence.toSortedSet(): java.util.SortedSet<Char>
             inline fun CharSequence.trim(predicate: Function1<Char, Boolean>): CharSequence
             fun CharSequence.trim(chars: CharArray): CharSequence
             fun CharSequence.trim(): CharSequence
@@ -561,6 +563,9 @@ class KotlinMetadataTest {
         """.trimIndent()
     }
 
+
+    // TestClass tests
+
     @Test
     fun `should resolve TestClass with extension functions from multiple packages`() {
         // when
@@ -579,6 +584,24 @@ class KotlinMetadataTest {
             // from com.xemantic.ai.golem.kotlin.metadata.test.ext
             val TestClass.uppercaseName: String
             fun TestClass.describe(): String
+        """.trimIndent()
+    }
+
+    @Test
+    fun `should resolve class with cross-package type references`() {
+        // when - CrossPackageTypeTest references types from test.other package
+        val signature = resolver.resolve(
+            "com.xemantic.ai.golem.kotlin.metadata.test.CrossPackageTypeTest"
+        )
+
+        // then - types from different packages should be fully qualified
+        // so that an LLM can look them up or import them correctly
+        signature sameAs /* language=kotlin */ """
+            // com.xemantic.ai.golem.kotlin.metadata.test.CrossPackageTypeTest [page 1/1]
+            class CrossPackageTypeTest(val processor: com.xemantic.ai.golem.kotlin.metadata.test.other.CustomProcessor) {
+                fun process(input: String): com.xemantic.ai.golem.kotlin.metadata.test.other.CustomResult
+                fun processWithProcessor(processor: com.xemantic.ai.golem.kotlin.metadata.test.other.CustomProcessor, input: String): com.xemantic.ai.golem.kotlin.metadata.test.other.CustomResult
+            }
         """.trimIndent()
     }
 
@@ -641,19 +664,40 @@ class KotlinMetadataTest {
     }
 
     @Test
-    fun `should resolve enum class`() {
+    fun `should resolve simple enum class`() {
         // when
         val signature = resolver.resolve(
             "com.xemantic.ai.golem.kotlin.metadata.test.EnumTestClass"
         )
 
         // then - an LLM needs to see enum entries to know what values are available
+        // Note: Enum<T> supertype is filtered out as redundant - enum class already implies it
         signature sameAs /* language=kotlin */ """
             // com.xemantic.ai.golem.kotlin.metadata.test.EnumTestClass [page 1/1]
             enum class EnumTestClass {
                 FIRST,
                 SECOND,
                 THIRD
+            }
+        """.trimIndent()
+    }
+
+    @Test
+    fun `should resolve rich enum class with constructor, properties and functions`() {
+        // when
+        val signature = resolver.resolve(
+            "com.xemantic.ai.golem.kotlin.metadata.test.RichEnumTestClass"
+        )
+
+        // then - an LLM needs to see constructor params, entries, properties and functions
+        signature sameAs /* language=kotlin */ """
+            // com.xemantic.ai.golem.kotlin.metadata.test.RichEnumTestClass [page 1/1]
+            enum class RichEnumTestClass(val code: Int, val label: String) {
+                ALPHA,
+                BETA,
+                GAMMA;
+                val displayName: String
+                fun isFirst(): Boolean
             }
         """.trimIndent()
     }
@@ -790,6 +834,20 @@ class KotlinMetadataTest {
     }
 
     @Test
+    fun `should resolve nested class directly`() {
+        // when
+        val signature = resolver.resolve(
+            "com.xemantic.ai.golem.kotlin.metadata.test.SealedTestClass.SubClass1"
+        )
+
+        // then - nested class can be resolved independently to see its full details
+        signature sameAs /* language=kotlin */ """
+            // com.xemantic.ai.golem.kotlin.metadata.test.SealedTestClass.SubClass1 [page 1/1]
+            class SubClass1(val name: String) : SealedTestClass
+        """.trimIndent()
+    }
+
+    @Test
     fun `should resolve abstract class`() {
         // when
         val signature = resolver.resolve(
@@ -821,6 +879,124 @@ class KotlinMetadataTest {
             class OverrideTestClass : Comparable<OverrideTestClass> {
                 override operator fun compareTo(other: OverrideTestClass): Int
             }
+        """.trimIndent()
+    }
+
+    // search() tests
+
+    @Test
+    fun `search should find class by partial name match`() {
+        // when
+        val result = resolver.search("TestClass")
+
+        // then - should find our test classes
+        result sameAs /* language=kotlin */ """
+            // search results for "TestClass" [page 1/2]
+            com.xemantic.ai.golem.kotlin.metadata.test.AbstractTestClass
+            com.xemantic.ai.golem.kotlin.metadata.test.AnnotationTestClass
+            com.xemantic.ai.golem.kotlin.metadata.test.CompanionTestClass
+            com.xemantic.ai.golem.kotlin.metadata.test.DataTestClass
+            com.xemantic.ai.golem.kotlin.metadata.test.EnumTestClass
+            com.xemantic.ai.golem.kotlin.metadata.test.FunctionModifiersTestClass
+            com.xemantic.ai.golem.kotlin.metadata.test.ObjectTestClass
+            com.xemantic.ai.golem.kotlin.metadata.test.OpenTestClass
+            com.xemantic.ai.golem.kotlin.metadata.test.OverrideTestClass
+            com.xemantic.ai.golem.kotlin.metadata.test.PropertyModifiersTestClass
+        """.trimIndent()
+    }
+
+    @Test
+    fun `search should be case-insensitive`() {
+        // when
+        val result = resolver.search("TESTCLASS")
+
+        // then - should still find test classes despite uppercase query
+        result sameAs /* language=kotlin */ """
+            // search results for "TESTCLASS" [page 1/2]
+            com.xemantic.ai.golem.kotlin.metadata.test.AbstractTestClass
+            com.xemantic.ai.golem.kotlin.metadata.test.AnnotationTestClass
+            com.xemantic.ai.golem.kotlin.metadata.test.CompanionTestClass
+            com.xemantic.ai.golem.kotlin.metadata.test.DataTestClass
+            com.xemantic.ai.golem.kotlin.metadata.test.EnumTestClass
+            com.xemantic.ai.golem.kotlin.metadata.test.FunctionModifiersTestClass
+            com.xemantic.ai.golem.kotlin.metadata.test.ObjectTestClass
+            com.xemantic.ai.golem.kotlin.metadata.test.OpenTestClass
+            com.xemantic.ai.golem.kotlin.metadata.test.OverrideTestClass
+            com.xemantic.ai.golem.kotlin.metadata.test.PropertyModifiersTestClass
+        """.trimIndent()
+    }
+
+    @Test
+    fun `search should return null when no matches found`() {
+        // when
+        val result = resolver.search("XyzNonExistentClass12345")
+
+        // then
+        assert(result == null)
+    }
+
+    @Test
+    fun `search should support pagination with pageSize`() {
+        // when
+        val result = resolver.search("TestClass", pageSize = 3)
+
+        // then - should show first 3 results (15 total classes, 5 pages)
+        result sameAs /* language=kotlin */ """
+            // search results for "TestClass" [page 1/5]
+            com.xemantic.ai.golem.kotlin.metadata.test.AbstractTestClass
+            com.xemantic.ai.golem.kotlin.metadata.test.AnnotationTestClass
+            com.xemantic.ai.golem.kotlin.metadata.test.CompanionTestClass
+        """.trimIndent()
+    }
+
+    @Test
+    fun `search should support pagination with page parameter`() {
+        // when
+        val result = resolver.search("TestClass", page = 2, pageSize = 3)
+
+        // then - should show results 4-6 (15 total classes, 5 pages)
+        result sameAs /* language=kotlin */ """
+            // search results for "TestClass" [page 2/5]
+            com.xemantic.ai.golem.kotlin.metadata.test.DataTestClass
+            com.xemantic.ai.golem.kotlin.metadata.test.EnumTestClass
+            com.xemantic.ai.golem.kotlin.metadata.test.FunctionModifiersTestClass
+        """.trimIndent()
+    }
+
+    @Test
+    fun `search should find enum class`() {
+        // when
+        val result = resolver.search("EnumTestClass")
+
+        // then
+        result sameAs /* language=kotlin */ """
+            // search results for "EnumTestClass" [page 1/1]
+            com.xemantic.ai.golem.kotlin.metadata.test.EnumTestClass
+            com.xemantic.ai.golem.kotlin.metadata.test.RichEnumTestClass
+        """.trimIndent()
+    }
+
+    @Test
+    fun `search should find annotation class`() {
+        // when
+        val result = resolver.search("AnnotationTestClass")
+
+        // then
+        result sameAs /* language=kotlin */ """
+            // search results for "AnnotationTestClass" [page 1/1]
+            com.xemantic.ai.golem.kotlin.metadata.test.AnnotationTestClass
+        """.trimIndent()
+    }
+
+    @Test
+    fun `search should find value class`() {
+        // when
+        val result = resolver.search("ValueTestClass")
+
+        // then
+        result sameAs /* language=kotlin */ """
+            // search results for "ValueTestClass" [page 1/1]
+            com.xemantic.ai.golem.kotlin.metadata.test.ValueTestClass
         """.trimIndent()
     }
 
