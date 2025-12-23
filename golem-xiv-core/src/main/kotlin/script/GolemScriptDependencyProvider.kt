@@ -12,6 +12,7 @@ import com.xemantic.ai.golem.api.backend.script.Memory
 import com.xemantic.ai.golem.core.script.service.ActualMind
 import com.xemantic.ai.golem.core.script.service.KtorHttp
 import com.xemantic.ai.golem.core.script.service.LocalFiles
+import com.xemantic.ai.golem.kotlin.metadata.DefaultKotlinMetadata
 
 class GolemScriptDependencyProvider(
     private val repository: CognitionRepository,
@@ -22,6 +23,8 @@ class GolemScriptDependencyProvider(
 
     private val http = KtorHttp()
 
+    private val kotlinMetadata = DefaultKotlinMetadata()
+
     fun dependencies(
         cognitionId: Long,
         fulfillmentId: Long
@@ -30,7 +33,8 @@ class GolemScriptDependencyProvider(
             service("mind", ActualMind(repository, cognitionId)),
             service("memory", memoryProvider(cognitionId, fulfillmentId)),
             service("files", files),
-            service("http", http)
+            service("http", http),
+            service("kotlinMetadata", kotlinMetadata)
         )
     }
 

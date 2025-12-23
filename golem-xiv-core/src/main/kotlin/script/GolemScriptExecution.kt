@@ -35,7 +35,7 @@ import kotlin.script.experimental.api.compilerOptions
 import kotlin.script.experimental.api.defaultImports
 import kotlin.script.experimental.api.providedProperties
 import kotlin.script.experimental.host.toScriptSource
-import kotlin.script.experimental.jvm.dependenciesFromClassContext
+import kotlin.script.experimental.jvm.dependenciesFromCurrentContext
 import kotlin.script.experimental.jvm.jvm
 import kotlin.script.experimental.jvmhost.BasicJvmScriptingHost
 import kotlin.time.measureTimedValue
@@ -59,14 +59,13 @@ class GolemScriptExecutor {
 
     private val compilationConfigurationTemplate = ScriptCompilationConfiguration {
         jvm {
-            dependenciesFromClassContext(
-                contextClass = GolemScriptExecutor::class,
+            dependenciesFromCurrentContext(
                 wholeClasspath = true
             )
         }
         // Add helpful default imports
         defaultImports(
-            "kotlinx.coroutines.*"
+            "kotlinx.coroutines.async"
         )
         // TODO can be removed once the time API is stable?
         // "-Xmulti-dollar-interpolation" probably not needed anymore
