@@ -41,6 +41,7 @@ dependencies {
     api(libs.xemantic.neo4j.kotlin.driver)
     api(libs.xemantic.ai.tool.schema)
     api(libs.ktor.client.core)
+    api(libs.markanywhere.api)
 
     implementation(project(":golem-xiv-json")) //
 
