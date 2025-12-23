@@ -8,6 +8,7 @@ dependencies {
     api(project(":golem-xiv-api-backend"))
     api(libs.anthropic.sdk.kotlin)
     api(libs.kotlinx.coroutines.core)
+    api(libs.markanywhere.parse)
 
     implementation(libs.ktor.serialization.kotlinx.json)
 
