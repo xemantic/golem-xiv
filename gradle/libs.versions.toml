@@ -1,8 +1,8 @@
 [versions]
-kotlinTarget = "2.2"
+kotlinTarget = "2.3"
 javaTarget = "21"
 
-kotlin = "2.2.21"
+kotlin = "2.3.0"
 kotlinxSerialization = "1.9.0"
 kotlinxCoroutines = "1.10.2"
 kotlinxHtml = "0.12.0"
@@ -10,21 +10,21 @@ kotlinxHtml = "0.12.0"
 kotlinLogging = "7.0.13"
 
 anthropicSdkKotlin = "0.25.2"
-xemanticKotlinCore = "0.5.0"
-xemanticKotlinTest = "1.15.2"
+xemanticKotlinCore = "0.6.1"
+xemanticKotlinTest = "1.16.0"
 xemanticAiToolSchema = "1.2.0"
 xemanticNeo4jKotlinDriver = "1.0.0"
 
 ktor = "3.3.3"
 playwright = "1.57.0"
 dashscope = "2.20.1"
-neo4j = "2025.10.1"
+neo4j = "2025.11.2"
 neo4jBrowser = "2025.2.0"
 neo4jDriver = "6.0.2"
-neo4jMigrations = "2.20.1"
+neo4jMigrations = "3.1.0"
 
 slf4j = "2.0.17"
-logback = "1.5.21"
+logback = "1.5.23"
 
 versionsPlugin = "0.53.0"
 dokkaPlugin = "2.1.0"
@@ -38,6 +38,9 @@ nodeGradle = "7.1.0"
 kotlin-scripting-common = { module = "org.jetbrains.kotlin:kotlin-scripting-common", version.ref = "kotlin" }
 kotlin-scripting-jvm = { module = "org.jetbrains.kotlin:kotlin-scripting-jvm", version.ref = "kotlin" }
 kotlin-scripting-jvm-host = { module = "org.jetbrains.kotlin:kotlin-scripting-jvm-host", version.ref = "kotlin" }
+kotlin-metadata-jvm = { module = "org.jetbrains.kotlin:kotlin-metadata-jvm", version.ref = "kotlin" }
+kotlin-compiler-embeddable = { module = "org.jetbrains.kotlin:kotlin-compiler-embeddable", version.ref = "kotlin" }
+kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 
 kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlinxSerialization" }

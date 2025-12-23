@@ -32,6 +32,7 @@ val mind: Mind
 val memory: Memory
 val files: Files
 val http: Http
+val kotlinMetadata: KotlinMetadata
 <golem-script-api>
 
 IMPORTANT: remember to add necessary imports.

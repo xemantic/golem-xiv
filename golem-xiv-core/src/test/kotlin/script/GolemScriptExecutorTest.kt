@@ -19,7 +19,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
-import kotlin.time.measureTimedValue
 
 class GolemScriptExecutorTest {
 
@@ -38,6 +37,42 @@ class GolemScriptExecutorTest {
         result should {
             be<ExecuteGolemScript.Result.Value>()
             have(value == "foo")
+        }
+    }
+
+    @Test
+    fun `should execute typical Golem Script crafted by an LLM`() = runTest {
+        // given
+        val script = $$"""
+            
+            fun fibonacci(n: Int): Long {
+                if (n <= 1) return n.toLong()
+                
+                var a = 0L
+                var b = 1L
+                
+                for (i in 2..n) {
+                    val temp = a + b
+                    a = b
+                    b = temp
+                }
+                
+                return b
+            }
+            
+            val result = fibonacci(42)
+            "The 42nd Fibonacci number is: $result"
+            
+        """.trimIndent()
+        val executor = GolemScriptExecutor()
+
+        // when
+        val result = executor.execute(script)
+
+        // then
+        result should {
+            be<ExecuteGolemScript.Result.Value>()
+            have(value == "The 42nd Fibonacci number is: 267914296")
         }
     }
 
@@ -415,6 +450,8 @@ class GolemScriptExecutorTest {
             )
         )
         val script = """
+            import kotlinx.coroutines.delay
+            
             logger.info { "before delay" }
             delay(1000)
             logger.info { "after delay" }
