@@ -14,7 +14,6 @@ application {
 dependencies {
     implementation(project(":golem-xiv-logging"))
     implementation(project(":golem-xiv-api"))
-    implementation(project(":golem-xiv-api-websocket"))
     implementation(project(":golem-xiv-api-backend"))
     implementation(project(":golem-xiv-neo4j"))
     implementation(project(":golem-xiv-cognizer-anthropic"))
@@ -33,13 +32,15 @@ dependencies {
 
     implementation(libs.ktor.client.java)
     implementation(libs.ktor.server.core)
-    implementation(libs.ktor.server.websockets)
+    implementation(libs.ktor.server.sse)
     implementation(libs.ktor.server.netty)
-    implementation(libs.ktor.server.cors)
     implementation(libs.ktor.server.call.logging)
     implementation(libs.ktor.server.config.yaml)
     implementation(libs.ktor.server.content.negotiation)
     implementation(libs.ktor.server.status.pages)
+    // cors is needed only during development
+    // TODO check how to exclude it when assembling shadowJar
+    implementation(libs.ktor.server.cors)
     implementation(libs.ktor.serialization.kotlinx.json)
 
     implementation(libs.anthropic.sdk.kotlin)
@@ -48,8 +49,6 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.xemantic.kotlin.test)
     testImplementation(libs.neo4j.harness)
-
-
 }
 
 tasks.register<Copy>("copyWebResources") {
