@@ -50,11 +50,10 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.put
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
-import io.ktor.server.websocket.WebSockets
-import io.ktor.server.websocket.webSocket
+import io.ktor.server.sse.SSE
+import io.ktor.server.sse.sse
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.neo4j.driver.AuthTokens
 import org.neo4j.driver.GraphDatabase
@@ -146,41 +145,7 @@ fun Application.module() {
     install(ContentNegotiation) {
         json()
     }
-    install(CORS) {
-        // Allow requests from any host
-        anyHost()
-
-        // Or specify allowed hosts
-        // allowHost("example.com")
-        // allowHost("localhost:3000")
-
-        allowMethod(HttpMethod.Get)
-        allowMethod(HttpMethod.Post)
-        allowMethod(HttpMethod.Put)
-        allowMethod(HttpMethod.Patch)
-        allowMethod(HttpMethod.Delete)
-        allowMethod(HttpMethod.Options)
-
-        // Allow headers
-        allowHeader(HttpHeaders.ContentType)
-        allowHeader(HttpHeaders.Authorization)
-
-        // Allow credentials (cookies, etc.)
-        allowCredentials = true
-
-        // Allow specific content types
-        allowHeadersPrefixed("X-Custom-")
-
-        // Configure max age for preflight requests cache
-        maxAgeInSeconds = 3600
-    }
-    install(WebSockets) {
-//        contentConverter = KotlinxWebsocketSerializationConverter(Json)
-//        pingPeriod = 15.seconds
-//        timeout = 15.seconds
-//        maxFrameSize = Long.MAX_VALUE
-//        masking = false
-    }
+    install(SSE)
 
     install(StatusPages) {
         configureStatusPages()
@@ -200,55 +165,17 @@ fun Application.module() {
             golemApiRoute(logger, golem)
         }
 
-        webSocket("/ws") {
-
+        sse("/events") {
             val clientIp = call.request.origin.remoteAddress
-            logger.info { "WebSocket connected: $clientIp" }
+            logger.info { "SSE client connected: $clientIp" }
 
             sendGolemOutput(
                 GolemOutput.Welcome("You are connected to Golem XIV")
             )
 
-//            val frame = incoming.receive()
-//            logger.info { frame }
-//            val input = receiveGolemInput()
-//            println(input)
-//
-
-            launch {
-                outputs.collect {
-                    sendGolemOutput(it)
-                }
+            outputs.collect {
+                sendGolemOutput(it)
             }
-
-            // not used at the moment
-            collectGolemInput {
-                logger.debug {
-                    "GolemInput received: $it"
-                }
-            }
-
-//                try {
-//                    val context = golem.newContext()
-//
-////                while (true) {
-////                    val frame = incoming.receive()
-////                    if (frame !is Frame.Text) {              logger.error { "Received frame is not a text: ${frame.frameType}" }
-////                        send(AgentOutput.Error("Received frame is not a text: ${frame.frameType}"))              continue
-////                    }            val receivedText = frame.readText()
-////                    val message = try {
-////                        AgentInput.fromJson(receivedText)            } catch (e: SerializationException) {
-////                        logger.error { "Unrecognized JSON message: $receivedText" }              send(AgentOutput.Error("Unrecognized JSON message: ${frame.frameType}"))
-////                        continue            }
-////                    claudineSession.process(message) {              send(it)
-////                    }
-////                }        } catch (e: Exception) {
-//
-//                } catch (e: Exception) {
-//                    logger.error {
-//                        "Unexpected error in WebSocket session: ${e.message}"
-//                    }
-//                }
         }
     }
 }

@@ -5,6 +5,7 @@ ktor:
     port: 8081
   application:
     modules:
+      - com.xemantic.ai.golem.server.CorsKt.cors
       - com.xemantic.ai.golem.server.GolemServerKt.module
 
 neo4j:

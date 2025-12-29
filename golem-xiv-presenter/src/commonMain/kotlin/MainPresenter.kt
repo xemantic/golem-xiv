@@ -8,12 +8,10 @@
 package com.xemantic.ai.golem.presenter
 
 import com.xemantic.ai.golem.api.GolemError
-import com.xemantic.ai.golem.api.GolemInput
 import com.xemantic.ai.golem.api.GolemOutput
 import com.xemantic.ai.golem.api.client.GolemServiceException
 import com.xemantic.ai.golem.api.client.http.HttpClientCognitionService
 import com.xemantic.ai.golem.api.client.http.HttpClientPingService
-import com.xemantic.ai.golem.api.client.http.sendGolemData
 import com.xemantic.ai.golem.presenter.environment.Theme
 import com.xemantic.ai.golem.presenter.environment.ThemeManager
 import com.xemantic.ai.golem.presenter.memory.MemoryView
@@ -26,16 +24,15 @@ import com.xemantic.ai.golem.presenter.navigation.SidebarView
 import com.xemantic.ai.golem.presenter.cognition.CognitionPresenter
 import com.xemantic.ai.golem.presenter.cognition.CognitionView
 import com.xemantic.ai.golem.presenter.util.Action
-import com.xemantic.ai.golem.presenter.websocket.collectGolemOutput
+import com.xemantic.ai.golem.presenter.sse.collectGolemOutput
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
-import io.ktor.client.plugins.websocket.WebSockets
-import io.ktor.client.plugins.websocket.webSocket
+import io.ktor.client.plugins.sse.SSE
+import io.ktor.client.plugins.sse.sse
 import io.ktor.http.URLProtocol
 import io.ktor.serialization.kotlinx.json.json
-import io.ktor.websocket.WebSocketSession
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -79,12 +76,11 @@ class MainPresenter(
     data class Config(
         val apiProtocol: URLProtocol,
         val apiHost: String,
-        val apiPort: Int,
-        val wsProtocol: URLProtocol = if (apiProtocol == URLProtocol.HTTPS) URLProtocol.WSS else URLProtocol.WS
+        val apiPort: Int
     )
 
     private val apiClient = HttpClient {
-        install(WebSockets)
+        install(SSE)
         install(ContentNegotiation) {
             json()
         }
@@ -121,9 +117,6 @@ class MainPresenter(
         themeChangesSink = themeChangesFlow
     )
 
-//    private val golemInput = MutableSharedFlow<GolemInput>()
-
-    private val golemInputs = MutableSharedFlow<GolemInput>()
     private val golemOutputs = MutableSharedFlow<GolemOutput>()
 
     private val pingService = HttpClientPingService(apiClient)
@@ -197,21 +190,12 @@ class MainPresenter(
 //        }
 
         scope.launch {
-            logger.debug { "Connecting to WebSocket, port: ${config.apiPort}" }
-            apiClient.webSocket(
-                request = {
-                    url.host = config.apiHost
-                    url.port = config.apiPort
-                    url.protocol = config.wsProtocol
-                },
-                path = "/ws"
+            logger.debug { "Connecting to SSE, port: ${config.apiPort}" }
+            apiClient.sse(
+                host = config.apiHost,
+                port = config.apiPort,
+                path = "/events"
             ) {
-                launch {
-                    // nothing to send at the moment
-                    golemInputs.collect { intput ->
-                        sendGolemData(intput)
-                    }
-                }
                 collectGolemOutput { handle(it) }
             }
         }
@@ -239,7 +223,7 @@ class MainPresenter(
     }
 
     @OptIn(ExperimentalTime::class)
-    private suspend fun WebSocketSession.handle(
+    private suspend fun handle(
         output: GolemOutput
     ) {
         when (output) {

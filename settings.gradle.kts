@@ -8,7 +8,6 @@ pluginManagement {
 include(
     ":golem-xiv-json",
     ":golem-xiv-api",
-    ":golem-xiv-api-websocket",
     ":golem-xiv-api-backend",
     ":golem-xiv-api-client",
     ":golem-xiv-logging",

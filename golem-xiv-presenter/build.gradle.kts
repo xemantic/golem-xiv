@@ -18,11 +18,9 @@ kotlin {
             dependencies {
                 api(project(":golem-xiv-api"))
                 api(project(":golem-xiv-api-client"))
-                api(project(":golem-xiv-api-websocket"))
                 api(libs.kotlinx.coroutines.core)
 
                 implementation(libs.kotlinx.serialization.json)
-                implementation(libs.ktor.websockets)
                 implementation(libs.ktor.client.core)
                 implementation(libs.ktor.client.content.negotiation)
                 implementation(libs.ktor.serialization.kotlinx.json)
