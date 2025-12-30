@@ -1,7 +1,3 @@
 <component name="CopyrightManager">
-  <settings default="xemantic copyright">
-    <module2copyright>
-      <element module="All" copyright="xemantic copyright" />
-    </module2copyright>
-  </settings>
+  <settings default="golem agpl" />
 </component>
