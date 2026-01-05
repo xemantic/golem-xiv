@@ -24,6 +24,7 @@ import kotlinx.html.TagConsumer
 import kotlinx.html.div
 import kotlinx.html.dom.create
 import kotlinx.html.id
+import org.w3c.dom.Element
 import org.w3c.dom.HTMLElement
 
 val dom: TagConsumer<HTMLElement> get() = GolemTagConsumer()
@@ -67,4 +68,58 @@ private class GolemTagConsumer(
         return final
     }
 
+}
+
+operator fun Element.invoke(block: ElementBuilder.() -> Unit) {
+    val builder = ElementBuilder(this)
+    builder.block()
+}
+
+class ElementBuilder(
+    @PublishedApi
+    internal val parent: Element
+) {
+
+    inline operator fun String.invoke(
+        vararg attributes: Pair<String, String>,
+        noinline block: ElementBuilder.() -> Unit
+    ) {
+        element(
+            name = this,
+            attributes = attributes,
+            block = block
+        )
+    }
+
+    @PublishedApi
+    internal fun element(
+        name: String,
+        vararg attributes: Pair<String, String>,
+        block: ElementBuilder.() -> Unit
+    ) {
+        val element = document.createElement(name)
+        val builder = ElementBuilder(element)
+        builder.block()
+        //element.attributes[""]
+        parent.appendChild(element)
+    }
+
+}
+
+fun test() {
+    document.body!! {
+        "section" {
+            div {
+
+            }
+        }
+    }
+}
+
+inline fun ElementBuilder.div(
+    crossinline block: ElementBuilder.() -> Unit
+) {
+    "div" {
+        block(this)
+    }
 }

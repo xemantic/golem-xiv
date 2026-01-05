@@ -1,8 +1,19 @@
 /*
- * Copyright (c) 2025. Kazimierz Pogoda / Xemantic. All rights reserved.
+ * Golem XIV - Autonomous metacognitive AI system with semantic memory and self-directed research
+ * Copyright (C) 2025  Kazimierz Pogoda / Xemantic
  *
- * This code is part of the "golem-xiv" project, a cognitive AI agent.
- * Unauthorized reproduction or distribution is prohibited.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 package com.xemantic.ai.golem.cognizer.anthropic
@@ -21,7 +32,6 @@ import com.xemantic.ai.golem.api.PhenomenalExpression
 import com.xemantic.ai.golem.api.EpistemicAgent
 import com.xemantic.ai.golem.api.backend.Cognizer2
 import com.xemantic.ai.golem.api.backend.CognizerEvent
-import com.xemantic.ai.golem.api.backend.CognizerEvent.*
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.onCompletion
@@ -38,20 +48,11 @@ class AnthropicCognizer(
 
     override fun reason(
         constitution: List<String>,
-        cognitionId: Long,
         phenomenalFlow: List<PhenomenalExpression>,
-        hints: Map<String, String>
+        parameters: Map<String, String>
     ): Flow<CognizerEvent> {
 
-        logger.debug {
-            "Cognition[$cognitionId]: reasoning"
-        }
-
         val messageFlow = phenomenalFlow.toAnthropicMessages().addCacheBreakpoint()
-
-        logger.trace {
-            "Cognition[$cognitionId]: anthropic messages: $messageFlow"
-        }
 
         val flow = anthropic.messages.stream {
             system = constitution.toAnthropicSystem()
@@ -60,7 +61,7 @@ class AnthropicCognizer(
             when (event) {
 
                 is Event.MessageStart -> {
-                    logger.debug { "Cognition[$cognitionId]: MessageStart event" }
+                    logger.debug { "MessageStart event" }
                 }
 
                 is Event.ContentBlockStart -> {
@@ -85,7 +86,7 @@ class AnthropicCognizer(
 
                         is Event.ContentBlockDelta.Delta.TextDelta -> {
                             val textDelta = (event.delta as Event.ContentBlockDelta.Delta.TextDelta).text
-                            emit(TextDelta(textDelta))
+                            emit(CognizerEvent.TextDelta(textDelta))
                         }
 
                         is Event.ContentBlockDelta.Delta.InputJsonDelta -> {
@@ -101,7 +102,9 @@ class AnthropicCognizer(
                 }
 
                 is Event.MessageDelta -> {
-                    emit(Usage(categories = emptyMap()))
+//                    emit(CognizerEvent.Usage(categories = mapOf(
+//                        "inputTokens" to (this as Event.MessageDelta).usage.outputTokens
+//                    )))
                 }
 
                 is Event.MessageStop -> {
@@ -110,18 +113,18 @@ class AnthropicCognizer(
                 }
 
                 is Event.Error -> {
-                    logger.error { "Cognition[$cognitionId]: Error, ${event.error}" }
+                    logger.error { "Error, ${event.error}" }
                 }
 
 
                 is Event.Ping -> {
-                    logger.trace { "Cognition[$cognitionId]: Ping event" }
+                    logger.trace { "Ping" }
                 }
             }
         }.onStart {
-            logger.debug { "Cognition[$cognitionId]: API streaming start" }
+            logger.debug { "API streaming start" }
         }.onCompletion {
-            logger.debug { "Cognition[$cognitionId]: API streaming stop" }
+            logger.debug { "API streaming stop" }
         }
 
         return flow
