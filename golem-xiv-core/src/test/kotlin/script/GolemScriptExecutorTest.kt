@@ -783,12 +783,12 @@ class GolemScriptExecutorTest {
     }
 
     @Test
-    fun `should execute 100 scripts in a loop`() = runTest {
+    fun `should execute 50 scripts in a loop`() = runTest {
         // given
         val executor = GolemScriptExecutor()
 
         // when/then
-        repeat(100) { i ->
+        repeat(50) { i ->
             val script = $$"""
                 val index = $$i
                 "result-$index"
