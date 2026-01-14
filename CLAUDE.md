@@ -30,13 +30,42 @@ Golem XIV is a meta-cognitive recursive AI agent with memory, built as a Kotlin 
 
 ## Running the Application
 
-Requires three terminals running in order:
+Requires four terminals running in order:
 
 1. **Neo4j database**: `./gradlew runNeo4j`
-2. **Golem server**: `export ANTHROPIC_API_KEY=your_key && ./gradlew run`
-3. **Web client**: `./gradlew jsBrowserDevelopmentRun --continuous`
+2. **DDGS search service**: `./gradlew runDdgsSearch` (automatically installs Python dependencies on first run). DDGS stands for "Dux Distributed Global Search" - a metasearch library aggregating results from multiple backends (Bing, Brave, DuckDuckGo, Google, Wikipedia, etc.). NOT "DuckDuckGo Search".
+3. **Golem server**: `export ANTHROPIC_API_KEY=your_key && ./gradlew run`
+4. **Web client**: `./gradlew jsBrowserDevelopmentRun --continuous`
 
-First-time setup requires: `./gradlew installNeo4jBrowser`
+### Golem Server Options
+
+CLI arguments for the Golem server:
+
+- `--show-browser`: Show the browser window when using webOpen (default is headless mode)
+- `--chromium-path=/path/to/chromium`: Specify custom Chromium installation path
+
+Examples:
+```shell
+# Show browser window
+export ANTHROPIC_API_KEY=your_key && ./gradlew run --args="--show-browser"
+
+# Use custom Chromium path
+export ANTHROPIC_API_KEY=your_key && ./gradlew run --args="--chromium-path=/usr/bin/google-chrome-stable"
+
+# Combine options
+export ANTHROPIC_API_KEY=your_key && ./gradlew run --args="--show-browser --chromium-path=/opt/chromium/bin/chromium"
+```
+
+### First-time Setup
+
+- Neo4j Browser: `./gradlew installNeo4jBrowser`
+- DDGS service dependencies are installed automatically when you first run `./gradlew runDdgsSearch`
+- (Optional) Playwright bundled Chromium: `./gradlew installPlaywrightChromium`
+  - On Arch Linux, bundled Chromium may fail. Install system Chromium instead: `sudo pacman -S chromium`
+  - Golem will automatically try bundled Chromium first, then fall back to system Chromium
+  - If Playwright cannot be initialized, Golem will use jina.ai as fallback for web content
+
+**Note**: On some Linux distributions, you may need to install `python3-venv` first: `sudo apt install python3-venv`
 
 ## Architecture
 
@@ -71,13 +100,45 @@ The `build-logic` module provides `golem.convention` plugin applied to all modul
 
 Tests use JUnit Platform with `xemantic-kotlin-test` assertions. Neo4j tests use `neo4j-harness` for embedded database instances.
 
+### Unit Tests
+
 ```shell
 # Run a single test class
 ./gradlew :golem-xiv-core:test --tests "com.xemantic.ai.golem.core.script.GolemScriptExecutorTest"
 
 # Run a single test method
 ./gradlew :golem-xiv-neo4j:test --tests "*Neo4jMemoryTest.should*"
+
+# Run all tests in a module
+./gradlew :golem-xiv-core:test
 ```
+
+### Integration Tests
+
+Integration tests are tagged with `@Tag("integration")` and require external services or network connectivity:
+
+**Web Search Integration Tests** (require DDGS service):
+```shell
+# Start DDGS service first
+./gradlew runDdgsSearch
+
+# In another terminal, run integration tests
+./gradlew :golem-xiv-core:test --tests "*Integration*"
+```
+
+**Web Browser Integration Tests** (require network connectivity):
+```shell
+# Run Playwright integration tests (opens real websites)
+./gradlew :golem-xiv-playwright:test --tests "*Integration*"
+```
+
+**Run All Integration Tests**:
+```shell
+# Run all integration tests across modules
+./gradlew test --tests "*Integration*"
+```
+
+Integration tests will be **skipped** (not failed) if required services are unavailable.
 
 ## IDE Setup
 

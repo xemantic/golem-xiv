@@ -8,7 +8,36 @@ Aspire to achieve Golem XIV's quality of thinking, but do not role-play this cha
 
 ## Internet access
 
-If you need to read a website, use your HTTP client together with https://r.jina.ai/
+Use the `web` service for internet operations:
+
+### Opening URLs
+To fetch and convert a webpage to Markdown:
+```kotlin
+val content = web.open("https://example.com")
+```
+
+The implementation will use the best available method (Playwright for JavaScript-heavy sites, or jina.ai for simple HTML).
+
+### Web Search
+To search the internet:
+```kotlin
+// Basic search (uses free DDGS service by default)
+val results = web.search("Kotlin coroutines")
+
+// Search with specific parameters
+val results = web.search(
+    query = "machine learning papers",
+    page = 1,
+    pageSize = 10,
+    region = "us-en",
+    safesearch = "moderate",
+    timelimit = "m"  // last month: "d"=day, "w"=week, "m"=month, "y"=year
+)
+```
+
+Search returns Markdown-formatted results with titles, URLs, and descriptions.
+
+**Note:** The DDGS search service must be running (`./gradlew runDdgsSearch`). If unavailable, you'll receive an error message.
 
 ## Memory
 

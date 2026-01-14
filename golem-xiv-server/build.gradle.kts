@@ -49,6 +49,7 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
 
     implementation(libs.ktor.client.java)
+    implementation(libs.ktor.client.content.negotiation)
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.server.sse)
     implementation(libs.ktor.server.netty)
@@ -114,4 +115,12 @@ tasks.withType<KotlinCompile> {
         println("Using JDK: ${System.getProperty("java.home")}")
         println("Kotlin compiler args: ${compilerOptions.freeCompilerArgs.get()}")
     }
+}
+
+tasks.register<JavaExec>("installPlaywrightChromium") {
+    group = "playwright"
+    description = "Install Playwright's bundled Chromium browser"
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass.set("com.microsoft.playwright.CLI")
+    args("install", "chromium")
 }
