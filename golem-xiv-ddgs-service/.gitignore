@@ -1,0 +1,8 @@
+# Python virtual environment
+src/main/python/venv/
+
+# Python cache
+src/main/python/__pycache__/
+src/main/python/*.pyc
+src/main/python/*.pyo
+src/main/python/*.pyd

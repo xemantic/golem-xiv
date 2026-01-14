@@ -284,6 +284,7 @@ class GolemXiv(
         }
 
         scriptExecutor.close()
+        golemScriptDependencyProvider.close()
 
         scope.cancel()
 

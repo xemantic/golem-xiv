@@ -125,3 +125,11 @@ tasks.withType<KotlinCompile> {
         println("Kotlin compiler args: ${compilerOptions.freeCompilerArgs.get()}")
     }
 }
+
+tasks.register<JavaExec>("installPlaywrightChromium") {
+    group = "playwright"
+    description = "Install Playwright's bundled Chromium browser"
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass.set("com.microsoft.playwright.CLI")
+    args("install", "chromium")
+}
