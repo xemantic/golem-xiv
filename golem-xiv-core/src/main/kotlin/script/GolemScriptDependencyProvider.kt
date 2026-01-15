@@ -20,21 +20,43 @@ package com.xemantic.ai.golem.core.script
 
 import com.xemantic.ai.golem.api.backend.CognitionRepository
 import com.xemantic.ai.golem.api.backend.script.Memory
+import com.xemantic.ai.golem.api.backend.script.Web
 import com.xemantic.ai.golem.core.script.service.ActualMind
+import com.xemantic.ai.golem.core.script.service.DefaultWeb
 import com.xemantic.ai.golem.core.script.service.KtorHttp
 import com.xemantic.ai.golem.core.script.service.LocalFiles
 import com.xemantic.ai.golem.kotlin.metadata.DefaultKotlinMetadata
+import io.ktor.client.HttpClient
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.serialization.kotlinx.json.json
+import kotlinx.serialization.json.Json
 
 class GolemScriptDependencyProvider(
     private val repository: CognitionRepository,
-    private val memoryProvider: (cognitionId: Long, fulfillmentId: Long) -> Memory
-) {
+    private val memoryProvider: (cognitionId: Long, fulfillmentId: Long) -> Memory,
+    private val web: Web? = null
+) : AutoCloseable {
 
     private val files = LocalFiles()
 
     private val http = KtorHttp()
 
     private val kotlinMetadata = DefaultKotlinMetadata()
+
+    // Default web service if none provided
+    private var defaultWebHttpClient: HttpClient? = null
+    private val defaultWeb: Web by lazy {
+        val httpClient = HttpClient {
+            install(ContentNegotiation) {
+                json(Json {
+                    ignoreUnknownKeys = true
+                    prettyPrint = false
+                })
+            }
+        }
+        defaultWebHttpClient = httpClient
+        DefaultWeb(httpClient)
+    }
 
     fun dependencies(
         cognitionId: Long,
@@ -44,9 +66,15 @@ class GolemScriptDependencyProvider(
             service("mind", ActualMind(repository, cognitionId)),
             service("memory", memoryProvider(cognitionId, fulfillmentId)),
             service("files", files),
-            service("http", http),
+            service("http", http), // Kept for backward compatibility
+            service("web", web ?: defaultWeb),
             service("kotlinMetadata", kotlinMetadata)
         )
+    }
+
+    override fun close() {
+        http.close()
+        defaultWebHttpClient?.close()
     }
 
 }

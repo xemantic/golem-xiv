@@ -27,11 +27,20 @@ import com.xemantic.ai.golem.cognizer.anthropic.AnthropicToolUseCognizer
 import com.xemantic.ai.golem.core.GolemXiv
 import com.xemantic.ai.golem.core.cognition.DefaultCognitionRepository
 import com.xemantic.ai.golem.core.script.GolemScriptDependencyProvider
+import com.xemantic.ai.golem.core.script.service.DefaultWeb
 import com.xemantic.ai.golem.logging.initializeLogging
+import com.microsoft.playwright.BrowserType
+import com.microsoft.playwright.Playwright
+import com.xemantic.ai.golem.playwright.DefaultWebBrowser
+import java.nio.file.Paths
 import com.xemantic.ai.golem.neo4j.Neo4jCognitiveMemory
 import com.xemantic.ai.golem.neo4j.Neo4jAgentIdentity
 import com.xemantic.ai.golem.neo4j.Neo4jMemory
 import com.xemantic.neo4j.driver.DispatchedNeo4jOperations
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.java.Java
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as ClientContentNegotiation
+import io.ktor.serialization.kotlinx.json.json as clientJson
 import io.github.oshai.kotlinlogging.KLogger
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.HttpHeaders
@@ -66,6 +75,7 @@ import io.ktor.server.sse.sse
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.Json
 import org.neo4j.driver.AuthTokens
 import org.neo4j.driver.GraphDatabase
 
@@ -73,7 +83,27 @@ val logger = KotlinLogging.logger {}
 
 fun main(args: Array<String>) {
     initializeLogging()
-    io.ktor.server.netty.EngineMain.main(args)
+
+    // Parse custom CLI arguments
+    val showBrowser = args.contains("--show-browser")
+    System.setProperty("golem.playwright.headless", (!showBrowser).toString())
+
+    // Parse --chromium-path argument
+    val chromiumPathArg = args.find { it.startsWith("--chromium-path=") }
+    chromiumPathArg?.let {
+        val path = it.substringAfter("--chromium-path=")
+        System.setProperty("golem.playwright.chromium.path", path)
+        logger.info { "Custom chromium path specified: $path" }
+    }
+
+    // Filter out custom arguments before passing to Ktor
+    val ktorArgs = args.filter {
+        it != "--show-browser" && !it.startsWith("--chromium-path=")
+    }.toTypedArray()
+
+    logger.info { "Playwright headless mode: ${!showBrowser}" }
+
+    io.ktor.server.netty.EngineMain.main(ktorArgs)
 }
 
 fun Application.module() {
@@ -119,6 +149,106 @@ fun Application.module() {
         repository = repository
     )
 
+    // Try to create Playwright browser for web content fetching (optional)
+    var playwright: Playwright? = null
+    var browser: com.microsoft.playwright.Browser? = null
+    var webBrowser: com.xemantic.ai.golem.api.backend.script.WebBrowser? = null
+
+    val headless = System.getProperty("golem.playwright.headless", "true").toBoolean()
+    val customChromiumPath = System.getProperty("golem.playwright.chromium.path")
+
+    try {
+        playwright = Playwright.create()
+
+        // If custom chromium path is specified, use it directly
+        if (customChromiumPath != null) {
+            logger.info { "Initializing Playwright with custom chromium at: $customChromiumPath (headless: $headless)" }
+            browser = playwright.chromium().launch(
+                BrowserType.LaunchOptions()
+                    .setHeadless(headless)
+                    .setExecutablePath(Paths.get(customChromiumPath))
+            )
+            logger.info { "Playwright browser initialized successfully using custom chromium" }
+        } else {
+            // Try bundled Playwright chromium first
+            try {
+                logger.info { "Attempting to initialize Playwright with bundled chromium (headless: $headless)..." }
+                browser = playwright.chromium().launch(
+                    BrowserType.LaunchOptions()
+                        .setHeadless(headless)
+                )
+                logger.info { "Playwright browser initialized successfully using bundled chromium" }
+            } catch (bundledError: Exception) {
+                logger.warn { "Failed to launch bundled chromium: ${bundledError.message}" }
+                logger.info { "Falling back to system chromium..." }
+
+                // Fall back to system chromium
+                val systemChromiumPaths = listOf(
+                    "/usr/bin/chromium",
+                    "/usr/bin/chromium-browser",
+                    "/usr/bin/google-chrome-stable",
+                    // Newer ubuntu versions install chromium from snap,
+                    // even if `sudo apt-get install chromium-browser`
+                    // command is used
+                    "/snap/bin/chromium"
+                )
+
+                var launched = false
+                for (chromiumPath in systemChromiumPaths) {
+                    if (Paths.get(chromiumPath).toFile().exists()) {
+                        try {
+                            logger.info { "Trying system chromium at: $chromiumPath" }
+                            browser = playwright.chromium().launch(
+                                BrowserType.LaunchOptions()
+                                    .setHeadless(headless)
+                                    .setExecutablePath(Paths.get(chromiumPath))
+                            )
+                            logger.info { "Playwright browser initialized successfully using system chromium at: $chromiumPath" }
+                            launched = true
+                            break
+                        } catch (pathError: Exception) {
+                            logger.warn { "Failed to launch chromium at $chromiumPath: ${pathError.message}" }
+                        }
+                    }
+                }
+
+                if (!launched) {
+                    throw RuntimeException(
+                        "Failed to launch both bundled and system chromium. " +
+                        "Install chromium or specify custom path with --chromium-path"
+                    )
+                }
+            }
+        }
+
+        webBrowser = DefaultWebBrowser(
+            browser = browser!!,
+            keepPagesOpen = !headless  // Keep page visible in --show-browser mode
+        )
+    } catch (e: Exception) {
+        logger.warn(e) { "Failed to initialize Playwright browser, will use jina.ai fallback: ${e.message}" }
+        browser?.close()
+        playwright?.close()
+        playwright = null
+        browser = null
+    }
+
+    // Create HTTP client for Web service
+    val webHttpClient = HttpClient(Java) {
+        install(ClientContentNegotiation) {
+            clientJson(Json {
+                ignoreUnknownKeys = true
+                prettyPrint = false
+            })
+        }
+    }
+
+    // Create Web service with Playwright browser
+    val web = DefaultWeb(
+        httpClient = webHttpClient,
+        webBrowser = webBrowser,
+        ddgsServiceUrl = "http://localhost:8001"
+    )
 
     val golemScriptDependencyProvider = GolemScriptDependencyProvider(
         repository = repository,
@@ -128,7 +258,8 @@ fun Application.module() {
                 cognitionId = cognitionId,
                 fulfillmentId = fulfillmentId
             )
-        }
+        },
+        web = web
     )
 
     val golem = GolemXiv(
@@ -142,6 +273,9 @@ fun Application.module() {
     monitor.subscribe(ApplicationStopPreparing) {
         logger.info { "Stopping Golem XIV server" }
         golem.close()
+        browser?.close()
+        playwright?.close()
+        webHttpClient.close()
         driver.close()
     }
 

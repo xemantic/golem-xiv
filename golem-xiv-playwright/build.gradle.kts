@@ -26,9 +26,9 @@ dependencies {
 
     api(libs.playwright)
 
-    // TODO flexmark is suboptimal
-    implementation("com.vladsch.flexmark:flexmark:0.64.8")
-    implementation("com.vladsch.flexmark:flexmark-html2md-converter:0.64.8")
+    // HTML parsing and conversion to Markdown
+    // Using jsoup for HTML parsing + custom converter for better control over Markdown output
+    implementation("org.jsoup:jsoup:1.17.2")
 
     implementation(libs.kotlin.logging)
 

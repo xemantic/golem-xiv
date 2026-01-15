@@ -18,6 +18,7 @@
 
 plugins {
     alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlin.plugin.serialization)
     id("golem.convention")
 }
 
@@ -32,8 +33,15 @@ dependencies {
     implementation(libs.kotlin.scripting.jvm)
     implementation(libs.kotlin.scripting.jvm.host)
 
+    // Web service dependencies
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.client.content.negotiation)
+    implementation(libs.ktor.serialization.kotlinx.json)
+
     testImplementation(libs.kotlin.test)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.xemantic.kotlin.test)
     testImplementation(libs.neo4j.harness)
+    testImplementation("io.ktor:ktor-client-mock:3.3.3")
+    testImplementation(libs.ktor.client.java)
 }

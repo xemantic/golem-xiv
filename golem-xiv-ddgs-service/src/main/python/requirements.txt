@@ -1,0 +1,6 @@
+# DDGS Search Service Dependencies
+# Python >= 3.10 required
+
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+ddgs>=1.8.0
