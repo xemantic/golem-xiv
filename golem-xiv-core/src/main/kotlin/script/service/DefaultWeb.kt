@@ -18,6 +18,7 @@
 
 package com.xemantic.ai.golem.core.script.service
 
+import com.xemantic.ai.golem.api.backend.SearchProvider
 import com.xemantic.ai.golem.api.backend.script.Web
 import com.xemantic.ai.golem.api.backend.script.WebBrowser
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -28,6 +29,7 @@ import io.ktor.client.plugins.timeout
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 import io.ktor.client.statement.bodyAsText
+import io.ktor.http.ContentType
 import io.ktor.http.isSuccess
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.Serializable
@@ -57,13 +59,14 @@ private const val DEFAULT_HTTP_TIMEOUT_MS = 30_000L
  * @param httpTimeoutMs Timeout for HTTP requests in milliseconds (default: 30000)
  */
 class DefaultWeb(
+    private val searchProviderMap: Map<String, SearchProvider>,
     private val httpClient: HttpClient,
     private val webBrowser: WebBrowser? = null,
     private val ddgsServiceUrl: String = System.getenv(DDGS_SERVICE_URL_ENV) ?: DEFAULT_DDGS_SERVICE_URL,
     private val httpTimeoutMs: Long = DEFAULT_HTTP_TIMEOUT_MS
 ) : Web {
 
-    override suspend fun open(url: String): String {
+    override suspend fun fetch(url: String, accept: ContentType): String {
         return if (webBrowser != null) {
             try {
                 logger.debug { "Opening URL with Playwright: $url" }
@@ -93,7 +96,7 @@ class DefaultWeb(
         }
     }
 
-    override suspend fun openInSession(sessionId: String, url: String): String {
+    suspend fun openInSession(sessionId: String, url: String): String {
         if (webBrowser == null) {
             throw UnsupportedOperationException(
                 "Session-based browsing requires Playwright. " +
@@ -109,7 +112,7 @@ class DefaultWeb(
         }
     }
 
-    override suspend fun closeSession(sessionId: String) {
+    suspend fun closeSession(sessionId: String) {
         if (webBrowser == null) {
             logger.warn { "closeSession('$sessionId') called but no browser available" }
             return
@@ -118,7 +121,7 @@ class DefaultWeb(
         webBrowser.closeSession(sessionId)
     }
 
-    override fun listSessions(): Set<String> {
+    fun listSessions(): Set<String> {
         return webBrowser?.listSessions() ?: emptySet()
     }
 
@@ -157,21 +160,22 @@ class DefaultWeb(
         page: Int,
         pageSize: Int,
         region: String,
-        safesearch: String,
-        timelimit: String?
-    ): String {
-        return when (provider) {
-            "anthropic" -> {
-                throw UnsupportedOperationException(
-                    "Anthropic WebSearch requires integration at the server level. " +
-                    "Use provider='ddgs' or null for local search."
-                )
-            }
-            "ddgs", null -> searchWithDdgs(query, page, pageSize, region, safesearch, timelimit)
-            else -> throw IllegalArgumentException("Unknown search provider: $provider. Use 'ddgs' or 'anthropic'.")
-        }
-    }
+        safeSearch: String,
+        timeLimit: String?
+    ): String = searchProviderMap[provider]!!.search(query, page, pageSize, region, safeSearch, timeLimit)
+//        return when (provider) {
+//            "anthropic" -> {
+//                throw UnsupportedOperationException(
+//                    "Anthropic WebSearch requires integration at the server level. " +
+//                    "Use provider='ddgs' or null for local search."
+//                )
+//            }
+//            "ddgs", null -> searchWithDdgs(query, page, pageSize, region, safesearch, timelimit)
+//            else -> throw IllegalArgumentException("Unknown search provider: $provider. Use 'ddgs' or 'anthropic'.")
+//        }
+//    }
 
+    // TODO move to DdgsSearchProvider
     private suspend fun searchWithDdgs(
         query: String,
         page: Int,
