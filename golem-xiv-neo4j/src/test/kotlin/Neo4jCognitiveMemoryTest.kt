@@ -114,4 +114,146 @@ class Neo4jCognitiveMemoryTest {
         }
     }
 
+    @Test
+    fun `should list cognitions ordered by initiation moment descending`() = runTest {
+        // given
+        val memory = Neo4jCognitiveMemory(
+            neo4j = TestNeo4j.operations
+        )
+
+        val cognition1 = memory.createCognition(constitution = listOf("First"))
+        val cognition2 = memory.createCognition(constitution = listOf("Second"))
+        val cognition3 = memory.createCognition(constitution = listOf("Third"))
+
+        // when
+        val cognitions = memory.listCognitions()
+
+        // then
+        cognitions should {
+            have(size == 3)
+            have(get(0).id == cognition3.id) // most recent first
+            have(get(1).id == cognition2.id)
+            have(get(2).id == cognition1.id)
+        }
+    }
+
+    @Test
+    fun `should list cognitions excluding child cognitions`() = runTest {
+        // given
+        val memory = Neo4jCognitiveMemory(
+            neo4j = TestNeo4j.operations
+        )
+
+        val parentCognition = memory.createCognition(constitution = listOf("Parent"))
+        val childCognition = memory.createCognition(
+            constitution = listOf("Child"),
+            parentId = parentCognition.id
+        )
+        val standaloneCognition = memory.createCognition(constitution = listOf("Standalone"))
+
+        // when
+        val cognitions = memory.listCognitions()
+
+        // then
+        cognitions should {
+            have(size == 2) // only parent and standalone, not child
+            have(any { it.id == parentCognition.id })
+            have(any { it.id == standaloneCognition.id })
+            have(none { it.id == childCognition.id })
+        }
+    }
+
+    @Test
+    fun `should list cognitions with title`() = runTest {
+        // given
+        val memory = Neo4jCognitiveMemory(
+            neo4j = TestNeo4j.operations
+        )
+
+        val cognition = memory.createCognition(constitution = listOf("Test"))
+        memory.setCognitionTitle(cognition.id, "My Cognition Title")
+
+        // when
+        val cognitions = memory.listCognitions()
+
+        // then
+        cognitions should {
+            have(size == 1)
+            have(get(0).title == "My Cognition Title")
+        }
+    }
+
+    @Test
+    fun `should list cognitions with limit and offset`() = runTest {
+        // given
+        val memory = Neo4jCognitiveMemory(
+            neo4j = TestNeo4j.operations
+        )
+
+        repeat(5) {
+            memory.createCognition(constitution = listOf("Cognition $it"))
+        }
+
+        // when
+        val firstPage = memory.listCognitions(limit = 2, offset = 0)
+        val secondPage = memory.listCognitions(limit = 2, offset = 2)
+
+        // then
+        firstPage should { have(size == 2) }
+        secondPage should { have(size == 2) }
+        firstPage.map { it.id } should { have(none { id -> secondPage.any { it.id == id } }) }
+    }
+
+    @Test
+    fun `should return expression count of zero for new cognition`() = runTest {
+        // given
+        val memory = Neo4jCognitiveMemory(
+            neo4j = TestNeo4j.operations
+        )
+        val cognition = memory.createCognition(constitution = listOf("Test"))
+
+        // when
+        val count = memory.getExpressionCount(cognition.id)
+
+        // then
+        count should { have(this == 0) }
+    }
+
+    @Test
+    fun `should return correct expression count`() = runTest {
+        // given
+        val memory = Neo4jCognitiveMemory(
+            neo4j = TestNeo4j.operations
+        )
+        val cognition = memory.createCognition(constitution = listOf("Test"))
+
+        // create an agent and expressions directly via Cypher
+        val cognitionId = cognition.id
+        TestNeo4j.operations.write { tx ->
+            tx.run(
+                """
+                CREATE (agent:EpistemicAgent:Human)
+                WITH agent
+                MATCH (c:Cognition) WHERE id(c) = ${'$'}cognitionId
+                CREATE (e1:PhenomenalExpression {initiationMoment: datetime()})
+                CREATE (e2:PhenomenalExpression {initiationMoment: datetime()})
+                CREATE (e3:PhenomenalExpression {initiationMoment: datetime()})
+                CREATE (agent)-[:creator]->(e1)
+                CREATE (agent)-[:creator]->(e2)
+                CREATE (agent)-[:creator]->(e3)
+                CREATE (c)-[:hasPart]->(e1)
+                CREATE (c)-[:hasPart]->(e2)
+                CREATE (c)-[:hasPart]->(e3)
+                """.trimIndent(),
+                mapOf("cognitionId" to cognitionId)
+            )
+        }
+
+        // when
+        val count = memory.getExpressionCount(cognition.id)
+
+        // then
+        count should { have(this == 3) }
+    }
+
 }
