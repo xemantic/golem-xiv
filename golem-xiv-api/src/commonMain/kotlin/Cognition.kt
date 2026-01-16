@@ -102,3 +102,10 @@ sealed interface Phenomenon {
     ) : Phenomenon
 
 }
+
+@Serializable
+data class CognitionListItem(
+    val id: Long,
+    val title: String?,
+    val initiationMoment: Instant
+)

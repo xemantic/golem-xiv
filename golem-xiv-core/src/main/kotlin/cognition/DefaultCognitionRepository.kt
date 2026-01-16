@@ -18,6 +18,7 @@
 
 package com.xemantic.ai.golem.core.cognition
 
+import com.xemantic.ai.golem.api.CognitionListItem
 import com.xemantic.ai.golem.api.EpistemicAgent
 import com.xemantic.ai.golem.api.PhenomenalExpression
 import com.xemantic.ai.golem.api.Phenomenon
@@ -306,5 +307,14 @@ class DefaultCognitionRepository(
             null
         }
     }
+
+    override suspend fun listCognitions(
+        limit: Int,
+        offset: Int
+    ): List<CognitionListItem> = memory.listCognitions(limit, offset)
+
+    override suspend fun isFirstExpression(
+        cognitionId: Long
+    ): Boolean = memory.getExpressionCount(cognitionId) == 1
 
 }

@@ -18,6 +18,7 @@
 
 package com.xemantic.ai.golem.api.client
 
+import com.xemantic.ai.golem.api.CognitionListItem
 import com.xemantic.ai.golem.api.GolemError
 import com.xemantic.ai.golem.api.Phenomenon
 
@@ -50,6 +51,11 @@ interface CognitionService {
         id: Long,
         phenomena: List<Phenomenon>
     )
+
+    suspend fun listCognitions(
+        limit: Int = 50,
+        offset: Int = 0
+    ): List<CognitionListItem>
 
 }
 

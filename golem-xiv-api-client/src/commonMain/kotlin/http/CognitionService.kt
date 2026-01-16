@@ -18,6 +18,7 @@
 
 package com.xemantic.ai.golem.api.client.http
 
+import com.xemantic.ai.golem.api.CognitionListItem
 import com.xemantic.ai.golem.api.Phenomenon
 import com.xemantic.ai.golem.api.client.CognitionService
 import io.ktor.client.HttpClient
@@ -46,5 +47,12 @@ class HttpClientCognitionService(
             value = phenomena
         )
     }
+
+    override suspend fun listCognitions(
+        limit: Int,
+        offset: Int
+    ): List<CognitionListItem> = client.serviceGet(
+        uri = "/api/cognitions?limit=$limit&offset=$offset"
+    )
 
 }

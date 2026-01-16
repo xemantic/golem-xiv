@@ -18,13 +18,18 @@
 
 package com.xemantic.ai.golem.presenter.navigation
 
+import com.xemantic.ai.golem.api.CognitionListItem
+import com.xemantic.ai.golem.api.GolemOutput
+import com.xemantic.ai.golem.api.client.CognitionService
 import com.xemantic.ai.golem.presenter.environment.Theme
 import com.xemantic.ai.golem.presenter.util.Action
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 
 interface SidebarView {
 
@@ -36,7 +41,11 @@ interface SidebarView {
 
     val resizes: Flow<Action>
 
+    val cognitionSelections: Flow<Long>
+
     fun themeActionLabel(theme: Theme)
+
+    fun updateCognitionList(cognitions: List<CognitionListItem>)
 
     var opened: Boolean
 
@@ -47,7 +56,9 @@ class SidebarPresenter(
     private val view: SidebarView,
     toggles: Flow<Action>,
     navigation: Navigation,
-    themeChangesSink: FlowCollector<Theme>
+    themeChangesSink: FlowCollector<Theme>,
+    private val cognitionService: CognitionService,
+    golemOutputs: Flow<GolemOutput>
 ) {
 
     var opened: Boolean = false
@@ -84,6 +95,30 @@ class SidebarPresenter(
             view.opened = opened
         }.launchIn(scope)
 
+        view.cognitionSelections.onEach { cognitionId ->
+            navigation.navigateTo(Navigation.Target.Cognition(cognitionId))
+        }.launchIn(scope)
+
+        // Load initial cognition list
+        scope.launch {
+            refreshCognitionList()
+        }
+
+        // Refresh on title updates
+        golemOutputs.filterIsInstance<GolemOutput.CognitionTitleUpdated>().onEach {
+            refreshCognitionList()
+        }.launchIn(scope)
+
+        // Refresh on new cognitions
+        golemOutputs.filterIsInstance<GolemOutput.CognitionAdded>().onEach {
+            refreshCognitionList()
+        }.launchIn(scope)
+
+    }
+
+    private suspend fun refreshCognitionList() {
+        val cognitions = cognitionService.listCognitions()
+        view.updateCognitionList(cognitions)
     }
 
 }

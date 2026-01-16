@@ -23,6 +23,7 @@ import com.xemantic.ai.golem.api.GolemError
 import com.xemantic.ai.golem.api.GolemOutput
 import com.xemantic.ai.golem.api.Phenomenon
 import com.xemantic.ai.golem.api.backend.GolemException
+import com.xemantic.ai.golem.cognizer.anthropic.AnthropicTitleGenerator
 import com.xemantic.ai.golem.cognizer.anthropic.AnthropicToolUseCognizer
 import com.xemantic.ai.golem.core.GolemXiv
 import com.xemantic.ai.golem.core.cognition.DefaultCognitionRepository
@@ -131,10 +132,13 @@ fun Application.module() {
         }
     )
 
+    val titleGenerator = AnthropicTitleGenerator(anthropic)
+
     val golem = GolemXiv(
         identity = identity,
         repository = repository,
         cognizer = anthropicCognizer,
+        titleGenerator = titleGenerator,
         golemScriptDependencyProvider = golemScriptDependencyProvider,
         outputs = outputs
     )
@@ -201,9 +205,9 @@ fun Route.golemApiRoute(
     }
 
     get("/cognitions") {
-//        call.respond(
-//            golem.contexts
-//        )
+        val limit = call.parameters["limit"]?.toIntOrNull() ?: 50
+        val offset = call.parameters["offset"]?.toIntOrNull() ?: 0
+        call.respond(golem.listCognitions(limit, offset))
     }
 
     put("/cognitions") {
