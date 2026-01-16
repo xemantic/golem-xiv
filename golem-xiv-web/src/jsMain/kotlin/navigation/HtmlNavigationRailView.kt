@@ -18,6 +18,7 @@
 
 package com.xemantic.ai.golem.web.navigation
 
+import com.xemantic.ai.golem.api.CognitionListItem
 import com.xemantic.ai.golem.presenter.environment.Theme
 import com.xemantic.ai.golem.presenter.navigation.SidebarView
 import com.xemantic.ai.golem.presenter.util.Action
@@ -28,12 +29,14 @@ import com.xemantic.ai.golem.web.js.dom
 import com.xemantic.ai.golem.web.js.inject
 import com.xemantic.ai.golem.web.js.resizes
 import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import com.xemantic.ai.golem.web.view.HasRootHtmlElement
 import kotlinx.browser.window
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import kotlinx.html.*
 import org.w3c.dom.HTMLElement
 
@@ -70,6 +73,16 @@ class HtmlNavigationRailView : SidebarView, HasRootHtmlElement {
         i { +"light_mode" }
     }
 
+    private val cognitionListContainer = dom.div(classes = "cognition-list scroll") {}
+
+    private val cognitionListSection = dom.div(classes = "cognition-list-section") {
+        div(classes = "small-text bold padding") { +"Past Cognitions" }
+        inject(cognitionListContainer)
+    }
+
+    private val _cognitionSelections = MutableSharedFlow<Long>()
+    override val cognitionSelections: Flow<Long> = _cognitionSelections
+
     override val element: HTMLElement = dom.nav(classes = "app-navigation-rail left surface-container") {
         ariaLabel = "Main navigation"
         header {
@@ -78,7 +91,8 @@ class HtmlNavigationRailView : SidebarView, HasRootHtmlElement {
         inject(
             initiateCognitionItem,
             memoryItem,
-            settingsItem
+            settingsItem,
+            cognitionListSection
         )
         div(classes = "max")
         inject(themeSwitcherButton)
@@ -113,6 +127,24 @@ class HtmlNavigationRailView : SidebarView, HasRootHtmlElement {
         icon?.textContent = when (theme) {
             Theme.LIGHT -> "light_mode"
             Theme.DARK -> "dark_mode"
+        }
+    }
+
+    override fun updateCognitionList(cognitions: List<CognitionListItem>) {
+        cognitionListContainer.innerHTML = ""
+        cognitions.forEach { cognition ->
+            val displayTitle = cognition.title?.takeIf { it.isNotBlank() }
+                ?: "Cognition #${cognition.id}"
+            val item = dom.a(classes = "row wave") {
+                div(classes = "max") { +displayTitle }
+            }
+            item.onclick = {
+                MainScope().launch {
+                    _cognitionSelections.emit(cognition.id)
+                }
+                Unit
+            }
+            cognitionListContainer.appendChild(item)
         }
     }
 

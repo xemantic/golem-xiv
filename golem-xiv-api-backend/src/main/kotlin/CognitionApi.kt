@@ -18,6 +18,7 @@
 
 package com.xemantic.ai.golem.api.backend
 
+import com.xemantic.ai.golem.api.CognitionListItem
 import com.xemantic.ai.golem.api.EpistemicAgent
 import com.xemantic.ai.golem.api.PhenomenalExpression
 import com.xemantic.ai.golem.api.Phenomenon
@@ -111,6 +112,15 @@ interface CognitionRepository {
         cognitionId: Long
     ): Phenomenon.Intent?
 
+    suspend fun listCognitions(
+        limit: Int = 50,
+        offset: Int = 0
+    ): List<CognitionListItem>
+
+    suspend fun isFirstExpression(
+        cognitionId: Long
+    ): Boolean
+
 }
 
 interface CognitiveMemory {
@@ -177,6 +187,15 @@ interface CognitiveMemory {
         phenomenonId: Long,
         type: StorageType
     ): String
+
+    suspend fun listCognitions(
+        limit: Int = 50,
+        offset: Int = 0
+    ): List<CognitionListItem>
+
+    suspend fun getExpressionCount(
+        cognitionId: Long
+    ): Int
 
 }
 

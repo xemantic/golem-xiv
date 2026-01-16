@@ -114,6 +114,10 @@ class MainPresenter(
 
     private var currentNavigationTarget: Navigation.Target? = null
 
+    private val cognitionService = HttpClientCognitionService(apiClient)
+
+    private val golemOutputs = MutableSharedFlow<GolemOutput>()
+
     val headerPresenter = HeaderPresenter(
         scope,
         headerView,
@@ -125,13 +129,12 @@ class MainPresenter(
         sidebarView,
         toggles = toggleFlow,
         navigation,
-        themeChangesSink = themeChangesFlow
+        themeChangesSink = themeChangesFlow,
+        cognitionService = cognitionService,
+        golemOutputs = golemOutputs
     )
 
-    private val golemOutputs = MutableSharedFlow<GolemOutput>()
-
     private val pingService = HttpClientPingService(apiClient)
-    private val cognitionService = HttpClientCognitionService(apiClient)
 
     private lateinit var cognitionPresenter: CognitionPresenter
     private lateinit var cognitionView: CognitionView

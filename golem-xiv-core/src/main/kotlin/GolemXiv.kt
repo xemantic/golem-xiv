@@ -18,6 +18,7 @@
 
 package com.xemantic.ai.golem.core
 
+import com.xemantic.ai.golem.api.CognitionListItem
 import com.xemantic.ai.golem.api.Phenomenon
 import com.xemantic.ai.golem.api.CognitionEvent
 import com.xemantic.ai.golem.api.EpistemicAgent
@@ -25,6 +26,7 @@ import com.xemantic.ai.golem.api.GolemOutput
 import com.xemantic.ai.golem.api.backend.CognitionRepository
 import com.xemantic.ai.golem.api.backend.Cognizer
 import com.xemantic.ai.golem.api.backend.AgentIdentity
+import com.xemantic.ai.golem.api.backend.TitleGenerator
 import com.xemantic.ai.golem.api.backend.script.ExecuteGolemScript
 import com.xemantic.ai.golem.core.kotlin.getClasspathResource
 import com.xemantic.ai.golem.core.script.GolemScriptExecutor
@@ -55,6 +57,7 @@ class GolemXiv(
     private val identity: AgentIdentity,
     private val repository: CognitionRepository,
     private val cognizer: Cognizer,
+    private val titleGenerator: TitleGenerator?,
     private val golemScriptDependencyProvider: GolemScriptDependencyProvider,
     private val outputs: FlowCollector<GolemOutput>
 ) : AutoCloseable {
@@ -84,6 +87,11 @@ class GolemXiv(
         return info.id
     }
 
+    suspend fun listCognitions(
+        limit: Int = 50,
+        offset: Int = 0
+    ): List<CognitionListItem> = repository.listCognitions(limit, offset)
+
     /**
      * @throws com.xemantic.ai.golem.api.backend.GolemException
      */
@@ -106,6 +114,22 @@ class GolemXiv(
         val cognitionBroadcaster = outputs.cognitionBroadcaster(cognitionId)
 
         cognitionBroadcaster.emit(phenomenalExpression)
+
+        // Generate title for first user message
+        if (titleGenerator != null && repository.isFirstExpression(cognitionId)) {
+            val firstText = phenomena.filterIsInstance<Phenomenon.Text>().firstOrNull()
+            if (firstText != null) {
+                scope.launch {
+                    try {
+                        val title = titleGenerator.generateTitle(firstText.text)
+                        repository.getCognition(cognitionId).setTitle(title)
+                        outputs.emit(GolemOutput.CognitionTitleUpdated(cognitionId, title))
+                    } catch (e: Exception) {
+                        logger.warn(e) { "Failed to generate title for cognition $cognitionId" }
+                    }
+                }
+            }
+        }
 
         activeCognitionMap[cognitionId] = scope.launch {
 

@@ -70,6 +70,28 @@ pre {
     margin-bottom: .9rem;
 }
 
+/* Past cognitions list - only visible when expanded */
+.app-navigation-rail:not(.max) .cognition-list-section {
+    display: none;
+}
+
+.cognition-list-section {
+    border-top: 1px solid var(--outline-variant);
+    margin-top: .5rem;
+    padding-top: .5rem;
+}
+
+.cognition-list {
+    max-height: 500px;
+}
+
+.cognition-list a {
+    padding: .5rem 1rem;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
 /* Navigation components */
 .app-navigation-bar {
     z-index: 200 !important;

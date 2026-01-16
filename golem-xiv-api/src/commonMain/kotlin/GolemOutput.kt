@@ -63,4 +63,11 @@ sealed interface GolemOutput {
         val event: CognitionEvent
     ) : GolemOutput, WithCognitionId
 
+    @Serializable
+    @SerialName("CognitionTitleUpdated")
+    data class CognitionTitleUpdated(
+        override val cognitionId: Long,
+        val title: String
+    ) : GolemOutput, WithCognitionId
+
 }

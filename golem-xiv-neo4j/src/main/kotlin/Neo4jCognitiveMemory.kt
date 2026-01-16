@@ -18,6 +18,7 @@
 
 package com.xemantic.ai.golem.neo4j
 
+import com.xemantic.ai.golem.api.CognitionListItem
 import com.xemantic.ai.golem.api.EpistemicAgent
 import com.xemantic.ai.golem.api.PhenomenalExpression
 import com.xemantic.ai.golem.api.Phenomenon
@@ -32,6 +33,7 @@ import com.xemantic.neo4j.driver.singleOrNull
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.toList
 import org.neo4j.driver.types.Node
 
 class Neo4jCognitiveMemory(
@@ -459,6 +461,47 @@ class Neo4jCognitiveMemory(
                 if (value.isNull) "" else value.asString()
             }
         }
+    }
+
+    override suspend fun listCognitions(
+        limit: Int,
+        offset: Int
+    ): List<CognitionListItem> = neo4j.read { tx ->
+        tx.run(
+            query = $$"""
+                MATCH (c:Cognition)
+                WHERE NOT EXISTS { (parent:Cognition)-[:hasChild]->(c) }
+                RETURN id(c) AS id, c.title AS title, c.initiationMoment AS initiationMoment
+                ORDER BY c.initiationMoment DESC
+                SKIP $offset
+                LIMIT $limit
+            """.trimIndent(),
+            parameters = mapOf(
+                "offset" to offset,
+                "limit" to limit
+            )
+        ).records().toList().map { record ->
+            CognitionListItem(
+                id = record["id"].asLong(),
+                title = record["title"]?.let { if (it.isNull) null else it.asString() },
+                initiationMoment = record["initiationMoment"].asInstant()
+            )
+        }
+    }
+
+    override suspend fun getExpressionCount(
+        cognitionId: Long
+    ): Int = neo4j.read { tx ->
+        tx.run(
+            query = $$"""
+                MATCH (c:Cognition)-[:hasPart]->(e:PhenomenalExpression)
+                WHERE id(c) = $cognitionId
+                RETURN count(e) AS count
+            """.trimIndent(),
+            parameters = mapOf(
+                "cognitionId" to cognitionId
+            )
+        ).single()["count"].asInt()
     }
 
 }
