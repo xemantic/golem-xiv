@@ -39,5 +39,5 @@ include(
     ":golem-xiv-web",
     ":golem-xiv-cli",
     ":golem-xiv-neo4j-starter",
-    ":golem-xiv-kotlin-metadata",
+    ":golem-xiv-kotlin-metadata"
 )
