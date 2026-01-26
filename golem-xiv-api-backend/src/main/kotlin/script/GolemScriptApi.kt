@@ -1,6 +1,6 @@
 /*
  * Golem XIV - Autonomous metacognitive AI system with semantic memory and self-directed research
- * Copyright (C) 2025  Kazimierz Pogoda / Xemantic
+ * Copyright (C) 2026  Kazimierz Pogoda / Xemantic
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -20,7 +20,8 @@ package com.xemantic.ai.golem.api.backend.script
 
 import com.xemantic.ai.golem.api.PhenomenalExpression
 import com.xemantic.neo4j.driver.Result
-import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.*
+import io.ktor.http.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable
 import org.neo4j.driver.Record
@@ -75,10 +76,12 @@ interface Files {
     suspend fun delete(path: String): Boolean
 }
 
+val MarkdownContentType = ContentType("text", "markdown")
+
 /**
  * If you need custom client, here is example usage of Ktor client with resource closing:
  * ```
- * val json = HttpClient().client {
+ * val json = HttpClient {
  *     install(ContentNegotiation) {
  *         json()
  *     }
@@ -89,7 +92,7 @@ interface Files {
 */
 interface Http {
 
-    suspend fun get(url: String): HttpResponse
+    suspend fun get(url: String, accept: ContentType = MarkdownContentType): HttpResponse
 
 }
 

@@ -1,6 +1,6 @@
 /*
  * Golem XIV - Autonomous metacognitive AI system with semantic memory and self-directed research
- * Copyright (C) 2025  Kazimierz Pogoda / Xemantic
+ * Copyright (C) 2026  Kazimierz Pogoda / Xemantic
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -19,20 +19,48 @@
 package com.xemantic.ai.golem.core.script.service
 
 import com.xemantic.ai.golem.api.backend.script.Http
-import io.ktor.client.HttpClient
-import io.ktor.client.request.get
-import io.ktor.client.statement.HttpResponse
+import com.xemantic.ai.golem.api.backend.script.MarkdownContentType
+import io.ktor.client.*
+import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
+import io.ktor.http.*
+import io.ktor.serialization.kotlinx.json.*
 
 class KtorHttp : Http, AutoCloseable {
 
     private val client = HttpClient {
-//        install(ContentNegotiation) {
-//            json()
-//        }
+        install(ContentNegotiation) {
+            json()
+        }
     }
 
-    override suspend fun get(url: String): HttpResponse {
-        return client.get(url)
+    override suspend fun get(
+        url: String,
+        accept: ContentType
+    ): HttpResponse {
+        val effectiveUrl = when {
+
+            accept.match(MarkdownContentType) -> {
+                val contentType = client.head(url).contentType()
+                if (contentType != null) {
+                    if (contentType.match(MarkdownContentType)
+                        || contentType.match(ContentType.Application.Json)) {
+                        url
+                    } else {
+                        "https://r.jina.ai/$url"
+                    }
+                } else {
+                    "https://r.jina.ai/$url"
+                }
+            }
+
+            accept.match(ContentType.Application.Json) -> url
+
+            else -> url
+
+        }
+        return client.get(effectiveUrl)
     }
 
     override fun close() {
