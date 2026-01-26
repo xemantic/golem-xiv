@@ -16,13 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import com.github.gradle.node.yarn.task.YarnTask
 import java.net.URI
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlin.plugin.serialization)
-    alias(libs.plugins.node.gradle)
     id("golem.convention")
 }
 
@@ -57,46 +55,34 @@ kotlin {
 
 }
 
-node {
-    download = true
-    nodeProjectDir = file("build/neo4j-browser")
-}
-
 val neo4jBrowserVersion: String = libs.versions.neo4jBrowser.get()
-
-tasks.register<Exec>("cloneNeo4jBrowser") {
-    group = "golem-support"
-    description = "Clones neo4j-browser repository, builds it, and copies the build to jsMain resources"
-    val cloneDir = project.layout.buildDirectory.get().asFile
-    File(cloneDir, "neo4j-browser").deleteRecursively()
-    cloneDir.mkdirs()
-    workingDir = project.layout.buildDirectory.get().asFile
-    commandLine = "git -c advice.detachedHead=false clone --branch $neo4jBrowserVersion --depth 1 https://github.com/neo4j/neo4j-browser.git".split(' ')
-}
-
-tasks.register<YarnTask>("neo4jBrowserYarnInstall") {
-    group = "golem-support"
-    dependsOn("cloneNeo4jBrowser")
-    args.set(listOf("install"))
-}
-
-tasks.register<YarnTask>("neo4jBrowserYarnBuild") {
-    group = "golem-support"
-    dependsOn("neo4jBrowserYarnInstall")
-    environment = mapOf("NODE_OPTIONS" to "--openssl-legacy-provider")
-    args.set(listOf("build"))
-}
 
 tasks.register("installNeo4jBrowser") {
     group = "golem"
-    dependsOn("neo4jBrowserYarnBuild")
+    description = "Downloads pre-built Neo4j Browser and installs it to jsMain resources"
+    val tarballUrl = "https://github.com/neo4j/neo4j-browser/releases/download/$neo4jBrowserVersion/neo4j-browser-$neo4jBrowserVersion.tgz"
+    val downloadDir = project.layout.buildDirectory.dir("neo4j-browser").get().asFile
+    val tarballFile = File(downloadDir, "neo4j-browser-$neo4jBrowserVersion.tgz")
+    val extractDir = File(downloadDir, "extracted")
     val destination = file("src/jsMain/resources/neo4j-browser")
-    destination.mkdirs()
     doLast {
-        copy {
-            from("build/neo4j-browser/dist")
-            into(destination)
+        downloadDir.mkdirs()
+        if (!tarballFile.exists()) {
+            println("Downloading Neo4j Browser $neo4jBrowserVersion...")
+            download(tarballUrl, tarballFile.absolutePath)
         }
+        extractDir.deleteRecursively()
+        extractDir.mkdirs()
+        println("Extracting Neo4j Browser...")
+        ProcessBuilder("tar", "-xzf", tarballFile.absolutePath, "-C", extractDir.absolutePath, "--strip-components=1")
+            .inheritIO()
+            .start()
+            .waitFor()
+        destination.deleteRecursively()
+        println("Installing Neo4j Browser to $destination...")
+        File(extractDir, "dist").copyRecursively(destination)
+        extractDir.deleteRecursively()
+        println("Neo4j Browser $neo4jBrowserVersion installed successfully")
     }
 }
 

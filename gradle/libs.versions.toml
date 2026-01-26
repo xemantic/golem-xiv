@@ -19,7 +19,7 @@ ktor = "3.3.3"
 playwright = "1.57.0"
 dashscope = "2.20.1"
 neo4j = "2025.11.2"
-neo4jBrowser = "2025.2.0"
+neo4jBrowser = "2025.8.0"
 neo4jDriver = "6.0.2"
 neo4jMigrations = "3.1.0"
 
@@ -31,7 +31,6 @@ dokkaPlugin = "2.1.0"
 jreleaserPlugin = "1.16.0"
 binaryCompatibilityValidatorPlugin = "0.17.0"
 xemanticConventionsPlugin = "0.6.8"
-nodeGradle = "7.1.0"
 
 
 [libraries]
@@ -103,7 +102,6 @@ jreleaser = { id = "org.jreleaser", version.ref = "jreleaserPlugin" }
 xemantic-conventions = { id = "com.xemantic.gradle.xemantic-conventions", version.ref = "xemanticConventionsPlugin" }
 kotlin-plugin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ktor-plugin = { id = "io.ktor.plugin", version.ref = "ktor" }
-node-gradle = { id = "com.github.node-gradle.node", version.ref = "nodeGradle" }
 
 # Plugins defined by this project
 golem-jvm-library = { id = "golem.jvm.library" }
