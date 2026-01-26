@@ -49,6 +49,7 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
 
     implementation(libs.ktor.client.java)
+    implementation(libs.ktor.client.content.negotiation)
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.server.sse)
     implementation(libs.ktor.server.netty)
@@ -67,6 +68,7 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.xemantic.kotlin.test)
     testImplementation(libs.neo4j.harness)
+    testImplementation(libs.ktor.server.test.host)
 }
 
 tasks.register<Copy>("copyWebResources") {
