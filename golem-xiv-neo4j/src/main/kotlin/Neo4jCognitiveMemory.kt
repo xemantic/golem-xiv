@@ -1,6 +1,6 @@
 /*
  * Golem XIV - Autonomous metacognitive AI system with semantic memory and self-directed research
- * Copyright (C) 2025  Kazimierz Pogoda / Xemantic
+ * Copyright (C) 2026  Kazimierz Pogoda / Xemantic
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -21,11 +21,7 @@ package com.xemantic.ai.golem.neo4j
 import com.xemantic.ai.golem.api.EpistemicAgent
 import com.xemantic.ai.golem.api.PhenomenalExpression
 import com.xemantic.ai.golem.api.Phenomenon
-import com.xemantic.ai.golem.api.backend.CognitionInfo
-import com.xemantic.ai.golem.api.backend.CognitiveMemory
-import com.xemantic.ai.golem.api.backend.CulminatedWithIntent
-import com.xemantic.ai.golem.api.backend.PhenomenalExpressionInfo
-import com.xemantic.ai.golem.api.backend.StorageType
+import com.xemantic.ai.golem.api.backend.*
 import com.xemantic.neo4j.driver.Neo4jOperations
 import com.xemantic.neo4j.driver.asInstant
 import com.xemantic.neo4j.driver.singleOrNull
@@ -458,6 +454,32 @@ class Neo4jCognitiveMemory(
             ).single()["content"].let { value ->
                 if (value.isNull) "" else value.asString()
             }
+        }
+    }
+
+    override suspend fun writePhenomenonContent(
+        phenomenonId: Long,
+        content: Map<StorageType, String>
+    ) {
+        if (content.isEmpty()) return
+
+        val setClauses = content.keys.joinToString(", ") { type ->
+            val propertyName = type.toPropertyName()
+            "phenomenon.$propertyName = \$${propertyName}"
+        }
+        val parameters = mutableMapOf<String, Any>("phenomenonId" to phenomenonId)
+        content.forEach { (type, value) ->
+            parameters[type.toPropertyName()] = value
+        }
+
+        neo4j.write { tx ->
+            tx.run(
+                query = $$"""
+                    MATCH (phenomenon:Phenomenon) WHERE id(phenomenon) = $phenomenonId
+                    SET $$setClauses
+                """.trimIndent(),
+                parameters = parameters
+            )
         }
     }
 
