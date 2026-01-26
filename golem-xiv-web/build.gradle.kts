@@ -17,6 +17,7 @@
  */
 
 import java.net.URI
+import java.security.MessageDigest
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
@@ -56,6 +57,7 @@ kotlin {
 }
 
 val neo4jBrowserVersion: String = libs.versions.neo4jBrowser.get()
+val neo4jBrowserSha256: String = libs.versions.neo4jBrowserSha256.get()
 
 tasks.register("installNeo4jBrowser") {
     group = "golem"
@@ -64,6 +66,11 @@ tasks.register("installNeo4jBrowser") {
     val downloadDir = project.layout.buildDirectory.dir("neo4j-browser").get().asFile
     val tarballFile = File(downloadDir, "neo4j-browser-$neo4jBrowserVersion.tgz")
     val destination = file("src/jsMain/resources/neo4j-browser")
+
+    inputs.property("neo4jBrowserVersion", neo4jBrowserVersion)
+    inputs.property("neo4jBrowserSha256", neo4jBrowserSha256)
+    outputs.dir(destination)
+
     doLast {
         downloadDir.mkdirs()
         if (!tarballFile.exists()) {
@@ -71,8 +78,14 @@ tasks.register("installNeo4jBrowser") {
             try {
                 download(tarballUrl, tarballFile.absolutePath)
             } catch (e: Exception) {
-                println("Failed to download Neo4j Browser: ${e.message}")
-                return@doLast
+                throw GradleException("Failed to download Neo4j Browser: ${e.message}", e)
+            }
+            val actualSha256 = sha256(tarballFile)
+            if (actualSha256 != neo4jBrowserSha256) {
+                tarballFile.delete()
+                throw GradleException(
+                    "Neo4j Browser checksum mismatch: expected $neo4jBrowserSha256, got $actualSha256"
+                )
             }
         }
         destination.deleteRecursively()
@@ -93,14 +106,12 @@ tasks.register("installNeo4jBrowser") {
                 into(destination)
             }
         } catch (e: Exception) {
-            println("Failed to extract Neo4j Browser: ${e.message}")
             tarballFile.delete()
-            return@doLast
+            throw GradleException("Failed to extract Neo4j Browser: ${e.message}", e)
         }
         if (!File(destination, "index.html").exists()) {
-            println("Failed to install Neo4j Browser: index.html not found after extraction")
             destination.deleteRecursively()
-            return@doLast
+            throw GradleException("Failed to install Neo4j Browser: index.html not found after extraction")
         }
         println("Neo4j Browser $neo4jBrowserVersion installed successfully")
     }
@@ -203,4 +214,16 @@ fun download(
             input.copyTo(output)
         }
     }
+}
+
+fun sha256(file: File): String {
+    val digest = MessageDigest.getInstance("SHA-256")
+    file.inputStream().use { input ->
+        val buffer = ByteArray(8192)
+        var bytesRead: Int
+        while (input.read(buffer).also { bytesRead = it } != -1) {
+            digest.update(buffer, 0, bytesRead)
+        }
+    }
+    return digest.digest().joinToString("") { "%02x".format(it) }
 }

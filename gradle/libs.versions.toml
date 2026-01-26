@@ -20,6 +20,7 @@ playwright = "1.57.0"
 dashscope = "2.20.1"
 neo4j = "2025.11.2"
 neo4jBrowser = "2025.8.0"
+neo4jBrowserSha256 = "4ed8ca29a27519a79f7013258acbcb020649a7fef354e1e157c1dc8f0a83cef2"
 neo4jDriver = "6.0.2"
 neo4jMigrations = "3.1.0"
 
