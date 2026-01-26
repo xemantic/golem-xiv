@@ -69,19 +69,41 @@ tasks.register("installNeo4jBrowser") {
         downloadDir.mkdirs()
         if (!tarballFile.exists()) {
             println("Downloading Neo4j Browser $neo4jBrowserVersion...")
-            download(tarballUrl, tarballFile.absolutePath)
+            try {
+                download(tarballUrl, tarballFile.absolutePath)
+            } catch (e: Exception) {
+                println("Failed to download Neo4j Browser: ${e.message}")
+                return@doLast
+            }
         }
         extractDir.deleteRecursively()
         extractDir.mkdirs()
         println("Extracting Neo4j Browser...")
-        ProcessBuilder("tar", "-xzf", tarballFile.absolutePath, "-C", extractDir.absolutePath, "--strip-components=1")
+        val exitCode = ProcessBuilder("tar", "-xzf", tarballFile.absolutePath, "-C", extractDir.absolutePath, "--strip-components=1")
             .inheritIO()
             .start()
             .waitFor()
+        if (exitCode != 0) {
+            println("Failed to extract Neo4j Browser tarball (exit code: $exitCode)")
+            tarballFile.delete()
+            return@doLast
+        }
+        val distDir = File(extractDir, "dist")
+        if (!distDir.exists()) {
+            println("Failed to install Neo4j Browser: dist directory not found in tarball")
+            extractDir.deleteRecursively()
+            return@doLast
+        }
         destination.deleteRecursively()
         println("Installing Neo4j Browser to $destination...")
-        File(extractDir, "dist").copyRecursively(destination)
-        extractDir.deleteRecursively()
+        try {
+            distDir.copyRecursively(destination)
+        } catch (e: Exception) {
+            println("Failed to copy Neo4j Browser files: ${e.message}")
+            return@doLast
+        } finally {
+            extractDir.deleteRecursively()
+        }
         println("Neo4j Browser $neo4jBrowserVersion installed successfully")
     }
 }
