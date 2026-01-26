@@ -114,7 +114,7 @@ class IntentCognizer(
                     }
                     Phase.COLLECTING_CODE -> {
                         add(CognitionEvent.IntentCodeCulmination(
-                            id = expressionId,
+                            id = phenomenonId,
                             expressionId = expressionId
                         ))
                     }
