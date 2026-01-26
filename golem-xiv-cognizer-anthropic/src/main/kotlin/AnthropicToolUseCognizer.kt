@@ -1,6 +1,6 @@
 /*
  * Golem XIV - Autonomous metacognitive AI system with semantic memory and self-directed research
- * Copyright (C) 2025  Kazimierz Pogoda / Xemantic
+ * Copyright (C) 2026  Kazimierz Pogoda / Xemantic
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -28,10 +28,11 @@ import com.xemantic.ai.anthropic.message.Role
 import com.xemantic.ai.anthropic.message.System
 import com.xemantic.ai.anthropic.message.addCacheBreakpoint
 import com.xemantic.ai.anthropic.tool.Tool
-import com.xemantic.ai.golem.api.Phenomenon
-import com.xemantic.ai.golem.api.PhenomenalExpression
+import com.xemantic.ai.anthropic.tool.ToolChoice
 import com.xemantic.ai.golem.api.CognitionEvent
 import com.xemantic.ai.golem.api.EpistemicAgent
+import com.xemantic.ai.golem.api.PhenomenalExpression
+import com.xemantic.ai.golem.api.Phenomenon
 import com.xemantic.ai.golem.api.backend.CognitionRepository
 import com.xemantic.ai.golem.api.backend.Cognizer
 import com.xemantic.ai.golem.api.backend.script.ExecuteGolemScript
@@ -71,6 +72,8 @@ class AnthropicToolUseCognizer(
 
         var intentCognizer: IntentCognizer? = null
 
+        var textBuffer: StringBuilder? = null
+
         var processedContentType: ProcessedContentType? = null
 
         var toolUseId: String? = null
@@ -85,6 +88,9 @@ class AnthropicToolUseCognizer(
             system = constitution.toAnthropicSystem()
             messages = messageFlow
             tools = golemTools
+            toolChoice = ToolChoice.Auto {
+                disableParallelToolUse = true
+            }
         }.transform { event ->
             when (event) {
 
@@ -126,6 +132,7 @@ class AnthropicToolUseCognizer(
                             )
 
                             phenomenonId = id
+                            textBuffer = StringBuilder()
 
                             emit(CognitionEvent.TextInitiation(
                                 id = id,
@@ -147,10 +154,8 @@ class AnthropicToolUseCognizer(
                             phenomenonId = id
 
                             intentCognizer = IntentCognizer(
-                                cognitionId = cognitionId,
                                 expressionId = expressionId,
-                                phenomenonId = id,
-                                repository = repository
+                                phenomenonId = id
                             )
 
 
@@ -174,17 +179,12 @@ class AnthropicToolUseCognizer(
 
                             val textDelta = (event.delta as Event.ContentBlockDelta.Delta.TextDelta).text
 
-                            repository.appendText(
-                                cognitionId = cognitionId,
-                                expressionId = expressionId!!,
-                                phenomenonId = phenomenonId!!,
-                                textDelta = textDelta
-                            )
+                            textBuffer!!.append(textDelta)
 
                             emit(
                                 CognitionEvent.TextUnfolding(
                                     id = phenomenonId!!,
-                                    expressionId = expressionId,
+                                    expressionId = expressionId!!,
                                     textDelta = textDelta
                                 )
                             )
@@ -204,15 +204,29 @@ class AnthropicToolUseCognizer(
                 is Event.ContentBlockStop -> {
                     when (processedContentType!!) {
                         ProcessedContentType.TEXT -> {
+                            repository.culminateTextPhenomenon(
+                                cognitionId = cognitionId,
+                                expressionId = expressionId!!,
+                                phenomenonId = phenomenonId!!,
+                                text = textBuffer.toString()
+                            )
                             emit(CognitionEvent.TextCulmination(
                                 id = phenomenonId!!,
-                                expressionId = expressionId!!
+                                expressionId = expressionId
                             ))
+                            textBuffer = null
                         }
                         ProcessedContentType.TOOL -> {
+                            repository.culminateIntentPhenomenon(
+                                cognitionId = cognitionId,
+                                expressionId = expressionId!!,
+                                phenomenonId = phenomenonId!!,
+                                purpose = intentCognizer!!.purpose,
+                                code = intentCognizer!!.code
+                            )
                             emit(CognitionEvent.IntentCulmination(
                                 id = phenomenonId!!,
-                                expressionId = expressionId!!
+                                expressionId = expressionId
                             ))
                         }
                     }

@@ -60,11 +60,11 @@ class DefaultCognitionRepository(
                         expressionId = info.id,
                         label = "Text"
                     )
-                    appendText(
+                    culminateTextPhenomenon(
                         cognitionId = cognitionId,
                         expressionId = info.id,
                         phenomenonId = id,
-                        textDelta = phenomenon.text
+                        text = phenomenon.text
                     )
                     Phenomenon.Text(
                         id = id,
@@ -137,45 +137,6 @@ class DefaultCognitionRepository(
             type = StorageType.SYSTEM_ID
         )
         return phenomenonId
-    }
-
-    override suspend fun appendText(
-        cognitionId: Long,
-        expressionId: Long,
-        phenomenonId: Long,
-        textDelta: String
-    ) {
-        memory.appendPhenomenonContent(
-            phenomenonId = phenomenonId,
-            content = textDelta,
-            type = StorageType.TEXT
-        )
-    }
-
-    override suspend fun appendIntentPurpose(
-        cognitionId: Long,
-        expressionId: Long,
-        phenomenonId: Long,
-        purposeDelta: String
-    ) {
-        memory.appendPhenomenonContent(
-            phenomenonId = phenomenonId,
-            content = purposeDelta,
-            type = StorageType.INTENT_PURPOSE
-        )
-    }
-
-    override suspend fun appendIntentCode(
-        cognitionId: Long,
-        expressionId: Long,
-        phenomenonId: Long,
-        codeDelta: String
-    ) {
-        memory.appendPhenomenonContent(
-            phenomenonId = phenomenonId,
-            content = codeDelta,
-            type = StorageType.INTENT_CODE
-        )
     }
 
     override suspend fun updateSystemPhenomena(
@@ -305,6 +266,46 @@ class DefaultCognitionRepository(
         } else {
             null
         }
+    }
+
+    override suspend fun culminateTextPhenomenon(
+        cognitionId: Long,
+        expressionId: Long,
+        phenomenonId: Long,
+        text: String
+    ) {
+        memory.writePhenomenonContent(
+            phenomenonId = phenomenonId,
+            content = mapOf(StorageType.TEXT to text)
+        )
+    }
+
+    override suspend fun culminateIntentPhenomenon(
+        cognitionId: Long,
+        expressionId: Long,
+        phenomenonId: Long,
+        purpose: String,
+        code: String
+    ) {
+        memory.writePhenomenonContent(
+            phenomenonId = phenomenonId,
+            content = mapOf(
+                StorageType.INTENT_PURPOSE to purpose,
+                StorageType.INTENT_CODE to code
+            )
+        )
+    }
+
+    override suspend fun culminateFulfillmentPhenomenon(
+        cognitionId: Long,
+        expressionId: Long,
+        phenomenonId: Long,
+        result: String
+    ) {
+        memory.writePhenomenonContent(
+            phenomenonId = phenomenonId,
+            content = mapOf(StorageType.TEXT to result)
+        )
     }
 
 }

@@ -1,6 +1,6 @@
 /*
  * Golem XIV - Autonomous metacognitive AI system with semantic memory and self-directed research
- * Copyright (C) 2025  Kazimierz Pogoda / Xemantic
+ * Copyright (C) 2026  Kazimierz Pogoda / Xemantic
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -19,25 +19,31 @@
 package com.xemantic.ai.golem.api.backend.util
 
 import com.xemantic.ai.golem.api.CognitionEvent
-import com.xemantic.ai.golem.api.backend.CognitionRepository
 import com.xemantic.ai.golem.json.DefaultStreamingJsonParser
 import com.xemantic.ai.golem.json.JsonEvent
 
 /**
  * The intent cognizer is a component to be used in the implementation of [Cognizer] interface.
+ *
+ * Accumulates purpose and code during streaming and provides the final values
+ * when the content block is complete.
  */
 class IntentCognizer(
-    private val cognitionId: Long,
     private val expressionId: Long,
-    private val phenomenonId: Long,
-    private val repository: CognitionRepository
+    private val phenomenonId: Long
 ) {
 
     private val jsonParser = DefaultStreamingJsonParser()
 
     private var phase: Phase? = null
 
-    suspend fun add(
+    private val purposeBuffer = StringBuilder()
+    private val codeBuffer = StringBuilder()
+
+    val purpose: String get() = purposeBuffer.toString()
+    val code: String get() = codeBuffer.toString()
+
+    fun add(
         jsonDelta: String
     ): List<CognitionEvent> = jsonParser
         .parse(jsonDelta)
@@ -45,7 +51,7 @@ class IntentCognizer(
             processJsonEvent(it)
         }
 
-    private suspend fun processJsonEvent(
+    private fun processJsonEvent(
         event: JsonEvent
     ): List<CognitionEvent> = buildList {
 
@@ -77,32 +83,22 @@ class IntentCognizer(
                 val chunk = event.chunk
                 when (phase) {
                     Phase.COLLECTING_PURPOSE -> {
-                        repository.appendIntentPurpose(
-                            cognitionId = cognitionId,
-                            expressionId = expressionId,
-                            phenomenonId = phenomenonId,
-                            purposeDelta = event.chunk
-                        )
+                        purposeBuffer.append(chunk)
                         add(CognitionEvent.IntentPurposeUnfolding(
                             id = phenomenonId,
                             expressionId = expressionId,
-                            purposeDelta = event.chunk
+                            purposeDelta = chunk
                         ))
                     }
                     Phase.COLLECTING_CODE -> {
-                        repository.appendIntentCode(
-                            cognitionId = cognitionId,
-                            expressionId = expressionId,
-                            phenomenonId = phenomenonId,
-                            codeDelta = event.chunk
-                        )
+                        codeBuffer.append(chunk)
                         add(CognitionEvent.IntentCodeUnfolding(
                             id = phenomenonId,
                             expressionId = expressionId,
-                            codeDelta = event.chunk
+                            codeDelta = chunk
                         ))
                     }
-                    null -> IllegalStateException( // should never happen
+                    null -> throw IllegalStateException( // should never happen
                         "No IntentAccumulator.phase selected, but received JsonEven.StringDelta: $chunk"
                     )
                 }
@@ -122,7 +118,7 @@ class IntentCognizer(
                             expressionId = expressionId
                         ))
                     }
-                    null -> IllegalStateException( // should never happen
+                    null -> throw IllegalStateException( // should never happen
                         "No IntentAccumulator.phase selected, but received JsonEven.StringEnd"
                     )
                 }

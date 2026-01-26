@@ -72,27 +72,6 @@ interface CognitionRepository {
         systemId: String
     ): Long
 
-    suspend fun appendText(
-        cognitionId: Long,
-        expressionId: Long,
-        phenomenonId: Long,
-        textDelta: String
-    )
-
-    suspend fun appendIntentPurpose(
-        cognitionId: Long,
-        expressionId: Long,
-        phenomenonId: Long,
-        purposeDelta: String
-    )
-
-    suspend fun appendIntentCode(
-        cognitionId: Long,
-        expressionId: Long,
-        phenomenonId: Long,
-        codeDelta: String
-    )
-
     suspend fun updateSystemPhenomena(
         cognitionId: Long,
         phenomena: List<String>
@@ -110,6 +89,28 @@ interface CognitionRepository {
     suspend fun maybeCulminatedWithIntent(
         cognitionId: Long
     ): Phenomenon.Intent?
+
+    suspend fun culminateTextPhenomenon(
+        cognitionId: Long,
+        expressionId: Long,
+        phenomenonId: Long,
+        text: String
+    )
+
+    suspend fun culminateIntentPhenomenon(
+        cognitionId: Long,
+        expressionId: Long,
+        phenomenonId: Long,
+        purpose: String,
+        code: String
+    )
+
+    suspend fun culminateFulfillmentPhenomenon(
+        cognitionId: Long,
+        expressionId: Long,
+        phenomenonId: Long,
+        result: String
+    )
 
 }
 
@@ -177,6 +178,11 @@ interface CognitiveMemory {
         phenomenonId: Long,
         type: StorageType
     ): String
+
+    suspend fun writePhenomenonContent(
+        phenomenonId: Long,
+        content: Map<StorageType, String>
+    )
 
 }
 

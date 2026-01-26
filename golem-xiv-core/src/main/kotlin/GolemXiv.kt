@@ -181,11 +181,11 @@ class GolemXiv(
                         is ExecuteGolemScript.Result.Error -> result.message to true
                     }
 
-                    repository.appendText(
+                    repository.culminateFulfillmentPhenomenon(
                         cognitionId = cognitionId,
                         expressionId = expressionInfo.id,
                         phenomenonId = fulfillmentId,
-                        textDelta = text
+                        result = text
                     )
 
                     cognitionBroadcaster.emit(CognitionEvent.FulfillmentUnfolding(
