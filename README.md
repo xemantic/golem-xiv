@@ -18,7 +18,7 @@ A meta-cognitive recursive AI agent with memory.
 ## Starting Golem XIV
 
 > [!NOTE]
-> Before Golem is started for the first time, the [neo4j-browser](https://neo4j.com/docs/browser-manual/current/) needs to be built from sources as a part of the `golem-xiv-web` module. It's a one-time action.
+> Before Golem is started for the first time, the [neo4j-browser](https://neo4j.com/docs/browser-manual/current/) needs to be installed as a part of the `golem-xiv-web` module. It's a one-time action.
 
 ```shell
 ./gradlew installNeo4jBrowser
