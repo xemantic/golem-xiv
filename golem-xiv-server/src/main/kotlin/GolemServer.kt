@@ -176,6 +176,8 @@ fun Application.module() {
             golemApiRoute(logger, golem)
         }
 
+        neo4jProxy(neo4jConfig.httpUri)
+
         sse("/events") {
             val clientIp = call.request.origin.remoteAddress
             logger.info { "SSE client connected: $clientIp" }

@@ -27,9 +27,10 @@ import org.w3c.dom.HTMLElement
 
 class HtmlMemoryView() : MemoryView, HasRootHtmlElement {
 
-    // TODO it should be populated with local storage if DB is remote
     override val element: HTMLElement = document.create.iframe(classes = "memory") {
-        src = "neo4j-browser/?dbms=bolt://localhost:7687&preselectAuthMethod=NO_AUTH"
+        // Connect to Neo4j via the reverse proxy endpoint
+        // The proxy forwards requests from /neo4j/* to the Neo4j HTTP API
+        src = "neo4j-browser/?connectURL=/neo4j&preselectAuthMethod=NO_AUTH"
     }
 
 }
