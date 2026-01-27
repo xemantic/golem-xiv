@@ -34,6 +34,7 @@ import com.xemantic.ai.golem.neo4j.Neo4jMemory
 import com.xemantic.neo4j.driver.DispatchedNeo4jOperations
 import io.github.oshai.kotlinlogging.KLogger
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.ktor.client.HttpClient
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.serialization.kotlinx.json.json
@@ -90,6 +91,7 @@ fun Application.module() {
     val outputs = MutableSharedFlow<GolemOutput>() // TODO can we move outputs to Golem?
 
     val driver = GraphDatabase.driver(neo4jConfig.uri, authToken)
+    val httpClient = HttpClient()
 
     val neo4j = DispatchedNeo4jOperations(
         driver = driver,
@@ -143,6 +145,7 @@ fun Application.module() {
         logger.info { "Stopping Golem XIV server" }
         golem.close()
         driver.close()
+        httpClient.close()
     }
 
     // TODO do we need to shutdown logback?
@@ -176,7 +179,12 @@ fun Application.module() {
             golemApiRoute(logger, golem)
         }
 
-        neo4jProxy(neo4jConfig.httpUri)
+        neo4jProxy(
+            httpClient = httpClient,
+            neo4jHttpUri = neo4jConfig.httpUri,
+            username = neo4jConfig.username,
+            password = neo4jConfig.password
+        )
 
         sse("/events") {
             val clientIp = call.request.origin.remoteAddress

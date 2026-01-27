@@ -19,12 +19,14 @@
 package com.xemantic.ai.golem.server
 
 import io.ktor.client.HttpClient
+import io.ktor.client.request.basicAuth
 import io.ktor.client.request.header
 import io.ktor.client.request.request
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsChannel
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
+import io.ktor.http.URLBuilder
 import io.ktor.http.contentType
 import io.ktor.server.application.call
 import io.ktor.server.request.receiveChannel
@@ -40,41 +42,46 @@ import io.ktor.utils.io.copyTo
  * This allows the Neo4j Browser to connect to the Neo4j database through the Golem server,
  * enabling cloud deployments where direct database access is not available.
  *
+ * @param httpClient The HTTP client to use for proxying requests
  * @param neo4jHttpUri The URI of the Neo4j HTTP endpoint (e.g., "http://localhost:7474")
+ * @param username The Neo4j username for authentication
+ * @param password The Neo4j password for authentication
  */
-fun Route.neo4jProxy(neo4jHttpUri: String) {
-    val httpClient = HttpClient()
-
+fun Route.neo4jProxy(
+    httpClient: HttpClient,
+    neo4jHttpUri: String,
+    username: String,
+    password: String
+) {
     route("/neo4j/{path...}") {
         handle {
             val path = call.parameters.getAll("path")?.joinToString("/") ?: ""
-            val queryString = call.request.queryParameters.entries()
-                .joinToString("&") { (key, values) ->
-                    values.joinToString("&") { value -> "$key=$value" }
-                }
 
-            val targetUrl = buildString {
-                append(neo4jHttpUri.removeSuffix("/"))
-                append("/")
-                append(path)
-                if (queryString.isNotEmpty()) {
-                    append("?")
-                    append(queryString)
+            val targetUrl = URLBuilder(neo4jHttpUri).apply {
+                pathSegments = pathSegments + path.split("/").filter { it.isNotEmpty() }
+                call.request.queryParameters.forEach { key, values ->
+                    values.forEach { value ->
+                        parameters.append(key, value)
+                    }
                 }
-            }
+            }.buildString()
 
             logger.debug { "Proxying ${call.request.local.method.value} request to: $targetUrl" }
 
             val response = httpClient.request(targetUrl) {
                 method = call.request.local.method
 
+                // Add Neo4j authentication
+                basicAuth(username, password)
+
                 // Forward relevant headers
                 call.request.headers.forEach { key, values ->
                     when (key) {
                         HttpHeaders.Host,
                         HttpHeaders.ContentLength,
-                        HttpHeaders.TransferEncoding -> {
-                            // Skip these headers as they will be set by the client
+                        HttpHeaders.TransferEncoding,
+                        HttpHeaders.Authorization -> {
+                            // Skip these headers as they will be set by the HTTP client library
                         }
                         else -> {
                             values.forEach { value ->
