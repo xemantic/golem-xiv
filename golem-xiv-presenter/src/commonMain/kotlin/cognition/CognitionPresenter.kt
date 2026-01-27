@@ -1,6 +1,6 @@
 /*
  * Golem XIV - Autonomous metacognitive AI system with semantic memory and self-directed research
- * Copyright (C) 2025  Kazimierz Pogoda / Xemantic
+ * Copyright (C) 2026  Kazimierz Pogoda / Xemantic
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -18,27 +18,14 @@
 
 package com.xemantic.ai.golem.presenter.cognition
 
-import com.xemantic.ai.golem.api.PhenomenalExpression
-import com.xemantic.ai.golem.api.GolemOutput
-import com.xemantic.ai.golem.api.CognitionEvent
-import com.xemantic.ai.golem.api.EpistemicAgent
-import com.xemantic.ai.golem.api.Phenomenon
+import com.xemantic.ai.golem.api.*
 import com.xemantic.ai.golem.api.client.CognitionService
 import com.xemantic.ai.golem.presenter.ScreenView
 import com.xemantic.ai.golem.presenter.navigation.Navigation
 import com.xemantic.ai.golem.presenter.util.Action
 import io.github.oshai.kotlinlogging.KotlinLogging
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.filterIsInstance
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
 
 typealias TextAppender = (text: String) -> Unit
 
@@ -48,6 +35,8 @@ interface ExpressionAppender {
 
     fun intentAppender(): IntentAppender
 
+    fun fulfillmentAppender(): FulfillmentAppender
+
 }
 
 interface IntentAppender {
@@ -55,6 +44,12 @@ interface IntentAppender {
     fun purposeAppender(): TextAppender
 
     fun codeAppender(): TextAppender
+
+}
+
+interface FulfillmentAppender {
+
+    fun textAppender(): TextAppender
 
 }
 
@@ -75,6 +70,8 @@ interface CognitionView : ScreenView {
     var promptInputDisabled: Boolean
 
     var sendDisabled: Boolean
+
+    var cognizing: Boolean
 
     fun clearPromptInput()
 
@@ -107,6 +104,8 @@ class CognitionPresenter(
     private var currentPrompt: String = ""
 
     private val expressionAppenderMap = mutableMapOf<Long, ExpressionAppender>()
+    private val aiExpressionIds = mutableSetOf<Long>()
+    private val expressionsWithIntent = mutableSetOf<Long>()
 
     init {
 
@@ -132,9 +131,11 @@ class CognitionPresenter(
         }.launchIn(scope)
 
         var intentAppender: IntentAppender? = null
+        var fulfillmentAppender: FulfillmentAppender? = null
         var textAppender: TextAppender? = null
         var purposeAppender: TextAppender? = null
         var codeAppender: TextAppender? = null
+        var fulfillmentTextAppender: TextAppender? = null
 
         golemOutputs.filterIsInstance<GolemOutput.Cognition>().filter {
             it.cognitionId == cognitionId
@@ -146,6 +147,16 @@ class CognitionPresenter(
             when (it) {
                 is CognitionEvent.ExpressionInitiation -> {
                     expressionAppenderMap[it.expressionId] = view.starExpression(it.agent)
+                    if (it.agent is EpistemicAgent.AI) {
+                        aiExpressionIds.add(it.expressionId)
+                    }
+                }
+                is CognitionEvent.ExpressionCulmination -> {
+                    val wasAiExpression = aiExpressionIds.remove(it.expressionId)
+                    val hadIntent = expressionsWithIntent.remove(it.expressionId)
+                    if (wasAiExpression && !hadIntent) {
+                        view.cognizing = false
+                    }
                 }
                 is CognitionEvent.TextInitiation -> {
                     textAppender = expressionAppenderMap[it.expressionId]!!.textAppender()
@@ -154,6 +165,7 @@ class CognitionPresenter(
                     textAppender!!(it.textDelta)
                 }
                 is CognitionEvent.IntentInitiation -> {
+                    expressionsWithIntent.add(it.expressionId)
                     intentAppender = expressionAppenderMap[it.expressionId]!!.intentAppender()
                 }
                 is CognitionEvent.IntentPurposeInitiation -> {
@@ -169,10 +181,11 @@ class CognitionPresenter(
                     codeAppender!!(it.codeDelta)
                 }
                 is CognitionEvent.FulfillmentInitiation -> {
-                    textAppender = expressionAppenderMap[it.expressionId]!!.textAppender()
+                    fulfillmentAppender = expressionAppenderMap[it.expressionId]!!.fulfillmentAppender()
+                    fulfillmentTextAppender = fulfillmentAppender.textAppender()
                 }
                 is CognitionEvent.FulfillmentUnfolding -> {
-                    textAppender!!(it.textDelta)
+                    fulfillmentTextAppender!!(it.textDelta)
                 }
                 else -> {}
             }
@@ -186,6 +199,7 @@ class CognitionPresenter(
 
     private suspend fun sendPhenomena() {
         view.sendDisabled = true
+        view.cognizing = true
         view.clearPromptInput()
         if (cognitionId == null) {
             cognitionId = initiateCognition()

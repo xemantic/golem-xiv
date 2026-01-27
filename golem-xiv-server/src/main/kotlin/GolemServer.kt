@@ -1,6 +1,6 @@
 /*
  * Golem XIV - Autonomous metacognitive AI system with semantic memory and self-directed research
- * Copyright (C) 2025  Kazimierz Pogoda / Xemantic
+ * Copyright (C) 2026  Kazimierz Pogoda / Xemantic
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -18,6 +18,7 @@
 
 package com.xemantic.ai.golem.server
 
+//import io.ktor.server.application.ApplicationStopped
 import com.xemantic.ai.anthropic.Anthropic
 import com.xemantic.ai.golem.api.GolemError
 import com.xemantic.ai.golem.api.GolemOutput
@@ -28,41 +29,24 @@ import com.xemantic.ai.golem.core.GolemXiv
 import com.xemantic.ai.golem.core.cognition.DefaultCognitionRepository
 import com.xemantic.ai.golem.core.script.GolemScriptDependencyProvider
 import com.xemantic.ai.golem.logging.initializeLogging
-import com.xemantic.ai.golem.neo4j.Neo4jCognitiveMemory
 import com.xemantic.ai.golem.neo4j.Neo4jAgentIdentity
+import com.xemantic.ai.golem.neo4j.Neo4jCognitiveMemory
 import com.xemantic.ai.golem.neo4j.Neo4jMemory
 import com.xemantic.neo4j.driver.DispatchedNeo4jOperations
 import io.github.oshai.kotlinlogging.KLogger
 import io.github.oshai.kotlinlogging.KotlinLogging
-import io.ktor.http.HttpHeaders
-import io.ktor.http.HttpMethod
-import io.ktor.serialization.kotlinx.json.json
-import io.ktor.server.application.Application
-import io.ktor.server.application.ApplicationStopPreparing
-//import io.ktor.server.application.ApplicationStopped
-import io.ktor.server.application.install
-import io.ktor.server.config.property
-import io.ktor.server.http.content.CompressedFileType
-import io.ktor.server.http.content.staticResources
-import io.ktor.server.plugins.calllogging.CallLogging
-import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.server.plugins.cors.routing.CORS
-import io.ktor.server.plugins.origin
-import io.ktor.server.plugins.statuspages.StatusPages
-import io.ktor.server.request.receive
-import io.ktor.server.request.uri
-import io.ktor.server.response.respond
-import io.ktor.server.response.respondText
-import io.ktor.server.routing.Route
-import io.ktor.server.routing.RoutingContext
-import io.ktor.server.routing.get
-import io.ktor.server.routing.patch
-import io.ktor.server.routing.post
-import io.ktor.server.routing.put
-import io.ktor.server.routing.route
-import io.ktor.server.routing.routing
-import io.ktor.server.sse.SSE
-import io.ktor.server.sse.sse
+import io.ktor.serialization.kotlinx.json.*
+import io.ktor.server.application.*
+import io.ktor.server.config.*
+import io.ktor.server.http.content.*
+import io.ktor.server.plugins.*
+import io.ktor.server.plugins.calllogging.*
+import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.plugins.statuspages.*
+import io.ktor.server.request.*
+import io.ktor.server.response.*
+import io.ktor.server.routing.*
+import io.ktor.server.sse.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.runBlocking

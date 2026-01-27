@@ -1,6 +1,6 @@
 /*
  * Golem XIV - Autonomous metacognitive AI system with semantic memory and self-directed research
- * Copyright (C) 2025  Kazimierz Pogoda / Xemantic
+ * Copyright (C) 2026  Kazimierz Pogoda / Xemantic
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -21,18 +21,16 @@ package com.xemantic.ai.golem.web.cognition
 import com.xemantic.ai.golem.api.EpistemicAgent
 import com.xemantic.ai.golem.api.PhenomenalExpression
 import com.xemantic.ai.golem.api.Phenomenon
-import com.xemantic.ai.golem.presenter.cognition.ExpressionAppender
-import com.xemantic.ai.golem.presenter.cognition.IntentAppender
-import com.xemantic.ai.golem.presenter.cognition.TextAppender
-import com.xemantic.ai.golem.presenter.cognition.CognitionView
+import com.xemantic.ai.golem.presenter.cognition.*
 import com.xemantic.ai.golem.web.js.actions
 import com.xemantic.ai.golem.web.js.dom
 import com.xemantic.ai.golem.web.js.eventFlow
 import com.xemantic.ai.golem.web.js.inject
-import com.xemantic.ai.golem.web.ui.IconButton
 import com.xemantic.ai.golem.web.ui.Div
 import com.xemantic.ai.golem.web.ui.Icon
+import com.xemantic.ai.golem.web.ui.IconButton
 import com.xemantic.ai.golem.web.view.HasRootHtmlElement
+import kotlinx.browser.window
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.html.article
@@ -123,7 +121,7 @@ class HtmlCognitionView(
 
                         }
                         val purposeDiv = dom.summary {
-                            article("round primary no-elevate") {
+                            article("round border no-elevate") {
                                 nav {
                                     inject(purposeTextDiv)
                                     Icon("keyboard_arrow_down")
@@ -138,6 +136,33 @@ class HtmlCognitionView(
                         val codeDiv = dom.div("code round")
                         intentDiv.append(codeDiv)
                         return { codeDiv.append(it) }
+                    }
+
+                }
+
+            }
+
+            override fun fulfillmentAppender(): FulfillmentAppender {
+
+                val fulfillmentDiv = dom.details("fulfillment")
+                messageDiv.append(fulfillmentDiv)
+
+                val summaryDiv = dom.summary {
+                    article("round border no-elevate") {
+                        nav {
+                            div("max") { +"Answer" }
+                            Icon("keyboard_arrow_down")
+                        }
+                    }
+                }
+                fulfillmentDiv.append(summaryDiv)
+
+                return object : FulfillmentAppender {
+
+                    override fun textAppender(): TextAppender {
+                        val textDiv = dom.div("text")
+                        fulfillmentDiv.append(textDiv)
+                        return { textDiv.append(it) }
                     }
 
                 }
@@ -198,6 +223,12 @@ class HtmlCognitionView(
         get() = expressButton.disabled
         set(value) {
             expressButton.disabled = value
+        }
+
+    override var cognizing: Boolean = false
+        set(value) {
+            field = value
+            window.asDynamic().cognizing = value
         }
 
 //    override fun addTextResponse(text: String) {
