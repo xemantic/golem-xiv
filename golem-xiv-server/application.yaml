@@ -10,5 +10,6 @@ ktor:
 
 neo4j:
   uri: bolt://localhost:7687
+  httpUri: http://localhost:7474
   username: golem
   password: golem

@@ -23,6 +23,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class Neo4jConfig(
     val uri: String,
+    val httpUri: String,
     val username: String,
     val password: String,
 )
