@@ -66,6 +66,7 @@ class HtmlMainView(
                 body.classList.add("dark")
             }
         }
+        window.asDynamic().theme = theme.name.lowercase()
     }
 
     override fun cognitionView(): CognitionView = HtmlCognitionView() // TODO move the factory outside

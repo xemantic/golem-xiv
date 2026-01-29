@@ -78,7 +78,9 @@ tasks.register<Copy>("copyWebResources") {
             .layout.buildDirectory
             .dir("dist/js/productionExecutable")
     ) {
-        exclude("index.html")
+        filter { line ->
+            if (line.contains("golem-dev-script")) null else line
+        }
     }
     into(
         layout.buildDirectory.dir("resources/main/web")

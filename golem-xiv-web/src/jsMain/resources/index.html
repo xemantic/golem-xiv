@@ -1,6 +1,6 @@
 <!--
   ~ Golem XIV - Autonomous metacognitive AI system with semantic memory and self-directed research
-  ~ Copyright (C) 2025  Kazimierz Pogoda / Xemantic
+  ~ Copyright (C) 2026  Kazimierz Pogoda / Xemantic
   ~
   ~ This program is free software: you can redistribute it and/or modify
   ~ it under the terms of the GNU Affero General Public License as
@@ -29,15 +29,14 @@
     <script type="module" src="/css/beercss.js"></script>
 </head>
 <body>
-<script>
-    const golemDevMode = true;
-</script>
+<script id="golem-dev-script">const golemDevMode = true;</script>
 <script type="x-shader/x-fragment" id="image">
     precision highp float;
 
     uniform vec2  iResolution;
     uniform float iTime;
     uniform float iScroll;
+    uniform float iInvert;
 
     #define rot(a) mat2(cos(a + vec4(0,33,11,0)))
     #define C(U,w) smoothstep( w, -w, sin(length(fract(U)*2.-1.) * 3.) *.5  -.118 )
@@ -76,6 +75,7 @@
                     - sin(t * vec3(1.43,1.53,1.63) * .3), d-.5) *.4*vec3(1,1,-1);
     O = vec4(pow(O.rgb, C), 1) * smoothstep(2.1, .7, d / .5);
     O = O * O;
+    O.rgb = pow(O.rgb, vec3(1.0 - iInvert));
 }
 </script>
 <script src="/js/shader-web-background.js"></script>
@@ -84,12 +84,21 @@
     const randomSeed = Math.random() * 100;
 
     let scroll = 0;
+    let time = randomSeed;
+    let lastFrameTime = performance.now();
+    window.theme = 'dark';
+    window.cognizing = false;
+    const COGNIZING_SPEED = 9;
+    const LIGHT_THEME_GAMMA = 0.5;
     shaderWebBackground.shade((ctx) => ({
       onResize: (width, height) => {
         minDimension = Math.min(width, height);
       },
       onBeforeFrame: () => {
-        time = performance.now() / 10000 + randomSeed;
+        const now = performance.now();
+        const delta = (now - lastFrameTime) / 10000;
+        lastFrameTime = now;
+        time += delta * (window.cognizing ? COGNIZING_SPEED : 1);
         scroll = (window.scrollY * ctx.cssPixelRatio) * -PARALLAX_SCROLLING_RATE;
       },
       shaders: {
@@ -98,6 +107,7 @@
             iResolution:           () => ctx.resolution,
             iTime:                 () => time,
             iScroll:               () => scroll,
+            iInvert:               () => window.theme === 'light' ? LIGHT_THEME_GAMMA : 0,
           }
         }
       }
