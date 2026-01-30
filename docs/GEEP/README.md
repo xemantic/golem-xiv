@@ -11,13 +11,14 @@ They cover the cognitive architecture, GolemScript, Knowledge Graph memory, and 
 
 **1. The proposal is published.**
 Every new proposal gets a GEEP number (previous proposal number + 1).
-The Markdown file is prefixed with the `GEEP-xxxx-` number and merged to the `main` branch.
+The Markdown file is prefixed with the `GEEP-xxxx-` number (zero-padded to 4 digits, e.g., `GEEP-0001-feature-name.md`) and merged to the `main` branch.
 
 **2. Public GEEP review stage.**
 Immediately after publishing the proposal, a new [GitHub Discussion](https://github.com/xemantic/golem-xiv/discussions) is opened.
 At this stage, we invite the community to read the proposal and share their opinion in the discussion.
 
 **3. The final decision on the proposal.**
+The project maintainers review community feedback and make the final decision.
 The proposal is either Accepted, Rejected, or requires further refinement.
 
 The up-to-date status of each proposal must be recorded in the GEEP document header.
@@ -26,9 +27,19 @@ Generally we use the following statuses:
 - `Public discussion` - open for community feedback
 - `In progress` - accepted and being implemented
 - `Experimental` - implemented but subject to change
-- `Stable` - fully implemented and stable
+- `Stable` - fully implemented and stable (optionally with version: `Stable (v1.2.0)`)
 - `Declined` - proposal was rejected
 - `Superseded by GEEP-xxxx` - replaced by another proposal
+
+## GEEP Template
+
+See [GEEP-0000-template.md](GEEP-0000-template.md) for the standard proposal structure.
+Each GEEP should include:
+- **Metadata** - GEEP number, title, status, authors, and dates
+- **Motivation** - the problem being solved and why it matters
+- **Proposed solution** - detailed description of the enhancement
+- **Alternatives considered** - other approaches that were evaluated
+- **Impact on existing functionality** - compatibility and migration considerations
 
 ## Design notes
 

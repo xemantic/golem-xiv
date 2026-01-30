@@ -60,3 +60,7 @@ http://localhost:8081
 ### Optional Cypher syntax highlighting
 The [Graph Database](https://plugins.jetbrains.com/plugin/20417-graph-database) IntelliJ plugin adds syntax highlighting to Cypher queries
 
+## Contributing
+
+See [GEEP](docs/GEEP/README.md) (Golem Evolution and Enhancement Process) for our enhancement proposal process.
+
