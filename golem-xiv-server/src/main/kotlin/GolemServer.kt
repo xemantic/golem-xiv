@@ -164,6 +164,8 @@ fun Application.module() {
             val clientIp = call.request.origin.remoteAddress
             logger.info { "SSE client connected: $clientIp" }
 
+            heartbeat()
+
             sendGolemOutput(
                 GolemOutput.Welcome("You are connected to Golem XIV")
             )
