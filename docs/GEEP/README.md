@@ -5,7 +5,7 @@ draft design notes and discussions for in-progress proposals as well as
 the design documentation on changes that were already implemented.
 
 The proposals themselves are colloquially referred to as GEEPs.
-They cover the cognitive architecture, GolemScript, Knowledge Graph memory, and APIs.
+They cover the cognitive architecture, GolemScript, Knowledge Graph memory, APIs, etc.
 
 ## GEEP document lifecycle
 
@@ -14,8 +14,8 @@ Every new proposal gets a GEEP number (previous proposal number + 1).
 The Markdown file is prefixed with the `GEEP-xxxx-` number and merged to the `main` branch.
 
 **2. Public GEEP review stage.**
-Immediately after publishing the proposal, a new [GitHub Discussion](https://github.com/xemantic/golem-xiv/discussions) is opened.
-At this stage, we invite the community to read the proposal and share their opinion in the discussion.
+At this stage, we invite the community to read the proposal and share their opinion
+on the [Xemantic Discord server](https://discord.gg/vQktqqN2Vn).
 
 **3. The final decision on the proposal.**
 The proposal is either Accepted, Rejected, or requires further refinement.
@@ -30,13 +30,6 @@ Generally we use the following statuses:
 - `Declined` - proposal was rejected
 - `Superseded by GEEP-xxxx` - replaced by another proposal
 
-## Design notes
-
-Some feature ideas that are being discussed for Golem XIV represent important directions of potential enhancement but
-are not complete enough to be called design proposals. They still need to be discussed
-with the community to gather use-cases, explore potential APIs, and assess impact on existing functionality.
-They are called "design notes" and are stored in a separate [notes](notes) directory.
-
 ## Contributing use-cases and enhancement proposals
 
 If you have a use case that is not covered or have a specific enhancement in mind,
@@ -46,7 +39,7 @@ Contributing **real-life use-cases** is the most valuable piece of feedback from
 
 ## Contributing to existing GEEPs
 
-* For in-progress GEEPs, please keep discussions in the corresponding GitHub Discussion thread.
+* For in-progress GEEPs, please keep discussions in [Xemantic Discord server](https://discord.gg/vQktqqN2Vn).
 * If you find problems with the _text_ or have corrections for merged GEEPs, feel free to create a
   pull request with the proposed correction.
 
