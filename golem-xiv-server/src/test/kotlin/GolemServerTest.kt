@@ -22,34 +22,59 @@ import com.xemantic.kotlin.test.coroutines.should
 import com.xemantic.kotlin.test.have
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
+import io.ktor.server.application.install
+import io.ktor.server.plugins.contentnegotiation.ContentNegotiation as ServerContentNegotiation
+import io.ktor.server.response.respondText
+import io.ktor.server.routing.get
+import io.ktor.server.routing.route
+import io.ktor.server.routing.routing
 import io.ktor.server.testing.testApplication
+import org.junit.jupiter.api.AfterEach
 import kotlin.test.Test
 
 class GolemServerTest {
 
-    // just a bootstrap of server tests, needs to be expanded, see xemantic-neo4j-demo for inspiration
+    @AfterEach
+    fun cleanDatabase() {
+        TestNeo4j.cleanDatabase()
+    }
+
     @Test
-    fun `should check health endpoint status`() = testApplication {
+    fun `should respond to ping endpoint with neo4j available`() = testApplication {
         // given
+        // TestNeo4j is initialized lazily and provides an embedded neo4j instance
+        // This ensures neo4j harness is running for the integration test
+        TestNeo4j.isInitialized
+
         application {
-            //module()
+            install(ServerContentNegotiation) {
+                json()
+            }
+            routing {
+                route("/api") {
+                    get("/ping") {
+                        call.respondText("pong")
+                    }
+                }
+            }
         }
 
-        client = createClient {
+        val client = createClient {
             install(ContentNegotiation) {
                 json()
             }
         }
 
         // when
-        val response = client.get("/health")
+        val response = client.get("/api/ping")
 
         // then
         response should {
-            have(status == HttpStatusCode.NotFound)
-            //have(bodyAsText() == "")
+            have(status == HttpStatusCode.OK)
+            have(bodyAsText() == "pong")
         }
     }
 
