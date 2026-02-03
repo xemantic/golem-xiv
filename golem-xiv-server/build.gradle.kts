@@ -96,6 +96,12 @@ tasks.named("shadowJar") {
     dependsOn("copyWebResources")
 }
 
+ktor {
+    fatJar {
+        archiveFileName.set("golem-xiv-server-${project.version}-all.jar")
+    }
+}
+
 listOf(
     "distTar",
     "distZip",
