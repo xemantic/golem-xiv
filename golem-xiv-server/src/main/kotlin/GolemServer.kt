@@ -18,23 +18,31 @@
 
 package com.xemantic.ai.golem.server
 
-//import io.ktor.server.application.ApplicationStopped
+import com.microsoft.playwright.BrowserType
+import com.microsoft.playwright.Playwright
 import com.xemantic.ai.anthropic.Anthropic
 import com.xemantic.ai.golem.api.GolemError
 import com.xemantic.ai.golem.api.GolemOutput
 import com.xemantic.ai.golem.api.Phenomenon
 import com.xemantic.ai.golem.api.backend.GolemException
+import com.xemantic.ai.golem.api.backend.SearchProvider
 import com.xemantic.ai.golem.cognizer.anthropic.AnthropicToolUseCognizer
 import com.xemantic.ai.golem.core.GolemXiv
 import com.xemantic.ai.golem.core.cognition.DefaultCognitionRepository
 import com.xemantic.ai.golem.core.script.GolemScriptDependencyProvider
+import com.xemantic.ai.golem.core.script.service.DefaultWeb
+import com.xemantic.ai.golem.ddgs.DdgsSearchProvider
 import com.xemantic.ai.golem.logging.initializeLogging
 import com.xemantic.ai.golem.neo4j.Neo4jAgentIdentity
 import com.xemantic.ai.golem.neo4j.Neo4jCognitiveMemory
 import com.xemantic.ai.golem.neo4j.Neo4jMemory
+import com.xemantic.ai.golem.playwright.DefaultWebBrowser
 import com.xemantic.neo4j.driver.DispatchedNeo4jOperations
 import io.github.oshai.kotlinlogging.KLogger
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.java.Java
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as ClientContentNegotiation
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.config.*
@@ -50,8 +58,10 @@ import io.ktor.server.sse.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.Json
 import org.neo4j.driver.AuthTokens
 import org.neo4j.driver.GraphDatabase
+import java.nio.file.Paths
 
 val logger = KotlinLogging.logger {}
 
@@ -127,6 +137,7 @@ fun Application.module() {
     var playwright: Playwright? = null
     var browser: com.microsoft.playwright.Browser? = null
     var webBrowser: com.xemantic.ai.golem.api.backend.script.WebBrowser? = null
+
 
     val headless = System.getProperty("golem.playwright.headless", "true").toBoolean()
     val customChromiumPath = System.getProperty("golem.playwright.chromium.path")
@@ -210,18 +221,29 @@ fun Application.module() {
     // Create HTTP client for Web service
     val webHttpClient = HttpClient(Java) {
         install(ClientContentNegotiation) {
-            clientJson(Json {
+            json(Json {
                 ignoreUnknownKeys = true
                 prettyPrint = false
             })
         }
     }
 
+    // Create search providers
+    val ddgsSearchProvider = DdgsSearchProvider(
+        httpClient = webHttpClient,
+        ddgsServiceUrl = "http://localhost:8001"
+    )
+    val searchProviders = mapOf<String?, SearchProvider>(
+        null to ddgsSearchProvider,
+        "ddgs" to ddgsSearchProvider
+        // "anthropic" provider can be added here when implemented
+    )
+
     // Create Web service with Playwright browser
     val web = DefaultWeb(
+        searchProviders = searchProviders,
         httpClient = webHttpClient,
-        webBrowser = webBrowser,
-        ddgsServiceUrl = "http://localhost:8001"
+        webBrowser = webBrowser
     )
 
     val golemScriptDependencyProvider = GolemScriptDependencyProvider(

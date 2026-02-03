@@ -18,6 +18,8 @@
 
 package com.xemantic.ai.golem.core.script.service
 
+import com.xemantic.ai.golem.api.backend.SearchProvider
+import com.xemantic.ai.golem.ddgs.DdgsSearchProvider
 import com.xemantic.kotlin.test.assert
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.java.Java
@@ -82,6 +84,15 @@ class DefaultWebIntegrationTest {
         )
     }
 
+    private fun createWeb(httpClient: HttpClient): DefaultWeb {
+        val ddgsProvider = DdgsSearchProvider(httpClient, DDGS_SERVICE_URL)
+        val searchProviders = mapOf<String?, SearchProvider>(
+            null to ddgsProvider,
+            "ddgs" to ddgsProvider
+        )
+        return DefaultWeb(searchProviders, httpClient)
+    }
+
     @Test
     fun `should perform actual search query using DDGS`() = runTest {
         assumeDdgsServiceAvailable()
@@ -92,7 +103,7 @@ class DefaultWebIntegrationTest {
                 json()
             }
         }
-        val web = DefaultWeb(httpClient, ddgsServiceUrl = DDGS_SERVICE_URL)
+        val web = createWeb(httpClient)
 
         // when
         val result = web.search("Kotlin programming language")
@@ -121,7 +132,7 @@ class DefaultWebIntegrationTest {
                 json()
             }
         }
-        val web = DefaultWeb(httpClient, ddgsServiceUrl = DDGS_SERVICE_URL)
+        val web = createWeb(httpClient)
 
         // when
         val result = web.search(
@@ -129,7 +140,7 @@ class DefaultWebIntegrationTest {
             page = 1,
             pageSize = 5,
             region = "us-en",
-            safesearch = "moderate"
+            safeSearch = "moderate"
         )
 
         // then
@@ -149,12 +160,12 @@ class DefaultWebIntegrationTest {
                 json()
             }
         }
-        val web = DefaultWeb(httpClient, ddgsServiceUrl = DDGS_SERVICE_URL)
+        val web = createWeb(httpClient)
 
         // when - search for news from past week
         val result = web.search(
             query = "technology news",
-            timelimit = "w"  // past week
+            timeLimit = "w"  // past week
         )
 
         // then
@@ -175,7 +186,7 @@ class DefaultWebIntegrationTest {
                 json()
             }
         }
-        val web = DefaultWeb(httpClient, ddgsServiceUrl = DDGS_SERVICE_URL)
+        val web = createWeb(httpClient)
 
         // when - search for extremely unlikely to exist query
         val result = web.search("xyzabc123impossible987654321query")
@@ -199,7 +210,7 @@ class DefaultWebIntegrationTest {
                 json()
             }
         }
-        val web = DefaultWeb(httpClient, ddgsServiceUrl = DDGS_SERVICE_URL)
+        val web = createWeb(httpClient)
 
         // when - get first and second page
         val page1 = web.search(query = "programming", page = 1, pageSize = 3)
@@ -233,7 +244,7 @@ class DefaultWebIntegrationTest {
                 json()
             }
         }
-        val web = DefaultWeb(httpClient, ddgsServiceUrl = DDGS_SERVICE_URL)
+        val web = createWeb(httpClient)
 
         // when - search in US region
         val result = web.search(
@@ -258,7 +269,7 @@ class DefaultWebIntegrationTest {
                 json()
             }
         }
-        val web = DefaultWeb(httpClient, ddgsServiceUrl = DDGS_SERVICE_URL)
+        val web = createWeb(httpClient)
 
         // when
         val result = web.search("open source")
@@ -296,7 +307,7 @@ class DefaultWebIntegrationTest {
                 json()
             }
         }
-        val web = DefaultWeb(httpClient, ddgsServiceUrl = DDGS_SERVICE_URL)
+        val web = createWeb(httpClient)
 
         // when - query with special characters
         val result = web.search("\"Kotlin\" AND \"JVM\"")
@@ -313,10 +324,12 @@ class DefaultWebIntegrationTest {
 
         // given
         val httpClient = HttpClient(Java)
-        val web = DefaultWeb(httpClient, webBrowser = null)
+        val ddgsProvider = DdgsSearchProvider(httpClient)
+        val searchProviders = mapOf<String?, SearchProvider>(null to ddgsProvider)
+        val web = DefaultWeb(searchProviders, httpClient, webBrowser = null)
 
         // when - try to open a simple website
-        val result = web.open("https://example.com")
+        val result = web.fetch("https://example.com")
 
         // then - should get markdown content
         assert(result.isNotEmpty())

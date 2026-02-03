@@ -18,55 +18,33 @@
 
 package com.xemantic.ai.golem.core.script.service
 
+import com.xemantic.ai.golem.api.backend.SearchProvider
+import com.xemantic.ai.golem.api.backend.script.MarkdownContentType
 import com.xemantic.ai.golem.api.backend.script.Web
 import com.xemantic.ai.golem.api.backend.script.WebBrowser
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
-import io.ktor.client.call.body
-import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.ktor.client.plugins.timeout
 import io.ktor.client.request.get
-import io.ktor.client.request.parameter
 import io.ktor.client.statement.bodyAsText
+import io.ktor.http.ContentType
 import io.ktor.http.isSuccess
-import kotlinx.serialization.SerializationException
-import kotlinx.serialization.Serializable
-import java.net.ConnectException
 
 private val logger = KotlinLogging.logger {}
 
-private const val DEFAULT_DDGS_SERVICE_URL = "http://localhost:8001"
-private const val DDGS_SERVICE_URL_ENV = "GOLEM_DDGS_SERVICE_URL"
 private const val DEFAULT_HTTP_TIMEOUT_MS = 30_000L
 
-/**
- * Default implementation of the Web service supporting multiple providers.
- *
- * For opening URLs:
- * - Uses Playwright (via WebBrowser) if available for JavaScript rendering
- * - Falls back to jina.ai for simple HTML to Markdown conversion
- *
- * For search:
- * - Uses DDGS service (free, local) as default
- * - Supports Anthropic WebSearch as premium option (requires separate integration)
- *
- * @param httpClient HTTP client for making requests
- * @param webBrowser Optional Playwright browser for JavaScript rendering
- * @param ddgsServiceUrl URL of the DDGS search service. Defaults to environment variable
- *                       GOLEM_DDGS_SERVICE_URL, or http://localhost:8001 if not set.
- * @param httpTimeoutMs Timeout for HTTP requests in milliseconds (default: 30000)
- */
 class DefaultWeb(
+    private val searchProviders: Map<String?, SearchProvider>,
     private val httpClient: HttpClient,
     private val webBrowser: WebBrowser? = null,
-    private val ddgsServiceUrl: String = System.getenv(DDGS_SERVICE_URL_ENV) ?: DEFAULT_DDGS_SERVICE_URL,
     private val httpTimeoutMs: Long = DEFAULT_HTTP_TIMEOUT_MS
 ) : Web {
 
-    override suspend fun open(url: String): String {
+    override suspend fun fetch(url: String, accept: ContentType): String {
         return if (webBrowser != null) {
             try {
-                logger.debug { "Opening URL with Playwright: $url" }
+                logger.debug { "Fetching URL with Playwright: $url" }
                 val result = webBrowser.open(url)
                 logger.debug {
                     buildString {
@@ -85,15 +63,16 @@ class DefaultWeb(
             } catch (e: Exception) {
                 // Playwright failed, fallback to jina.ai
                 logger.debug { "Playwright failed for $url, falling back to jina.ai: ${e.message}" }
-                openWithJina(url)
+                fetchWithJina(url)
             }
         } else {
             logger.debug { "No Playwright browser available, using jina.ai for: $url" }
-            openWithJina(url)
+            fetchWithJina(url)
         }
     }
 
-    override suspend fun openInSession(sessionId: String, url: String): String {
+    // Session methods kept for future implementation but not part of public interface
+    suspend fun openInSession(sessionId: String, url: String): String {
         if (webBrowser == null) {
             throw UnsupportedOperationException(
                 "Session-based browsing requires Playwright. " +
@@ -109,7 +88,7 @@ class DefaultWeb(
         }
     }
 
-    override suspend fun closeSession(sessionId: String) {
+    suspend fun closeSession(sessionId: String) {
         if (webBrowser == null) {
             logger.warn { "closeSession('$sessionId') called but no browser available" }
             return
@@ -118,11 +97,11 @@ class DefaultWeb(
         webBrowser.closeSession(sessionId)
     }
 
-    override fun listSessions(): Set<String> {
+    fun listSessions(): Set<String> {
         return webBrowser?.listSessions() ?: emptySet()
     }
 
-    private suspend fun openWithJina(url: String): String {
+    private suspend fun fetchWithJina(url: String): String {
         val jinaUrl = "https://r.jina.ai/$url"
         logger.debug { "Fetching via jina.ai: $url" }
         val response = httpClient.get(jinaUrl) {
@@ -157,107 +136,15 @@ class DefaultWeb(
         page: Int,
         pageSize: Int,
         region: String,
-        safesearch: String,
-        timelimit: String?
+        safeSearch: String,
+        timeLimit: String?
     ): String {
-        return when (provider) {
-            "anthropic" -> {
-                throw UnsupportedOperationException(
-                    "Anthropic WebSearch requires integration at the server level. " +
-                    "Use provider='ddgs' or null for local search."
-                )
-            }
-            "ddgs", null -> searchWithDdgs(query, page, pageSize, region, safesearch, timelimit)
-            else -> throw IllegalArgumentException("Unknown search provider: $provider. Use 'ddgs' or 'anthropic'.")
-        }
-    }
-
-    private suspend fun searchWithDdgs(
-        query: String,
-        page: Int,
-        pageSize: Int,
-        region: String,
-        safesearch: String,
-        timelimit: String?
-    ): String {
-        try {
-            val response = httpClient.get("$ddgsServiceUrl/search") {
-                timeout {
-                    requestTimeoutMillis = httpTimeoutMs
-                }
-                parameter("query", query)
-                parameter("page", page)
-                parameter("max_results", pageSize)
-                parameter("region", region)
-                parameter("safesearch", safesearch)
-                timelimit?.let { parameter("timelimit", it) }
-                parameter("backend", "auto")
-            }
-
-            if (!response.status.isSuccess()) {
-                throw IllegalStateException("DDGS service returned error: ${response.status}")
-            }
-
-            val results: List<DdgsSearchResult> = response.body()
-
-            logger.debug {
-                buildString {
-                    appendLine("DDGS search results for query: '$query'")
-                    appendLine("Parameters: page=$page, pageSize=$pageSize, region=$region, safesearch=$safesearch, timelimit=$timelimit")
-                    appendLine("Results count: ${results.size}")
-                    appendLine("Raw results:")
-                    results.forEachIndexed { index, result ->
-                        appendLine("  [$index] Title: ${result.title}")
-                        appendLine("      URL: ${result.href}")
-                        appendLine("      Body: ${result.body}")
-                        if (index < results.size - 1) appendLine()
-                    }
-                }
-            }
-
-            return formatDdgsResults(results)
-
-        } catch (e: ConnectException) {
-            throw IllegalStateException(
-                "DDGS search service is not running. " +
-                "Start it with: ./gradlew runDdgsSearch",
-                e
+        val searchProvider = searchProviders[provider]
+            ?: throw IllegalArgumentException(
+                "Unknown search provider: $provider. " +
+                "Available providers: ${searchProviders.keys.filterNotNull().joinToString(", ")}"
             )
-        } catch (e: HttpRequestTimeoutException) {
-            throw IllegalStateException(
-                "DDGS search request timed out after ${httpTimeoutMs}ms for query: '$query'",
-                e
-            )
-        } catch (e: SerializationException) {
-            throw IllegalStateException(
-                "DDGS search response format mismatch - API contract may have changed. " +
-                "Expected fields: title, href, body",
-                e
-            )
-        }
-    }
-
-    private fun formatDdgsResults(results: List<DdgsSearchResult>): String {
-        if (results.isEmpty()) {
-            return "No search results found."
-        }
-
-        return buildString {
-            appendLine("## Search Results")
-            appendLine()
-            results.forEachIndexed { index, result ->
-                appendLine("${index + 1}. **${result.title}** — ${result.href}")
-                appendLine("   ${result.body}")
-                appendLine()
-            }
-        }
+        return searchProvider.search(query, page, pageSize, region, safeSearch, timeLimit)
     }
 
 }
-
-@Serializable
-internal data class DdgsSearchResult(
-    val title: String,
-    val href: String,
-    val body: String
-)

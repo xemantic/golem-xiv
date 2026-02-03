@@ -96,91 +96,18 @@ interface Http {
 
 }
 
-/**
- * Web service providing internet search and content fetching capabilities.
- *
- * This interface abstracts away the underlying providers (DDGS, jina.ai, Playwright, Anthropic)
- * allowing Golem to work with the web through a unified API.
- */
 interface Web {
-
-    /**
-     * Opens a URL and returns its content as Markdown.
-     *
-     * This is a stateless operation - no cookies or authentication
-     * state is preserved between calls. The implementation may use
-     * different strategies:
-     * - Playwright for JavaScript-rendered content
-     * - jina.ai as fallback for simple conversion
-     *
-     * @param url The URL to open
-     * @return Markdown representation of the page content
-     */
-    suspend fun open(url: String): String
-
-    /**
-     * Opens a URL within a named session, preserving state across calls.
-     *
-     * Use this when you need to:
-     * - Log into a website and browse authenticated pages
-     * - Maintain state across multiple page navigations
-     * - Interact with sites that require cookies
-     *
-     * Example:
-     * ```kotlin
-     * // First, navigate to login page
-     * web.openInSession("github", "https://github.com/login")
-     * // After login completes (via OAuth redirect, etc.), access private content
-     * web.openInSession("github", "https://github.com/settings/profile")
-     * // When done, clean up
-     * web.closeSession("github")
-     * ```
-     *
-     * @param sessionId Identifier for the session (e.g., "github", "my-research")
-     * @param url The URL to open
-     * @return Markdown representation of the page content
-     * @throws UnsupportedOperationException if browser sessions are not available
-     */
-    suspend fun openInSession(sessionId: String, url: String): String
-
-    /**
-     * Closes a session and clears all its state (cookies, storage, auth).
-     *
-     * @param sessionId The session to close
-     */
-    suspend fun closeSession(sessionId: String)
-
-    /**
-     * Lists all active session IDs.
-     */
-    fun listSessions(): Set<String>
-
-    /**
-     * Performs a web search and returns results as Markdown.
-     *
-     * Supports multiple search providers:
-     * - "ddgs" or null: Use local DDGS service (free, default)
-     * - "anthropic": Use Anthropic WebSearch tool (expensive but high-quality)
-     *
-     * @param query The search query
-     * @param provider Optional provider ("anthropic", "ddgs", or null for default)
-     * @param page Page number (default 1)
-     * @param pageSize Number of results per page (default 10)
-     * @param region Search region (default "us-en")
-     * @param safesearch Safety level: "on", "moderate", "off" (default "moderate")
-     * @param timelimit Time filter: "d" (day), "w" (week), "m" (month), "y" (year), or null
-     * @return Markdown-formatted search results
-     */
+    suspend fun fetch(url: String, accept: ContentType = MarkdownContentType): String
+    /** @return Markdown-formatted search results */
     suspend fun search(
         query: String,
         provider: String? = null,
         page: Int = 1,
         pageSize: Int = 10,
         region: String = "us-en",
-        safesearch: String = "moderate",
-        timelimit: String? = null
+        safeSearch: String = "moderate",
+        timeLimit: String? = null
     ): String
-
 }
 
 interface Memory {
