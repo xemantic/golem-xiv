@@ -16,30 +16,22 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-rootProject.name = "golem-xiv"
-
-pluginManagement {
-    includeBuild("build-logic")
+plugins {
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlin.plugin.serialization)
+    id("golem.convention")
 }
 
-// TODO can it be a series of paths?
-include(
-    ":golem-xiv-json",
-    ":golem-xiv-api",
-    ":golem-xiv-api-backend",
-    ":golem-xiv-api-client",
-    ":golem-xiv-logging",
-    ":golem-xiv-core",
-    ":golem-xiv-neo4j",
-    ":golem-xiv-cognizer-anthropic",
-//    ":golem-xiv-cognizer-dashscope",
-    ":golem-xiv-playwright",
-    ":golem-xiv-server",
-    ":golem-xiv-presenter",
-    ":golem-xiv-web",
-    ":golem-xiv-cli",
-    ":golem-xiv-neo4j-starter",
-    ":golem-xiv-kotlin-metadata",
-    ":golem-xiv-ddgs",
-    ":golem-xiv-ddgs-service",
-)
+dependencies {
+    api(project(":golem-xiv-api-backend"))
+    implementation(project(":golem-xiv-logging"))
+
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.client.content.negotiation)
+    implementation(libs.ktor.serialization.kotlinx.json)
+
+    testImplementation(libs.kotlin.test)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.xemantic.kotlin.test)
+    testImplementation("io.ktor:ktor-client-mock:3.3.3")
+}

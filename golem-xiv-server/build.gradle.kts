@@ -36,6 +36,7 @@ dependencies {
     implementation(project(":golem-xiv-neo4j"))
     implementation(project(":golem-xiv-cognizer-anthropic"))
     implementation(project(":golem-xiv-playwright"))
+    implementation(project(":golem-xiv-ddgs"))
     implementation(project(":golem-xiv-core"))
 
     implementation(libs.kotlinx.serialization.core)

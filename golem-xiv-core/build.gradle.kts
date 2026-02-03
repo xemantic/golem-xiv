@@ -25,6 +25,7 @@ plugins {
 dependencies {
     implementation(project(":golem-xiv-api"))
     implementation(project(":golem-xiv-api-backend"))
+    implementation(project(":golem-xiv-ddgs"))
     implementation(project(":golem-xiv-kotlin-metadata"))
 
     implementation(libs.kotlin.logging)

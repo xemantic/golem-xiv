@@ -18,20 +18,16 @@
 
 package com.xemantic.ai.golem.core.script.service
 
+import com.xemantic.ai.golem.api.backend.SearchProvider
 import com.xemantic.ai.golem.api.backend.script.WebBrowser
 import com.xemantic.kotlin.test.assert
-import com.xemantic.kotlin.test.have
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
-import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.test.runTest
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
@@ -39,193 +35,129 @@ import kotlin.test.assertFailsWith
 
 class DefaultWebTest {
 
+    // Mock SearchProvider for tests
+    private class MockSearchProvider(
+        private val results: String = "Mock search results"
+    ) : SearchProvider {
+        var lastQuery: String? = null
+        var lastPage: Int? = null
+        var lastPageSize: Int? = null
+        var lastRegion: String? = null
+        var lastSafeSearch: String? = null
+        var lastTimeLimit: String? = null
+
+        override suspend fun search(
+            query: String,
+            page: Int,
+            pageSize: Int,
+            region: String,
+            safeSearch: String,
+            timeLimit: String?
+        ): String {
+            lastQuery = query
+            lastPage = page
+            lastPageSize = pageSize
+            lastRegion = region
+            lastSafeSearch = safeSearch
+            lastTimeLimit = timeLimit
+            return results
+        }
+    }
+
     @Test
-    fun `should perform DDGS search with default parameters`() = runTest {
+    fun `should delegate search to provider with default parameters`() = runTest {
         // given
-        val mockResults = listOf(
-            mapOf(
-                "title" to "Kotlin Programming Language",
-                "href" to "https://kotlinlang.org",
-                "body" to "Kotlin is a modern programming language that makes developers happier."
-            ),
-            mapOf(
-                "title" to "Kotlin Documentation",
-                "href" to "https://kotlinlang.org/docs",
-                "body" to "Official Kotlin documentation and tutorials."
-            )
+        val mockProvider = MockSearchProvider("## Search Results\n\n1. **Test Result**")
+        val searchProviders = mapOf<String?, SearchProvider>(
+            null to mockProvider,
+            "ddgs" to mockProvider
         )
 
-        val mockEngine = MockEngine { request ->
-            assert(request.url.toString().startsWith("http://localhost:8001/search"))
-            assert(request.url.parameters["query"] == "kotlin programming")
-            assert(request.url.parameters["page"] == "1")
-            assert(request.url.parameters["max_results"] == "10")
-            assert(request.url.parameters["region"] == "us-en")
-            assert(request.url.parameters["safesearch"] == "moderate")
-            assert(request.url.parameters["backend"] == "auto")
-
-            respond(
-                content = Json.encodeToString(mockResults),
-                status = HttpStatusCode.OK,
-                headers = headersOf(HttpHeaders.ContentType, "application/json")
-            )
-        }
-
-        val httpClient = HttpClient(mockEngine) {
-            install(ContentNegotiation) {
-                json()
-            }
-        }
-
-        val web = DefaultWeb(httpClient)
+        val mockEngine = MockEngine { respond(content = "", status = HttpStatusCode.OK) }
+        val httpClient = HttpClient(mockEngine)
+        val web = DefaultWeb(searchProviders, httpClient)
 
         // when
         val result = web.search("kotlin programming")
 
         // then
-        assertContains(result, "## Search Results")
-        assertContains(result, "Kotlin Programming Language")
-        assertContains(result, "https://kotlinlang.org")
-        assertContains(result, "Kotlin is a modern programming language")
-        assertContains(result, "Kotlin Documentation")
+        assertEquals("kotlin programming", mockProvider.lastQuery)
+        assertEquals(1, mockProvider.lastPage)
+        assertEquals(10, mockProvider.lastPageSize)
+        assertEquals("us-en", mockProvider.lastRegion)
+        assertEquals("moderate", mockProvider.lastSafeSearch)
+        assertEquals(null, mockProvider.lastTimeLimit)
+        assertContains(result, "Search Results")
     }
 
     @Test
-    fun `should perform DDGS search with custom parameters`() = runTest {
+    fun `should delegate search to provider with custom parameters`() = runTest {
         // given
-        val mockResults = listOf(
-            mapOf(
-                "title" to "Recent Kotlin News",
-                "href" to "https://blog.jetbrains.com/kotlin",
-                "body" to "Latest updates about Kotlin"
-            )
+        val mockProvider = MockSearchProvider("## Search Results\n\n1. **Recent Kotlin News**")
+        val searchProviders = mapOf<String?, SearchProvider>(
+            null to mockProvider,
+            "ddgs" to mockProvider
         )
 
-        val mockEngine = MockEngine { request ->
-            assert(request.url.parameters["query"] == "kotlin news")
-            assert(request.url.parameters["page"] == "2")
-            assert(request.url.parameters["max_results"] == "5")
-            assert(request.url.parameters["region"] == "us-en")
-            assert(request.url.parameters["safesearch"] == "off")
-            assert(request.url.parameters["timelimit"] == "w")
-
-            respond(
-                content = Json.encodeToString(mockResults),
-                status = HttpStatusCode.OK,
-                headers = headersOf(HttpHeaders.ContentType, "application/json")
-            )
-        }
-
-        val httpClient = HttpClient(mockEngine) {
-            install(ContentNegotiation) {
-                json()
-            }
-        }
-
-        val web = DefaultWeb(httpClient)
+        val mockEngine = MockEngine { respond(content = "", status = HttpStatusCode.OK) }
+        val httpClient = HttpClient(mockEngine)
+        val web = DefaultWeb(searchProviders, httpClient)
 
         // when
         val result = web.search(
             query = "kotlin news",
             page = 2,
             pageSize = 5,
-            region = "us-en",
-            safesearch = "off",
-            timelimit = "w"
+            region = "uk-en",
+            safeSearch = "off",
+            timeLimit = "w"
         )
 
         // then
+        assertEquals("kotlin news", mockProvider.lastQuery)
+        assertEquals(2, mockProvider.lastPage)
+        assertEquals(5, mockProvider.lastPageSize)
+        assertEquals("uk-en", mockProvider.lastRegion)
+        assertEquals("off", mockProvider.lastSafeSearch)
+        assertEquals("w", mockProvider.lastTimeLimit)
         assertContains(result, "Recent Kotlin News")
-        assertContains(result, "https://blog.jetbrains.com/kotlin")
     }
 
     @Test
-    fun `should return no results message when DDGS returns empty list`() = runTest {
+    fun `should delegate to named provider`() = runTest {
         // given
-        val mockEngine = MockEngine { request ->
-            respond(
-                content = Json.encodeToString(emptyList<Map<String, String>>()),
-                status = HttpStatusCode.OK,
-                headers = headersOf(HttpHeaders.ContentType, "application/json")
-            )
-        }
+        val defaultProvider = MockSearchProvider("Default results")
+        val namedProvider = MockSearchProvider("Named results")
+        val searchProviders = mapOf<String?, SearchProvider>(
+            null to defaultProvider,
+            "ddgs" to namedProvider
+        )
 
-        val httpClient = HttpClient(mockEngine) {
-            install(ContentNegotiation) {
-                json()
-            }
-        }
-
-        val web = DefaultWeb(httpClient)
+        val mockEngine = MockEngine { respond(content = "", status = HttpStatusCode.OK) }
+        val httpClient = HttpClient(mockEngine)
+        val web = DefaultWeb(searchProviders, httpClient)
 
         // when
-        val result = web.search("nonexistent query xyz123")
+        val result = web.search("test query", provider = "ddgs")
 
         // then
-        assert(result == "No search results found.")
-    }
-
-    @Test
-    fun `should handle DDGS service unavailable`() = runTest {
-        // given
-        val mockEngine = MockEngine { request ->
-            respond(
-                content = "",
-                status = HttpStatusCode.ServiceUnavailable
-            )
-        }
-
-        val httpClient = HttpClient(mockEngine) {
-            install(ContentNegotiation) {
-                json()
-            }
-        }
-
-        val web = DefaultWeb(httpClient)
-
-        // when/then
-        val exception = assertFailsWith<IllegalStateException> {
-            web.search("test query")
-        }
-        assertContains(exception.message ?: "", "DDGS search service is not available")
-    }
-
-    @Test
-    fun `should throw exception for anthropic provider`() = runTest {
-        // given
-        val mockEngine = MockEngine { request ->
-            respond(content = "[]", status = HttpStatusCode.OK)
-        }
-
-        val httpClient = HttpClient(mockEngine) {
-            install(ContentNegotiation) {
-                json()
-            }
-        }
-
-        val web = DefaultWeb(httpClient)
-
-        // when/then
-        val exception = assertFailsWith<UnsupportedOperationException> {
-            web.search("test query", provider = "anthropic")
-        }
-        assertContains(exception.message ?: "", "Anthropic WebSearch requires integration")
+        assertEquals("test query", namedProvider.lastQuery)
+        assertEquals(null, defaultProvider.lastQuery)
+        assertContains(result, "Named results")
     }
 
     @Test
     fun `should throw exception for unknown provider`() = runTest {
         // given
-        val mockEngine = MockEngine { request ->
-            respond(content = "[]", status = HttpStatusCode.OK)
-        }
+        val mockProvider = MockSearchProvider()
+        val searchProviders = mapOf<String?, SearchProvider>(
+            null to mockProvider,
+            "ddgs" to mockProvider
+        )
 
-        val httpClient = HttpClient(mockEngine) {
-            install(ContentNegotiation) {
-                json()
-            }
-        }
-
-        val web = DefaultWeb(httpClient)
+        val mockEngine = MockEngine { respond(content = "", status = HttpStatusCode.OK) }
+        val httpClient = HttpClient(mockEngine)
+        val web = DefaultWeb(searchProviders, httpClient)
 
         // when/then
         val exception = assertFailsWith<IllegalArgumentException> {
@@ -235,8 +167,11 @@ class DefaultWebTest {
     }
 
     @Test
-    fun `should open URL using jina fallback when no WebBrowser provided`() = runTest {
+    fun `should fetch URL using jina fallback when no WebBrowser provided`() = runTest {
         // given
+        val mockProvider = MockSearchProvider()
+        val searchProviders = mapOf<String?, SearchProvider>(null to mockProvider)
+
         val mockEngine = MockEngine { request ->
             assert(request.url.toString().startsWith("https://r.jina.ai/"))
             respond(
@@ -247,10 +182,10 @@ class DefaultWebTest {
         }
 
         val httpClient = HttpClient(mockEngine)
-        val web = DefaultWeb(httpClient, webBrowser = null)
+        val web = DefaultWeb(searchProviders, httpClient, webBrowser = null)
 
         // when
-        val result = web.open("https://kotlinlang.org")
+        val result = web.fetch("https://kotlinlang.org")
 
         // then
         assertContains(result, "Kotlin Programming")
@@ -260,6 +195,9 @@ class DefaultWebTest {
     @Test
     fun `should handle jina fallback failure`() = runTest {
         // given
+        val mockProvider = MockSearchProvider()
+        val searchProviders = mapOf<String?, SearchProvider>(null to mockProvider)
+
         val mockEngine = MockEngine { request ->
             respond(
                 content = "Error",
@@ -268,63 +206,14 @@ class DefaultWebTest {
         }
 
         val httpClient = HttpClient(mockEngine)
-        val web = DefaultWeb(httpClient, webBrowser = null)
+        val web = DefaultWeb(searchProviders, httpClient, webBrowser = null)
 
         // when/then
         val exception = assertFailsWith<IllegalStateException> {
-            web.open("https://example.com")
+            web.fetch("https://example.com")
         }
         assertContains(exception.message ?: "", "Failed to fetch")
         assertContains(exception.message ?: "", "via jina.ai")
-    }
-
-    @Test
-    fun `should format DDGS results with multiple entries correctly`() = runTest {
-        // given
-        val mockResults = listOf(
-            mapOf(
-                "title" to "Result 1",
-                "href" to "https://example1.com",
-                "body" to "Description 1"
-            ),
-            mapOf(
-                "title" to "Result 2",
-                "href" to "https://example2.com",
-                "body" to "Description 2"
-            ),
-            mapOf(
-                "title" to "Result 3",
-                "href" to "https://example3.com",
-                "body" to "Description 3"
-            )
-        )
-
-        val mockEngine = MockEngine { request ->
-            respond(
-                content = Json.encodeToString(mockResults),
-                status = HttpStatusCode.OK,
-                headers = headersOf(HttpHeaders.ContentType, "application/json")
-            )
-        }
-
-        val httpClient = HttpClient(mockEngine) {
-            install(ContentNegotiation) {
-                json()
-            }
-        }
-
-        val web = DefaultWeb(httpClient)
-
-        // when
-        val result = web.search("test")
-
-        // then
-        assertContains(result, "1. **Result 1** — https://example1.com")
-        assertContains(result, "   Description 1")
-        assertContains(result, "2. **Result 2** — https://example2.com")
-        assertContains(result, "   Description 2")
-        assertContains(result, "3. **Result 3** — https://example3.com")
-        assertContains(result, "   Description 3")
     }
 
     // Session-based tests
@@ -332,6 +221,9 @@ class DefaultWebTest {
     @Test
     fun `should delegate openInSession to WebBrowser`() = runTest {
         // given
+        val mockProvider = MockSearchProvider()
+        val searchProviders = mapOf<String?, SearchProvider>(null to mockProvider)
+
         val mockEngine = MockEngine { respond(content = "", status = HttpStatusCode.OK) }
         val httpClient = HttpClient(mockEngine)
 
@@ -349,7 +241,7 @@ class DefaultWebTest {
             override fun listSessions() = emptySet<String>()
         }
 
-        val web = DefaultWeb(httpClient, webBrowser = mockWebBrowser)
+        val web = DefaultWeb(searchProviders, httpClient, webBrowser = mockWebBrowser)
 
         // when
         val result = web.openInSession("test-session", "https://example.com")
@@ -363,9 +255,12 @@ class DefaultWebTest {
     @Test
     fun `should throw UnsupportedOperationException for openInSession when no WebBrowser`() = runTest {
         // given
+        val mockProvider = MockSearchProvider()
+        val searchProviders = mapOf<String?, SearchProvider>(null to mockProvider)
+
         val mockEngine = MockEngine { respond(content = "", status = HttpStatusCode.OK) }
         val httpClient = HttpClient(mockEngine)
-        val web = DefaultWeb(httpClient, webBrowser = null)
+        val web = DefaultWeb(searchProviders, httpClient, webBrowser = null)
 
         // when/then
         val exception = assertFailsWith<UnsupportedOperationException> {
@@ -377,6 +272,9 @@ class DefaultWebTest {
     @Test
     fun `should delegate closeSession to WebBrowser`() = runTest {
         // given
+        val mockProvider = MockSearchProvider()
+        val searchProviders = mapOf<String?, SearchProvider>(null to mockProvider)
+
         val mockEngine = MockEngine { respond(content = "", status = HttpStatusCode.OK) }
         val httpClient = HttpClient(mockEngine)
 
@@ -391,7 +289,7 @@ class DefaultWebTest {
             override fun listSessions() = emptySet<String>()
         }
 
-        val web = DefaultWeb(httpClient, webBrowser = mockWebBrowser)
+        val web = DefaultWeb(searchProviders, httpClient, webBrowser = mockWebBrowser)
 
         // when
         web.closeSession("my-session")
@@ -403,9 +301,12 @@ class DefaultWebTest {
     @Test
     fun `should handle closeSession gracefully when no WebBrowser`() = runTest {
         // given
+        val mockProvider = MockSearchProvider()
+        val searchProviders = mapOf<String?, SearchProvider>(null to mockProvider)
+
         val mockEngine = MockEngine { respond(content = "", status = HttpStatusCode.OK) }
         val httpClient = HttpClient(mockEngine)
-        val web = DefaultWeb(httpClient, webBrowser = null)
+        val web = DefaultWeb(searchProviders, httpClient, webBrowser = null)
 
         // when/then - should not throw
         web.closeSession("non-existent")
@@ -414,6 +315,9 @@ class DefaultWebTest {
     @Test
     fun `should delegate listSessions to WebBrowser`() = runTest {
         // given
+        val mockProvider = MockSearchProvider()
+        val searchProviders = mapOf<String?, SearchProvider>(null to mockProvider)
+
         val mockEngine = MockEngine { respond(content = "", status = HttpStatusCode.OK) }
         val httpClient = HttpClient(mockEngine)
 
@@ -424,7 +328,7 @@ class DefaultWebTest {
             override fun listSessions() = setOf("session-1", "session-2")
         }
 
-        val web = DefaultWeb(httpClient, webBrowser = mockWebBrowser)
+        val web = DefaultWeb(searchProviders, httpClient, webBrowser = mockWebBrowser)
 
         // when
         val sessions = web.listSessions()
@@ -436,9 +340,12 @@ class DefaultWebTest {
     @Test
     fun `should return empty set for listSessions when no WebBrowser`() = runTest {
         // given
+        val mockProvider = MockSearchProvider()
+        val searchProviders = mapOf<String?, SearchProvider>(null to mockProvider)
+
         val mockEngine = MockEngine { respond(content = "", status = HttpStatusCode.OK) }
         val httpClient = HttpClient(mockEngine)
-        val web = DefaultWeb(httpClient, webBrowser = null)
+        val web = DefaultWeb(searchProviders, httpClient, webBrowser = null)
 
         // when
         val sessions = web.listSessions()
@@ -450,6 +357,9 @@ class DefaultWebTest {
     @Test
     fun `should not fallback to jina for openInSession failures`() = runTest {
         // given
+        val mockProvider = MockSearchProvider()
+        val searchProviders = mapOf<String?, SearchProvider>(null to mockProvider)
+
         val mockEngine = MockEngine { respond(content = "", status = HttpStatusCode.OK) }
         val httpClient = HttpClient(mockEngine)
 
@@ -462,7 +372,7 @@ class DefaultWebTest {
             override fun listSessions() = emptySet<String>()
         }
 
-        val web = DefaultWeb(httpClient, webBrowser = mockWebBrowser)
+        val web = DefaultWeb(searchProviders, httpClient, webBrowser = mockWebBrowser)
 
         // when/then - should propagate the exception, not fallback
         val exception = assertFailsWith<RuntimeException> {

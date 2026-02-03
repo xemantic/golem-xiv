@@ -28,6 +28,7 @@ import com.xemantic.ai.golem.core.GolemXiv
 import com.xemantic.ai.golem.core.cognition.DefaultCognitionRepository
 import com.xemantic.ai.golem.core.script.GolemScriptDependencyProvider
 import com.xemantic.ai.golem.core.script.service.DefaultWeb
+import com.xemantic.ai.golem.ddgs.DdgsSearchProvider
 import com.xemantic.ai.golem.logging.initializeLogging
 import com.microsoft.playwright.BrowserType
 import com.microsoft.playwright.Playwright
@@ -243,11 +244,22 @@ fun Application.module() {
         }
     }
 
+    // Create search providers
+    val ddgsSearchProvider = DdgsSearchProvider(
+        httpClient = webHttpClient,
+        ddgsServiceUrl = "http://localhost:8001"
+    )
+    val searchProviders = mapOf<String?, com.xemantic.ai.golem.api.backend.SearchProvider>(
+        null to ddgsSearchProvider,
+        "ddgs" to ddgsSearchProvider
+        // "anthropic" provider can be added here when implemented
+    )
+
     // Create Web service with Playwright browser
     val web = DefaultWeb(
+        searchProviders = searchProviders,
         httpClient = webHttpClient,
-        webBrowser = webBrowser,
-        ddgsServiceUrl = "http://localhost:8001"
+        webBrowser = webBrowser
     )
 
     val golemScriptDependencyProvider = GolemScriptDependencyProvider(
