@@ -1,9 +1,12 @@
-# Builds the release and publishes to Maven Central
+# Builds the release uberjar and uploads it to GitHub Releases
 name: Build release
 
 on:
   release:
     types: [ published ]
+
+permissions:
+  contents: write
 
 jobs:
   extract_version:
@@ -20,6 +23,20 @@ jobs:
     uses: xemantic/.github/.github/workflows/build-gradle.yml@main
     secrets: inherit
     with:
-      gradle_args: -Pversion=${{ needs.extract_version.outputs.version }} build publishToMavenCentral jreleaserAnnounce --no-configuration-cache
-      maven_central: true
-      jreleaser: true
+      gradle_args: -Pversion=${{ needs.extract_version.outputs.version }} build shadowJar --no-configuration-cache
+      artifact_path: golem-xiv-server/build/libs/golem-xiv-server-${{ needs.extract_version.outputs.version }}-all.jar
+      artifact_name: uberjar
+
+  upload_release:
+    needs: [extract_version, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download uberjar artifact
+        uses: actions/download-artifact@v7.0.0
+        with:
+          name: uberjar
+
+      - name: Upload uberjar to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" golem-xiv-server-${{ needs.extract_version.outputs.version }}-all.jar --repo "${{ github.repository }}"
