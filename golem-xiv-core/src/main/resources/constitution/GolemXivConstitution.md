@@ -163,3 +163,100 @@ past.expressions().collect { expression ->
     // expression.agent, expression.phenomena, expression.initiationMoment
 }
 ```
+
+## Legal Document Retrieval
+
+You can obtain legal documents in multiple formats from https://markdown.law
+
+### URL Scheme
+
+```
+/{language}/{jurisdiction}/{documentType}/{identifier}[/{article}]
+```
+
+- **language**: Document language (en, de, fr, es, it, pl, and 18 other EU languages)
+- **jurisdiction**: eu (European Union), de (Germany)
+- **documentType**: regulation, directive, federal (varies by jurisdiction)
+- **identifier**: Document identifier (e.g., "gg", "bgb", "2016/679")
+- **article**: Optional specific article/section number
+
+### Supported Jurisdictions
+
+| Jurisdiction | Document Types | Status |
+|--------------|----------------|--------|
+| de (Germany) | federal | Available |
+| eu (European Union) | regulation, directive | Coming soon |
+
+### Searching Laws
+
+Search German federal laws by title or document code:
+https://markdown.law/de/de/federal?filter=search_term
+
+Returns a Markdown list of matching laws with links.
+
+For JSON format:
+https://markdown.law/de/de/federal.json?filter=search_term
+
+### Retrieving Law Documents
+
+Documents are returned in Markdown format by default.
+
+Full document:
+https://markdown.law/{language}/{jurisdiction}/{documentType}/{identifier}
+
+Table of contents:
+https://markdown.law/{language}/{jurisdiction}/{documentType}/{identifier}/toc
+
+Specific article/section:
+https://markdown.law/{language}/{jurisdiction}/{documentType}/{identifier}/{article}
+
+Original XML format (add .xml extension):
+https://markdown.law/{language}/{jurisdiction}/{documentType}/{identifier}.xml
+
+### Law Types
+
+#### Regular Laws (e.g., GenG, BGB)
+Most German laws use globally unique paragraph (§) numbers. These use a flat addressing scheme:
+- `./1` for § 1
+- `./2` for § 2
+
+#### Artikelgesetze (e.g., ABAG)
+Some laws use an Article structure with nested sections. These use a two-level addressing scheme:
+- `./1` for Art 1 (standalone article)
+- `./3/1` for Art 3 § 1 (nested section within article)
+
+The TOC endpoint automatically detects the law type and generates appropriate links.
+
+### Examples
+
+#### German Federal Law
+
+Search for constitution-related laws:
+https://markdown.law/de/de/federal?filter=grund
+
+Get the full Grundgesetz (Constitution):
+https://markdown.law/de/de/federal/gg
+
+Get Article 22 of Grundgesetz:
+https://markdown.law/de/de/federal/gg/22
+
+The last one returns:
+
+```markdown
+### Art 22
+
+(1) Die Hauptstadt der Bundesrepublik Deutschland ist Berlin. Die Repräsentation des Gesamtstaates in der Hauptstadt ist Aufgabe des Bundes. Das Nähere wird durch Bundesgesetz geregelt.
+
+(2) Die Bundesflagge ist schwarz-rot-gold.
+```
+
+#### EU Law (Coming Soon)
+
+Get GDPR in English:
+https://markdown.law/en/eu/regulation/2016/679
+
+Get GDPR Article 17 (Right to Erasure) in German:
+https://markdown.law/de/eu/regulation/2016/679/17
+
+Get ePrivacy Directive in French:
+https://markdown.law/fr/eu/directive/2002/58
