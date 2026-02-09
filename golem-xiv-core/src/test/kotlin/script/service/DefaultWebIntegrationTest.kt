@@ -32,8 +32,6 @@ import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Tag
 import kotlin.test.Test
-import kotlin.test.assertContains
-import kotlin.test.assertTrue
 
 /**
  * Integration tests for DefaultWeb that make actual calls to the DDGS service.
@@ -109,15 +107,10 @@ class DefaultWebIntegrationTest {
         val result = web.search("Kotlin programming language")
 
         // then
-        assertContains(result, "## Search Results")
+        assert("## Search Results" in result)
         // Verify we got some results (not empty)
-        assert(result.lines().size > 5) {
-            "Expected multiple lines of search results, got: ${result.lines().size}"
-        }
-        assertTrue(
-            result.contains("**") && result.contains("—"),
-            "Expected formatted search results with title and URL"
-        )
+        assert(result.lines().size > 5)
+        assert("**" in result && "—" in result)
 
         httpClient.close()
     }
@@ -144,7 +137,7 @@ class DefaultWebIntegrationTest {
         )
 
         // then
-        assertContains(result, "## Search Results")
+        assert("## Search Results" in result)
         assert(result.isNotEmpty())
 
         httpClient.close()
@@ -169,9 +162,9 @@ class DefaultWebIntegrationTest {
         )
 
         // then
-        assertContains(result, "## Search Results")
+        assert("## Search Results" in result)
         // Should get recent results
-        assert(result.contains("http") || result.contains("https"))
+        assert("http" in result || "https" in result)
 
         httpClient.close()
     }
@@ -192,7 +185,7 @@ class DefaultWebIntegrationTest {
         val result = web.search("xyzabc123impossible987654321query")
 
         // then - should return valid markdown format regardless of results
-        assertContains(result, "## Search Results")
+        assert("## Search Results" in result)
         // Even nonsense queries might return fuzzy match results, which is fine
         // We just verify the service responds and formats correctly
         assert(result.isNotEmpty())
@@ -217,8 +210,8 @@ class DefaultWebIntegrationTest {
         val page2 = web.search(query = "programming", page = 2, pageSize = 3)
 
         // then - both should have results and be different
-        assertContains(page1, "## Search Results")
-        assertContains(page2, "## Search Results")
+        assert("## Search Results" in page1)
+        assert("## Search Results" in page2)
 
         // Extract URLs from both pages to verify they're different
         val urlPattern = Regex("https?://[^\\s\\)]+")
@@ -226,10 +219,7 @@ class DefaultWebIntegrationTest {
         val urls2 = urlPattern.findAll(page2).map { it.value }.toSet()
 
         // Pages should have different content (different URLs)
-        assertTrue(
-            urls1.intersect(urls2).size < urls1.size,
-            "Expected different results on different pages"
-        )
+        assert(urls1.intersect(urls2).size < urls1.size)
 
         httpClient.close()
     }
@@ -253,8 +243,8 @@ class DefaultWebIntegrationTest {
         )
 
         // then - should get results
-        assertContains(result, "## Search Results")
-        assert(result.contains("http"))
+        assert("## Search Results" in result)
+        assert("http" in result)
 
         httpClient.close()
     }
@@ -275,24 +265,18 @@ class DefaultWebIntegrationTest {
         val result = web.search("open source")
 
         // then - verify markdown format
-        assertContains(result, "## Search Results")
+        assert("## Search Results" in result)
 
         // Should have numbered items with bold titles
         val lines = result.lines()
         val numberedItems = lines.filter { it.trim().matches(Regex("^\\d+\\.\\s+\\*\\*.*")) }
-        assertTrue(
-            numberedItems.isNotEmpty(),
-            "Expected numbered search results with format: 1. **Title** — URL"
-        )
+        assert(numberedItems.isNotEmpty())
 
         // Should have URLs
-        assertTrue(
-            result.contains("http://") || result.contains("https://"),
-            "Expected HTTP URLs in search results"
-        )
+        assert("http://" in result || "https://" in result)
 
         // Should have the em dash separator between title and URL
-        assertContains(result, "—")
+        assert("—" in result)
 
         httpClient.close()
     }
@@ -313,7 +297,7 @@ class DefaultWebIntegrationTest {
         val result = web.search("\"Kotlin\" AND \"JVM\"")
 
         // then - should handle query and return results
-        assertContains(result, "## Search Results")
+        assert("## Search Results" in result)
 
         httpClient.close()
     }
@@ -334,10 +318,7 @@ class DefaultWebIntegrationTest {
         // then - should get markdown content
         assert(result.isNotEmpty())
         // example.com typically has "Example Domain" in title
-        assertTrue(
-            result.contains("Example") || result.contains("domain"),
-            "Expected content from example.com"
-        )
+        assert("Example" in result || "domain" in result)
 
         httpClient.close()
     }

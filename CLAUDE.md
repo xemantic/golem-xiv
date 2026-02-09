@@ -98,7 +98,58 @@ The `build-logic` module provides `golem.convention` plugin applied to all modul
 
 ## Testing
 
-Tests use JUnit Platform with `xemantic-kotlin-test` assertions. Neo4j tests use `neo4j-harness` for embedded database instances.
+Tests use JUnit Platform with `xemantic-kotlin-test` assertions (power-assert enabled). Neo4j tests use `neo4j-harness` for embedded database instances.
+
+### Assertion Conventions
+
+Use `com.xemantic.kotlin.test` instead of `kotlin.test` assertions. The only assertion function is `assert` with power-assert rendering complex boolean expressions on failure. Never use `assertEquals`, `assertContains`, `assertTrue`, `assertFalse`, `assertNotNull` from `kotlin.test`.
+
+```kotlin
+// equality - use assert with ==
+assert(actual == expected)
+
+// contains - use `in` operator
+assert("Search Results" in result)
+assert(element in list)
+
+// negation
+assert("error" !in output)
+assert(!deleted)
+
+// null checks
+assert(value == null)
+
+// scoped assertions on an object - use should/have
+mockProvider should {
+    have(lastQuery == "kotlin programming")
+    have(lastPage == 1)
+    have(lastPageSize == 10)
+}
+
+// type assertions - use should/be
+content should {
+    be<Text>()
+    have(text.length > 0)
+}
+
+// string comparison with unified diff - use sameAs
+actual sameAs expected
+
+// exception assertions - assertFailsWith from kotlin.test is OK
+val exception = assertFailsWith<IllegalArgumentException> {
+    doSomething()
+}
+assert("expected message" in (exception.message ?: ""))
+```
+
+Imports:
+```kotlin
+import com.xemantic.kotlin.test.assert
+import com.xemantic.kotlin.test.should
+import com.xemantic.kotlin.test.have
+import com.xemantic.kotlin.test.be
+import com.xemantic.kotlin.test.sameAs
+```
 
 ### Unit Tests
 

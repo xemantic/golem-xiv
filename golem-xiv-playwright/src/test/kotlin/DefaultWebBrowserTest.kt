@@ -28,7 +28,6 @@ import org.junit.jupiter.api.BeforeAll
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.test.Test
-import kotlin.test.assertContains
 
 class DefaultWebBrowserTest {
 
@@ -79,10 +78,10 @@ class DefaultWebBrowserTest {
         val markdown = webBrowser.open("file://$htmlFile")
 
         // then
-        assertContains(markdown, "# Main Heading")
-        assertContains(markdown, "This is a simple paragraph")
-        assertContains(markdown, "**bold text**")
-        assertContains(markdown, "*italic text*")
+        assert("# Main Heading" in markdown)
+        assert("This is a simple paragraph" in markdown)
+        assert("**bold text**" in markdown)
+        assert("*italic text*" in markdown)
     }
 
     @Test
@@ -107,8 +106,8 @@ class DefaultWebBrowserTest {
         val markdown = webBrowser.open("file://$htmlFile")
 
         // then
-        assertContains(markdown, "[Kotlin](https://kotlinlang.org)")
-        assertContains(markdown, "[GitHub](https://github.com)")
+        assert("[Kotlin](https://kotlinlang.org)" in markdown)
+        assert("[GitHub](https://github.com)" in markdown)
     }
 
     @Test
@@ -142,13 +141,13 @@ class DefaultWebBrowserTest {
         val markdown = webBrowser.open("file://$htmlFile")
 
         // then
-        assertContains(markdown, "## Unordered List")
-        assertContains(markdown, "- First item")
-        assertContains(markdown, "- Second item")
-        assertContains(markdown, "- Third item")
-        assertContains(markdown, "## Ordered List")
-        assertContains(markdown, "1. Step one")
-        assertContains(markdown, "2. Step two")
+        assert("## Unordered List" in markdown)
+        assert("- First item" in markdown)
+        assert("- Second item" in markdown)
+        assert("- Third item" in markdown)
+        assert("## Ordered List" in markdown)
+        assert("1. Step one" in markdown)
+        assert("2. Step two" in markdown)
     }
 
     @Test
@@ -175,9 +174,9 @@ class DefaultWebBrowserTest {
         val markdown = webBrowser.open("file://$htmlFile")
 
         // then
-        assertContains(markdown, "`println(\"Hello\")`")
-        assertContains(markdown, "```")
-        assertContains(markdown, "fun main()")
+        assert("`println(\"Hello\")`" in markdown)
+        assert("```" in markdown)
+        assert("fun main()" in markdown)
     }
 
     @Test
@@ -201,7 +200,7 @@ class DefaultWebBrowserTest {
         val markdown = webBrowser.open("file://$htmlFile")
 
         // then
-        assertContains(markdown, "![Company Logo](https://example.com/logo.png)")
+        assert("![Company Logo](https://example.com/logo.png)" in markdown)
     }
 
     @Test
@@ -227,7 +226,7 @@ class DefaultWebBrowserTest {
         val markdown = webBrowser.open("file://$htmlFile")
 
         // then
-        assertContains(markdown, "> This is a quote")
+        assert("> This is a quote" in markdown)
     }
 
     @Test
@@ -264,10 +263,10 @@ class DefaultWebBrowserTest {
         val markdown = webBrowser.open("file://$htmlFile")
 
         // then
-        assertContains(markdown, "| Name | Age |")
-        assertContains(markdown, "| --- | --- |")
-        assertContains(markdown, "| Alice | 30 |")
-        assertContains(markdown, "| Bob | 25 |")
+        assert("| Name | Age |" in markdown)
+        assert("| --- | --- |" in markdown)
+        assert("| Alice | 30 |" in markdown)
+        assert("| Bob | 25 |" in markdown)
     }
 
     @Test
@@ -302,9 +301,9 @@ class DefaultWebBrowserTest {
 
         // then
         // Header should span 2 columns (Full Name + empty cell) + Age = 3 columns total
-        assertContains(markdown, "| Full Name |")
-        assertContains(markdown, "| --- | --- | --- |")
-        assertContains(markdown, "| John | Doe | 30 |")
+        assert("| Full Name |" in markdown)
+        assert("| --- | --- | --- |" in markdown)
+        assert("| John | Doe | 30 |" in markdown)
     }
 
     @Test
@@ -338,10 +337,10 @@ class DefaultWebBrowserTest {
         val markdown = webBrowser.open("file://$htmlFile")
 
         // then
-        assertContains(markdown, "| A | B | C |")
-        assertContains(markdown, "| --- | --- | --- |")
+        assert("| A | B | C |" in markdown)
+        assert("| --- | --- | --- |" in markdown)
         // Row with missing cell should still have 3 columns
-        assertContains(markdown, "| 1 | 2 |")
+        assert("| 1 | 2 |" in markdown)
     }
 
     @Test
@@ -375,9 +374,9 @@ class DefaultWebBrowserTest {
 
         // then
         // Should still produce valid markdown table with separator after first row
-        assertContains(markdown, "| A | B |")
-        assertContains(markdown, "| --- | --- |")
-        assertContains(markdown, "| 1 | 2 |")
+        assert("| A | B |" in markdown)
+        assert("| --- | --- |" in markdown)
+        assert("| 1 | 2 |" in markdown)
     }
 
     @Test
@@ -409,9 +408,9 @@ class DefaultWebBrowserTest {
         val markdown = webBrowser.open("file://$htmlFile")
 
         // then
-        assertContains(markdown, "Visible content")
-        assert(!markdown.contains("color: red"))
-        assert(!markdown.contains("console.log"))
+        assert("Visible content" in markdown)
+        assert("color: red" !in markdown)
+        assert("console.log" !in markdown)
     }
 
     @Test
@@ -443,10 +442,10 @@ class DefaultWebBrowserTest {
         val markdown = webBrowser.open("file://$htmlFile")
 
         // then
-        assertContains(markdown, "- Parent item 1")
-        assertContains(markdown, "- Parent item 2")
-        assertContains(markdown, "Child item 1.1")
-        assertContains(markdown, "Child item 1.2")
+        assert("- Parent item 1" in markdown)
+        assert("- Parent item 2" in markdown)
+        assert("Child item 1.1" in markdown)
+        assert("Child item 1.2" in markdown)
     }
 
     @Test
@@ -489,12 +488,12 @@ class DefaultWebBrowserTest {
         val markdown = webBrowser.open("file://$htmlFile")
 
         // then
-        assertContains(markdown, "# Site Header")
-        assertContains(markdown, "## Article Title")
-        assertContains(markdown, "### Section Heading")
-        assertContains(markdown, "[internal link](/link)")
-        assertContains(markdown, "- Point 1")
-        assertContains(markdown, "Footer content")
+        assert("# Site Header" in markdown)
+        assert("## Article Title" in markdown)
+        assert("### Section Heading" in markdown)
+        assert("[internal link](/link)" in markdown)
+        assert("- Point 1" in markdown)
+        assert("Footer content" in markdown)
     }
 
     @Test
@@ -547,12 +546,12 @@ class DefaultWebBrowserTest {
         val markdown = webBrowser.open("file://$htmlFile")
 
         // then
-        assertContains(markdown, "# Level 1")
-        assertContains(markdown, "## Level 2")
-        assertContains(markdown, "### Level 3")
-        assertContains(markdown, "#### Level 4")
-        assertContains(markdown, "##### Level 5")
-        assertContains(markdown, "###### Level 6")
+        assert("# Level 1" in markdown)
+        assert("## Level 2" in markdown)
+        assert("### Level 3" in markdown)
+        assert("#### Level 4" in markdown)
+        assert("##### Level 5" in markdown)
+        assert("###### Level 6" in markdown)
     }
 
     @Test
@@ -579,9 +578,9 @@ class DefaultWebBrowserTest {
         val markdown = webBrowser.open("file://$htmlFile")
 
         // then - should contain JS-rendered content, not "Loading..."
-        assertContains(markdown, "# Dynamic Title")
-        assertContains(markdown, "This content was rendered by JavaScript")
-        assert(!markdown.contains("Loading..."))
+        assert("# Dynamic Title" in markdown)
+        assert("This content was rendered by JavaScript" in markdown)
+        assert("Loading..." !in markdown)
     }
 
     @Test
@@ -608,12 +607,12 @@ class DefaultWebBrowserTest {
         val markdown = webBrowser.open("file://$htmlFile")
 
         // then
-        assertContains(markdown, "Cześć świecie")
-        assertContains(markdown, "日本語テキスト")
-        assertContains(markdown, "🎉")
-        assertContains(markdown, "αβγδ")
-        assertContains(markdown, "абвг")
-        assertContains(markdown, "مرحبا")
+        assert("Cześć świecie" in markdown)
+        assert("日本語テキスト" in markdown)
+        assert("🎉" in markdown)
+        assert("αβγδ" in markdown)
+        assert("абвг" in markdown)
+        assert("مرحبا" in markdown)
     }
 
     // Session-based tests
@@ -640,8 +639,8 @@ class DefaultWebBrowserTest {
         val markdown = webBrowser.openInSession("test-session", "file://$htmlFile")
 
         // then
-        assertContains(markdown, "# Session Page")
-        assertContains(markdown, "Content in session")
+        assert("# Session Page" in markdown)
+        assert("Content in session" in markdown)
 
         // cleanup
         webBrowser.closeSession("test-session")
@@ -666,8 +665,8 @@ class DefaultWebBrowserTest {
 
         // then
         val sessions = webBrowser.listSessions()
-        assert(sessions.contains("session-a"))
-        assert(sessions.contains("session-b"))
+        assert("session-a" in sessions)
+        assert("session-b" in sessions)
         assert(sessions.size == 2)
 
         // cleanup
@@ -688,13 +687,13 @@ class DefaultWebBrowserTest {
 
         val webBrowser = DefaultWebBrowser(browser)
         webBrowser.openInSession("to-close", "file://$htmlFile")
-        assert(webBrowser.listSessions().contains("to-close"))
+        assert("to-close" in webBrowser.listSessions())
 
         // when
         webBrowser.closeSession("to-close")
 
         // then
-        assert(!webBrowser.listSessions().contains("to-close"))
+        assert("to-close" !in webBrowser.listSessions())
     }
 
     @Test
@@ -743,7 +742,7 @@ class DefaultWebBrowserTest {
 
         // then - read localStorage in same session (should persist)
         val result = webBrowser.openInSession("storage-session", "file://$readStorageFile")
-        assertContains(result, "sessionvalue")
+        assert("sessionvalue" in result)
 
         // cleanup
         webBrowser.closeSession("storage-session")
@@ -786,9 +785,7 @@ class DefaultWebBrowserTest {
 
         // then - session-b should NOT see the localStorage
         val resultB = webBrowser.openInSession("session-b", "file://$readStorageFile")
-        assert(!resultB.contains("session-a-value")) {
-            "Session B should not see Session A's localStorage"
-        }
+        assert("session-a-value" !in resultB)
 
         // cleanup
         webBrowser.closeSession("session-a")
@@ -831,9 +828,7 @@ class DefaultWebBrowserTest {
 
         // then - session should not see it (stateless pages are isolated)
         val result = webBrowser.openInSession("fresh-session", "file://$readStorageFile")
-        assert(!result.contains("test-value")) {
-            "Session should not see localStorage from stateless open"
-        }
+        assert("test-value" !in result)
 
         // cleanup
         webBrowser.closeSession("fresh-session")

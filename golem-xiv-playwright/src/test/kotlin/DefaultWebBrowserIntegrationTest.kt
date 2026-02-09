@@ -30,7 +30,6 @@ import org.junit.jupiter.api.Tag
 import java.net.HttpURLConnection
 import java.net.URL
 import kotlin.test.Test
-import kotlin.test.assertContains
 
 /**
  * Integration tests for DefaultWebBrowser that open real websites.
@@ -114,7 +113,7 @@ class DefaultWebBrowserIntegrationTest {
 
         // then - smoke test: page opens and returns non-empty content
         assert(markdown.isNotEmpty())
-        assertContains(markdown, "Example", ignoreCase = true)
+        assert("example" in markdown.lowercase())
     }
 
     @Test

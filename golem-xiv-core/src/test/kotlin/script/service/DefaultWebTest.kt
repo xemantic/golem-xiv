@@ -21,6 +21,8 @@ package com.xemantic.ai.golem.core.script.service
 import com.xemantic.ai.golem.api.backend.SearchProvider
 import com.xemantic.ai.golem.api.backend.script.WebBrowser
 import com.xemantic.kotlin.test.assert
+import com.xemantic.kotlin.test.have
+import com.xemantic.kotlin.test.should
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -29,8 +31,6 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
-import kotlin.test.assertContains
-import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
 class DefaultWebTest {
@@ -81,13 +81,15 @@ class DefaultWebTest {
         val result = web.search("kotlin programming")
 
         // then
-        assertEquals("kotlin programming", mockProvider.lastQuery)
-        assertEquals(1, mockProvider.lastPage)
-        assertEquals(10, mockProvider.lastPageSize)
-        assertEquals("us-en", mockProvider.lastRegion)
-        assertEquals("moderate", mockProvider.lastSafeSearch)
-        assertEquals(null, mockProvider.lastTimeLimit)
-        assertContains(result, "Search Results")
+        mockProvider should {
+            have(lastQuery == "kotlin programming")
+            have(lastPage == 1)
+            have(lastPageSize == 10)
+            have(lastRegion == "us-en")
+            have(lastSafeSearch == "moderate")
+            have(lastTimeLimit == null)
+        }
+        assert("Search Results" in result)
     }
 
     @Test
@@ -114,13 +116,15 @@ class DefaultWebTest {
         )
 
         // then
-        assertEquals("kotlin news", mockProvider.lastQuery)
-        assertEquals(2, mockProvider.lastPage)
-        assertEquals(5, mockProvider.lastPageSize)
-        assertEquals("uk-en", mockProvider.lastRegion)
-        assertEquals("off", mockProvider.lastSafeSearch)
-        assertEquals("w", mockProvider.lastTimeLimit)
-        assertContains(result, "Recent Kotlin News")
+        mockProvider should {
+            have(lastQuery == "kotlin news")
+            have(lastPage == 2)
+            have(lastPageSize == 5)
+            have(lastRegion == "uk-en")
+            have(lastSafeSearch == "off")
+            have(lastTimeLimit == "w")
+        }
+        assert("Recent Kotlin News" in result)
     }
 
     @Test
@@ -141,9 +145,9 @@ class DefaultWebTest {
         val result = web.search("test query", provider = "ddgs")
 
         // then
-        assertEquals("test query", namedProvider.lastQuery)
-        assertEquals(null, defaultProvider.lastQuery)
-        assertContains(result, "Named results")
+        assert(namedProvider.lastQuery == "test query")
+        assert(defaultProvider.lastQuery == null)
+        assert("Named results" in result)
     }
 
     @Test
@@ -163,7 +167,7 @@ class DefaultWebTest {
         val exception = assertFailsWith<IllegalArgumentException> {
             web.search("test query", provider = "unknown")
         }
-        assertContains(exception.message ?: "", "Unknown search provider: unknown")
+        assert("Unknown search provider: unknown" in (exception.message ?: ""))
     }
 
     @Test
@@ -188,8 +192,8 @@ class DefaultWebTest {
         val result = web.fetch("https://kotlinlang.org")
 
         // then
-        assertContains(result, "Kotlin Programming")
-        assertContains(result, "Kotlin is awesome!")
+        assert("Kotlin Programming" in result)
+        assert("Kotlin is awesome!" in result)
     }
 
     @Test
@@ -212,8 +216,10 @@ class DefaultWebTest {
         val exception = assertFailsWith<IllegalStateException> {
             web.fetch("https://example.com")
         }
-        assertContains(exception.message ?: "", "Failed to fetch")
-        assertContains(exception.message ?: "", "via jina.ai")
+        exception should {
+            have("Failed to fetch" in (message ?: ""))
+            have("via jina.ai" in (message ?: ""))
+        }
     }
 
     // Session-based tests
@@ -247,9 +253,9 @@ class DefaultWebTest {
         val result = web.openInSession("test-session", "https://example.com")
 
         // then
-        assertEquals("test-session", capturedSessionId)
-        assertEquals("https://example.com", capturedUrl)
-        assertContains(result, "Session Content")
+        assert(capturedSessionId == "test-session")
+        assert(capturedUrl == "https://example.com")
+        assert("Session Content" in result)
     }
 
     @Test
@@ -266,7 +272,7 @@ class DefaultWebTest {
         val exception = assertFailsWith<UnsupportedOperationException> {
             web.openInSession("test-session", "https://example.com")
         }
-        assertContains(exception.message ?: "", "Session-based browsing requires Playwright")
+        assert("Session-based browsing requires Playwright" in (exception.message ?: ""))
     }
 
     @Test
@@ -295,7 +301,7 @@ class DefaultWebTest {
         web.closeSession("my-session")
 
         // then
-        assertEquals("my-session", closedSessionId)
+        assert(closedSessionId == "my-session")
     }
 
     @Test
@@ -334,7 +340,7 @@ class DefaultWebTest {
         val sessions = web.listSessions()
 
         // then
-        assertEquals(setOf("session-1", "session-2"), sessions)
+        assert(sessions == setOf("session-1", "session-2"))
     }
 
     @Test
@@ -378,7 +384,7 @@ class DefaultWebTest {
         val exception = assertFailsWith<RuntimeException> {
             web.openInSession("test", "https://example.com")
         }
-        assertContains(exception.message ?: "", "Browser navigation failed")
+        assert("Browser navigation failed" in (exception.message ?: ""))
     }
 
 }
