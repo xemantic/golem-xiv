@@ -23,7 +23,9 @@ import com.xemantic.kotlin.test.should
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty
 
+@EnabledIfSystemProperty(named = "ddgs.tests.enabled", matches = "true")
 class DdgsClientTest {
 
     companion object {
