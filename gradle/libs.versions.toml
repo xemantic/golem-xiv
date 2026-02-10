@@ -23,6 +23,7 @@ neo4jBrowser = "2025.8.0"
 neo4jBrowserSha256 = "4ed8ca29a27519a79f7013258acbcb020649a7fef354e1e157c1dc8f0a83cef2"
 neo4jDriver = "6.0.2"
 neo4jMigrations = "3.1.0"
+testcontainers = "2.0.3"
 
 slf4j = "2.0.17"
 logback = "1.5.23"
@@ -70,6 +71,8 @@ neo4j = { module = "org.neo4j:neo4j", version.ref = "neo4j" }
 neo4j-harness = { module = "org.neo4j.test:neo4j-harness", version.ref = "neo4j" }
 neo4j-java-driver = { module = "org.neo4j.driver:neo4j-java-driver", version.ref = "neo4jDriver" }
 neo4j-migrations = { module = "eu.michael-simons.neo4j:neo4j-migrations", version.ref = "neo4jMigrations" }
+
+testcontainers = { module = "org.testcontainers:testcontainers", version.ref = "testcontainers" }
 
 ktor-sse = { module = "io.ktor:ktor-sse", version.ref = "ktor" }
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }

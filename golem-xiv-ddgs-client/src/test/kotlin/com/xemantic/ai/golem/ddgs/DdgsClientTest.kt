@@ -37,7 +37,7 @@ class DdgsClientTest {
     @Test
     fun `should check health status`() = runTest {
         // given
-        val client = TestDdgs.client
+        val client = DdgsClient(baseUrl = TestDdgs.baseUrl)
 
         // when
         val health = client.checkHealth()
@@ -46,12 +46,14 @@ class DdgsClientTest {
         health should {
             have(status == "healthy")
         }
+
+        client.close()
     }
 
     @Test
     fun `should search text`() = runTest {
         // given
-        val client = TestDdgs.client
+        val client = DdgsClient(baseUrl = TestDdgs.baseUrl)
 
         // when
         val results = client.searchText(
@@ -64,12 +66,14 @@ class DdgsClientTest {
         assert(results.all { it.title.isNotBlank() })
         assert(results.all { it.href.isNotBlank() })
         assert(results.all { it.body.isNotBlank() })
+
+        client.close()
     }
 
     @Test
     fun `should search images`() = runTest {
         // given
-        val client = TestDdgs.client
+        val client = DdgsClient(baseUrl = TestDdgs.baseUrl)
 
         // when
         val results = client.searchImages(
@@ -82,12 +86,14 @@ class DdgsClientTest {
         assert(results.all { it.title.isNotBlank() })
         assert(results.all { it.image.isNotBlank() })
         assert(results.all { it.url.isNotBlank() })
+
+        client.close()
     }
 
     @Test
     fun `should search news`() = runTest {
         // given
-        val client = TestDdgs.client
+        val client = DdgsClient(baseUrl = TestDdgs.baseUrl)
 
         // when
         val results = client.searchNews(
@@ -100,12 +106,14 @@ class DdgsClientTest {
         assert(results.all { it.title.isNotBlank() })
         assert(results.all { it.url.isNotBlank() })
         assert(results.all { it.body.isNotBlank() })
+
+        client.close()
     }
 
     @Test
     fun `should search videos`() = runTest {
         // given
-        val client = TestDdgs.client
+        val client = DdgsClient(baseUrl = TestDdgs.baseUrl)
 
         // when
         val results = client.searchVideos(
@@ -117,12 +125,14 @@ class DdgsClientTest {
         assert(results.isNotEmpty())
         assert(results.all { it.title.isNotBlank() })
         assert(results.all { it.embedUrl.isNotBlank() })
+
+        client.close()
     }
 
     @Test
     fun `should search books`() = runTest {
         // given
-        val client = TestDdgs.client
+        val client = DdgsClient(baseUrl = TestDdgs.baseUrl)
 
         // when
         val results = client.searchBooks(
@@ -134,5 +144,7 @@ class DdgsClientTest {
         assert(results.isNotEmpty())
         assert(results.all { it.title.isNotBlank() })
         assert(results.all { it.url.isNotBlank() })
+
+        client.close()
     }
 }

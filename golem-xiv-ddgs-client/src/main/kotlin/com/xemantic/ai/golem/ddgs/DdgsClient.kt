@@ -21,21 +21,43 @@ package com.xemantic.ai.golem.ddgs
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.*
 import io.ktor.client.call.*
+import io.ktor.client.plugins.*
+import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.http.*
-
-private val logger = KotlinLogging.logger {}
+import io.ktor.serialization.kotlinx.json.*
+import kotlinx.serialization.json.Json
 
 /**
  * Client for DDGS (DuckDuckGo Search) API server.
  *
  * @param baseUrl The base URL of the DDGS server (default: http://localhost:8000)
- * @param httpClient The Ktor HTTP client to use for requests
  */
 class DdgsClient(
-    private val baseUrl: String = "http://localhost:8000",
-    private val httpClient: HttpClient
-) {
+    private val baseUrl: String = "http://localhost:8000"
+) : AutoCloseable {
+
+    private val logger = KotlinLogging.logger {}
+
+    private val httpClient = HttpClient {
+        install(ContentNegotiation) {
+            json(Json {
+                ignoreUnknownKeys = true
+                prettyPrint = true
+            })
+        }
+        install(HttpTimeout) {
+            requestTimeoutMillis = 30_000
+            connectTimeoutMillis = 10_000
+        }
+        install(HttpRequestRetry) {
+            retryOnServerErrors(maxRetries = 3)
+            exponentialDelay()
+        }
+        defaultRequest {
+            url(baseUrl)
+        }
+    }
 
     /**
      * Search for text results.
@@ -58,7 +80,7 @@ class DdgsClient(
     ): List<TextSearchResult> {
         logger.debug { "Searching text: query='$query', region=$region, safesearch=$safesearch" }
 
-        return httpClient.post("$baseUrl/search/text") {
+        return httpClient.post("/search/text") {
             contentType(ContentType.Application.Json)
             setBody(TextSearchRequest(
                 query = query,
@@ -90,7 +112,7 @@ class DdgsClient(
     ): List<ImageSearchResult> {
         logger.debug { "Searching images: query='$query'" }
 
-        return httpClient.post("$baseUrl/search/images") {
+        return httpClient.post("/search/images") {
             contentType(ContentType.Application.Json)
             setBody(ImageSearchRequest(
                 query = query,
@@ -121,7 +143,7 @@ class DdgsClient(
     ): List<NewsSearchResult> {
         logger.debug { "Searching news: query='$query'" }
 
-        return httpClient.post("$baseUrl/search/news") {
+        return httpClient.post("/search/news") {
             contentType(ContentType.Application.Json)
             setBody(NewsSearchRequest(
                 query = query,
@@ -152,7 +174,7 @@ class DdgsClient(
     ): List<VideoSearchResult> {
         logger.debug { "Searching videos: query='$query'" }
 
-        return httpClient.post("$baseUrl/search/videos") {
+        return httpClient.post("/search/videos") {
             contentType(ContentType.Application.Json)
             setBody(VideoSearchRequest(
                 query = query,
@@ -177,7 +199,7 @@ class DdgsClient(
     ): List<BookSearchResult> {
         logger.debug { "Searching books: query='$query'" }
 
-        return httpClient.post("$baseUrl/search/books") {
+        return httpClient.post("/search/books") {
             contentType(ContentType.Application.Json)
             setBody(BookSearchRequest(
                 query = query,
@@ -193,6 +215,11 @@ class DdgsClient(
      */
     suspend fun checkHealth(): HealthStatus {
         logger.debug { "Checking DDGS server health" }
-        return httpClient.get("$baseUrl/health").body()
+        return httpClient.get("/health").body()
+    }
+
+    override fun close() {
+        logger.debug { "Closing DDGS client" }
+        httpClient.close()
     }
 }

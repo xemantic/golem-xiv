@@ -18,11 +18,6 @@
 
 package com.xemantic.ai.golem.ddgs
 
-import io.ktor.client.*
-import io.ktor.client.engine.java.*
-import io.ktor.client.plugins.contentnegotiation.*
-import io.ktor.serialization.kotlinx.json.*
-import kotlinx.serialization.json.Json
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.wait.strategy.Wait
 import org.testcontainers.utility.DockerImageName
@@ -34,8 +29,16 @@ object TestDdgs {
 
     private const val DDGS_PORT = 8000
 
+    /**
+     * Docker image to use for tests.
+     * Uses local image when available, falls back to GitHub Container Registry image in CI.
+     */
+    private val dockerImage: String = System.getenv("CI")?.let {
+        "ghcr.io/xemantic/ddgs:latest"
+    } ?: "ddgs:latest"
+
     private val container: GenericContainer<*> by lazy {
-        GenericContainer(DockerImageName.parse("ghcr.io/xemantic/ddgs:latest"))
+        GenericContainer(DockerImageName.parse(dockerImage))
             .withExposedPorts(DDGS_PORT)
             .waitingFor(Wait.forHttp("/health").forStatusCode(200))
             .apply {
@@ -47,26 +50,7 @@ object TestDdgs {
         "http://${container.host}:${container.getMappedPort(DDGS_PORT)}"
     }
 
-    val httpClient: HttpClient by lazy {
-        HttpClient(Java) {
-            install(ContentNegotiation) {
-                json(Json {
-                    ignoreUnknownKeys = true
-                    prettyPrint = true
-                })
-            }
-        }
-    }
-
-    val client: DdgsClient by lazy {
-        DdgsClient(
-            baseUrl = baseUrl,
-            httpClient = httpClient
-        )
-    }
-
     fun stop() {
         container.stop()
-        httpClient.close()
     }
 }

@@ -35,5 +35,5 @@ dependencies {
     testImplementation(libs.kotlin.test)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.xemantic.kotlin.test)
-    testImplementation("org.testcontainers:testcontainers:1.20.4")
+    testImplementation(libs.testcontainers)
 }
