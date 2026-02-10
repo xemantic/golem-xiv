@@ -74,6 +74,11 @@ data class BookSearchRequest(
 // Response DTOs
 
 @Serializable
+data class SearchResponse<T>(
+    val results: List<T>
+)
+
+@Serializable
 data class TextSearchResult(
     val title: String,
     val href: String,
@@ -102,13 +107,21 @@ data class NewsSearchResult(
 )
 
 @Serializable
+data class VideoImages(
+    val large: String,
+    val medium: String,
+    val motion: String,
+    val small: String
+)
+
+@Serializable
 data class VideoSearchResult(
     val title: String,
     val description: String,
     val duration: String,
     @SerialName("embed_url")
     val embedUrl: String,
-    val images: List<String>,
+    val images: VideoImages,
     val uploader: String
 )
 

@@ -44,7 +44,7 @@ class DdgsClientTest {
 
         // then
         health should {
-            have(status == "ok")
+            have(status == "healthy")
         }
     }
 

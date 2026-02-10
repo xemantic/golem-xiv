@@ -68,7 +68,7 @@ class DdgsClient(
                 maxResults = maxResults,
                 backend = backend
             ))
-        }.body()
+        }.body<SearchResponse<TextSearchResult>>().results
     }
 
     /**
@@ -99,7 +99,7 @@ class DdgsClient(
                 timelimit = timelimit,
                 maxResults = maxResults
             ))
-        }.body()
+        }.body<SearchResponse<ImageSearchResult>>().results
     }
 
     /**
@@ -130,7 +130,7 @@ class DdgsClient(
                 timelimit = timelimit,
                 maxResults = maxResults
             ))
-        }.body()
+        }.body<SearchResponse<NewsSearchResult>>().results
     }
 
     /**
@@ -161,7 +161,7 @@ class DdgsClient(
                 timelimit = timelimit,
                 maxResults = maxResults
             ))
-        }.body()
+        }.body<SearchResponse<VideoSearchResult>>().results
     }
 
     /**
@@ -183,7 +183,7 @@ class DdgsClient(
                 query = query,
                 maxResults = maxResults
             ))
-        }.body()
+        }.body<SearchResponse<BookSearchResult>>().results
     }
 
     /**

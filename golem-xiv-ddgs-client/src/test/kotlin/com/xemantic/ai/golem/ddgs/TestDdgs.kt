@@ -35,7 +35,7 @@ object TestDdgs {
     private const val DDGS_PORT = 8000
 
     private val container: GenericContainer<*> by lazy {
-        GenericContainer(DockerImageName.parse("deedy5/ddgs:latest"))
+        GenericContainer(DockerImageName.parse("ghcr.io/xemantic/ddgs:latest"))
             .withExposedPorts(DDGS_PORT)
             .waitingFor(Wait.forHttp("/health").forStatusCode(200))
             .apply {
