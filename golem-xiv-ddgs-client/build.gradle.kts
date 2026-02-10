@@ -29,7 +29,8 @@ dependencies {
     api(libs.ktor.serialization.kotlinx.json)
     api(libs.kotlinx.serialization.json)
 
-    implementation(libs.kotlin.logging)
+    implementation(project(":golem-xiv-logging"))
+    implementation(libs.logback.classic)
 
     testImplementation(libs.kotlin.test)
     testImplementation(libs.kotlinx.coroutines.test)
