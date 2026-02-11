@@ -16,10 +16,22 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.xemantic.ai.golem.api.backend.script.incubation
-
-interface WebBrowser {
-    /** @return given [url] as Markdown. */
-    suspend fun open(url: String): String
+plugins {
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlin.plugin.serialization)
+    id("golem.convention")
 }
 
+dependencies {
+    api(project(":golem-xiv-api-backend"))
+    implementation(project(":golem-xiv-logging"))
+
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.client.content.negotiation)
+    implementation(libs.ktor.serialization.kotlinx.json)
+
+    testImplementation(libs.kotlin.test)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.xemantic.kotlin.test)
+    testImplementation("io.ktor:ktor-client-mock:3.3.3")
+}

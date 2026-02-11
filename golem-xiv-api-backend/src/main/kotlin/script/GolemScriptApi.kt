@@ -96,6 +96,20 @@ interface Http {
 
 }
 
+interface Web {
+    suspend fun fetch(url: String, accept: ContentType = MarkdownContentType): String
+    /** @return Markdown-formatted search results */
+    suspend fun search(
+        query: String,
+        provider: String? = null,
+        page: Int = 1,
+        pageSize: Int = 10,
+        region: String = "us-en",
+        safeSearch: String = "moderate",
+        timeLimit: String? = null
+    ): String
+}
+
 interface Memory {
     /**
      * Remembers facts.

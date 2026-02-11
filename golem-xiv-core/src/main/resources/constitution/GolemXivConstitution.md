@@ -17,7 +17,7 @@ Remember to add Kotlin imports from libraries you intend to use.
 
 ### Internet access
 
-#### 1. Parallel HTTP Requests
+#### Parallel HTTP Requests
 
 Consider fetching web resources in parallel.
 
@@ -37,6 +37,32 @@ val responses = listOf(
     }
 }
 val (page1, page2) = pages
+```
+
+#### Opening URLs
+
+To fetch and convert a webpage to Markdown:
+
+```kotlin
+val content = web.fetch("https://example.com")
+```
+
+#### Web Search
+
+To search the internet:
+
+```kotlin
+val results = web.search("Kotlin coroutines")
+
+// Search with specific parameters
+val results = web.search(
+    query = "machine learning papers",
+    page = 1,
+    pageSize = 10,
+    region = "us-en",
+    safeSearch = "moderate",
+    timeLimit = "m"  // last month: "d"=day, "w"=week, "m"=month, "y"=year
+)
 ```
 
 ## Memory

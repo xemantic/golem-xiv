@@ -36,6 +36,7 @@ dependencies {
     implementation(project(":golem-xiv-neo4j"))
     implementation(project(":golem-xiv-cognizer-anthropic"))
     implementation(project(":golem-xiv-playwright"))
+    implementation(project(":golem-xiv-ddgs"))
     implementation(project(":golem-xiv-core"))
 
     implementation(libs.kotlinx.serialization.core)
@@ -124,4 +125,12 @@ tasks.withType<KotlinCompile> {
         println("Using JDK: ${System.getProperty("java.home")}")
         println("Kotlin compiler args: ${compilerOptions.freeCompilerArgs.get()}")
     }
+}
+
+tasks.register<JavaExec>("installPlaywrightChromium") {
+    group = "playwright"
+    description = "Install Playwright's bundled Chromium browser"
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass.set("com.microsoft.playwright.CLI")
+    args("install", "chromium")
 }
