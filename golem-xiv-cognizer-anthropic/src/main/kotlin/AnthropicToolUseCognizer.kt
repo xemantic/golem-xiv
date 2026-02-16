@@ -19,6 +19,7 @@
 package com.xemantic.ai.golem.cognizer.anthropic
 
 import com.xemantic.ai.anthropic.Anthropic
+import com.xemantic.ai.anthropic.cache.CacheControl
 import com.xemantic.ai.anthropic.content.Text
 import com.xemantic.ai.anthropic.content.ToolResult
 import com.xemantic.ai.anthropic.content.ToolUse
@@ -303,5 +304,10 @@ private fun List<PhenomenalExpression>.toAnthropicMessages() = map {
 }
 
 private fun List<String>.toAnthropicSystem() = map {
-    System(text = it)
+    System(
+        text = it,
+        cacheControl = CacheControl.Ephemeral {
+            ttl = CacheControl.Ephemeral.TTL.ONE_HOUR
+        }
+    )
 }

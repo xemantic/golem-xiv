@@ -20,6 +20,7 @@ package com.xemantic.ai.golem.server
 
 //import io.ktor.server.application.ApplicationStopped
 import com.xemantic.ai.anthropic.Anthropic
+import com.xemantic.ai.anthropic.Model
 import com.xemantic.ai.golem.api.GolemError
 import com.xemantic.ai.golem.api.GolemOutput
 import com.xemantic.ai.golem.api.Phenomenon
@@ -88,6 +89,7 @@ fun Application.module() {
     )
 
     val anthropic = Anthropic {
+        defaultModel = Model.CLAUDE_OPUS_4_6
         anthropicBeta = listOf(
             "fine-grained-tool-streaming-2025-05-14",
             "token-efficient-tools-2025-02-19",
