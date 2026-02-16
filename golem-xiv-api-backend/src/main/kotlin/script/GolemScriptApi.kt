@@ -76,6 +76,17 @@ interface Files {
     suspend fun delete(path: String): Boolean
 }
 
+/**
+ * Tripple quotes. Allows to avoid escaping when producing multiline strings containing multiline strings. E.g. when outputting Python code. Example
+ * ```
+ * val pythonCode = """
+ * text = $tqThis is a
+ * multiline string in Python.$tq
+ * """.trimIndent()
+ * ```
+ */
+val tq = "\"\"\""
+
 val MarkdownContentType = ContentType("text", "markdown")
 
 /**
