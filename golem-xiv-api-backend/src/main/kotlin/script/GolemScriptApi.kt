@@ -77,7 +77,8 @@ interface Files {
 }
 
 /**
- * Tripple quotes. Allows to avoid escaping when producing multiline strings containing multiline strings. E.g. when outputting Python code. Example
+ * Triple quotes. Allows to avoid escaping when producing multiline strings containing multiline strings.
+ * E.g. when outputting Python code. Example:
  * ```
  * val pythonCode = """
  * text = $tqThis is a
