@@ -32,6 +32,7 @@ import org.jetbrains.kotlin.gradle.dsl.*
 import org.jetbrains.kotlin.powerassert.gradle.PowerAssertGradleExtension
 import org.jetbrains.kotlin.powerassert.gradle.PowerAssertGradlePlugin
 
+@Suppress("unused")
 class GolemConventionPlugin : Plugin<Project> {
 
     override fun apply(target: Project) {
