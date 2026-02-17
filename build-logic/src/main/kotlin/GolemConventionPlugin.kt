@@ -125,7 +125,8 @@ fun KotlinCommonCompilerOptions.configureCommons(
     freeCompilerArgs.set(
         listOf(
             "-Xcontext-sensitive-resolution",
-            "-Xexplicit-backing-fields"
+            "-Xexplicit-backing-fields",
+            "-Xskip-prerelease-check"
         )
     )
 }
