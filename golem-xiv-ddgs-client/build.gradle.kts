@@ -1,6 +1,6 @@
 /*
  * Golem XIV - Autonomous metacognitive AI system with semantic memory and self-directed research
- * Copyright (C) 2026  Kazimierz Pogoda / Xemantic
+ * Copyright (C) 2025  Kazimierz Pogoda / Xemantic
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -16,30 +16,24 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-rootProject.name = "golem-xiv"
-
-pluginManagement {
-    includeBuild("build-logic")
+plugins {
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlin.plugin.serialization)
+    id("golem.convention")
 }
 
-// TODO can it be a series of paths?
-include(
-    ":golem-xiv-json",
-    ":golem-xiv-api",
-    ":golem-xiv-api-backend",
-    ":golem-xiv-api-client",
-    ":golem-xiv-logging",
-    ":golem-xiv-core",
-    ":golem-xiv-neo4j",
-    ":golem-xiv-cognizer-anthropic",
-//    ":golem-xiv-cognizer-dashscope",
-    ":golem-xiv-playwright",
-    ":golem-xiv-ddgs-client",
-    ":golem-xiv-server",
-    ":golem-xiv-presenter",
-    ":golem-xiv-web",
-    ":golem-xiv-cli",
-    ":golem-xiv-neo4j-starter",
-    ":golem-xiv-kotlin-metadata",
-    ":golem-xiv-dom-export"
-)
+dependencies {
+    api(libs.ktor.client.core)
+    api(libs.ktor.client.java)
+    api(libs.ktor.client.content.negotiation)
+    api(libs.ktor.serialization.kotlinx.json)
+    api(libs.kotlinx.serialization.json)
+
+    implementation(project(":golem-xiv-logging"))
+    implementation(libs.logback.classic)
+
+    testImplementation(libs.kotlin.test)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.xemantic.kotlin.test)
+    testImplementation(libs.testcontainers)
+}
