@@ -16,29 +16,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-rootProject.name = "golem-xiv"
+package com.xemantic.golem.dom.export
 
-pluginManagement {
-    includeBuild("build-logic")
+import com.xemantic.markanywhere.SemanticEvent
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.map
+
+fun String.toSemanticEvents() = lines().asFlow().map {
+    SemanticEvent.fromJson(it)
 }
-
-// TODO can it be a series of paths?
-include(
-    ":golem-xiv-json",
-    ":golem-xiv-api",
-    ":golem-xiv-api-backend",
-    ":golem-xiv-api-client",
-    ":golem-xiv-logging",
-    ":golem-xiv-core",
-    ":golem-xiv-neo4j",
-    ":golem-xiv-cognizer-anthropic",
-//    ":golem-xiv-cognizer-dashscope",
-    ":golem-xiv-playwright",
-    ":golem-xiv-server",
-    ":golem-xiv-presenter",
-    ":golem-xiv-web",
-    ":golem-xiv-cli",
-    ":golem-xiv-neo4j-starter",
-    ":golem-xiv-kotlin-metadata",
-    ":golem-xiv-dom-export"
-)

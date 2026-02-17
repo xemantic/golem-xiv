@@ -16,41 +16,50 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import org.jetbrains.kotlin.gradle.dsl.JsModuleKind
+
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
-    alias(libs.plugins.kotlin.plugin.serialization)
+    alias(libs.plugins.kotlin.plugin.js.plain.objects)
     id("golem.convention")
 }
 
 kotlin {
-
-    jvm()
-
     js {
         browser()
-        binaries.library()
+        binaries.executable()
+        useEsModules()
+        compilerOptions {
+            moduleKind.set(JsModuleKind.MODULE_ES)
+            target = "es2015"
+            freeCompilerArgs.addAll(
+                "-Xir-generate-inline-anonymous-functions",
+                "-Xir-minimized-member-names",
+                "-Xir-dce",
+                "-Xoptimize-generated-js",
+                "-Xes-arrow-functions"
+            )
+            optIn.addAll(
+                "kotlin.js.ExperimentalJsExport",
+                "kotlin.js.ExperimentalJsCollectionsApi"
+            )
+        }
     }
 
     sourceSets {
 
-        commonMain {
+        jsMain {
             dependencies {
-                api(project(":golem-xiv-api"))
-                api(project(":golem-xiv-api-client"))
-                api(libs.kotlinx.coroutines.core)
-
-                implementation(libs.kotlinx.serialization.json)
-                implementation(libs.ktor.client.core)
-                implementation(libs.ktor.client.content.negotiation)
-                implementation(libs.ktor.serialization.kotlinx.json)
-                implementation(libs.kotlin.logging)
+                implementation(libs.xemantic.kotlin.js)
             }
         }
 
-        commonTest {
+        jsTest {
             dependencies {
                 implementation(libs.kotlin.test)
+                implementation(libs.kotlinx.coroutines.test)
                 implementation(libs.xemantic.kotlin.test)
+                implementation(libs.markanywhere.test)
             }
         }
 

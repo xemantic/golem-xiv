@@ -2,7 +2,7 @@
 kotlinTarget = "2.3"
 javaTarget = "21"
 
-kotlin = "2.3.0"
+kotlin = "2.3.10"
 kotlinxSerialization = "1.9.0"
 kotlinxCoroutines = "1.10.2"
 kotlinxHtml = "0.12.0"
@@ -12,8 +12,11 @@ kotlinLogging = "7.0.13"
 anthropicSdkKotlin = "0.29.0"
 xemanticKotlinCore = "0.6.1"
 xemanticKotlinTest = "1.16.0"
+xemanticKotlinJs = "0.2.0"
 xemanticAiToolSchema = "1.2.0"
 xemanticNeo4jKotlinDriver = "1.0.0"
+markanywhere = "0.1.12"
+
 
 ktor = "3.3.3"
 playwright = "1.57.0"
@@ -58,9 +61,11 @@ logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "lo
 # xemantic
 xemantic-kotlin-core = { module = "com.xemantic.kotlin:xemantic-kotlin-core", version.ref = "xemanticKotlinCore" }
 xemantic-kotlin-test = { module = "com.xemantic.kotlin:xemantic-kotlin-test", version.ref = "xemanticKotlinTest" }
+xemantic-kotlin-js = { module = "com.xemantic.kotlin:xemantic-kotlin-js", version.ref = "xemanticKotlinJs" }
 anthropic-sdk-kotlin = { module = "com.xemantic.ai:anthropic-sdk-kotlin", version.ref = "anthropicSdkKotlin" }
 xemantic-ai-tool-schema = { module = "com.xemantic.ai:xemantic-ai-tool-schema", version.ref ="xemanticAiToolSchema" }
 xemantic-neo4j-kotlin-driver = { module = "com.xemantic.neo4j:xemantic-neo4j-kotlin-driver", version.ref = "xemanticNeo4jKotlinDriver" }
+markanywhere-test = { module = "com.xemantic.markanywhere:markanywhere-test", version.ref = "markanywhere" }
 
 playwright = { module = "com.microsoft.playwright:playwright", version.ref = "playwright" }
 
@@ -96,6 +101,7 @@ kotlin-power-assert = { group = "org.jetbrains.kotlin", name = "kotlin-power-ass
 [plugins]
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-plugin-js-plain-objects = { id = "org.jetbrains.kotlin.plugin.js-plain-objects", version.ref = "kotlin" }
 dokka = { id = "org.jetbrains.dokka", version.ref = "dokkaPlugin" }
 versions = { id = "com.github.ben-manes.versions", version.ref = "versionsPlugin" }
 kotlinx-binary-compatibility-validator = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version.ref = "binaryCompatibilityValidatorPlugin" }
