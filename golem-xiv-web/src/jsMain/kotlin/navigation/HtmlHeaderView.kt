@@ -23,9 +23,7 @@ import com.xemantic.ai.golem.presenter.util.Action
 import com.xemantic.ai.golem.web.js.actions
 import com.xemantic.ai.golem.web.view.HasRootHtmlElement
 import com.xemantic.kotlin.js.dom.ariaLabel
-import com.xemantic.kotlin.js.dom.html.button
-import com.xemantic.kotlin.js.dom.html.nav
-import com.xemantic.kotlin.js.dom.html.icon
+import com.xemantic.kotlin.js.dom.html.*
 import com.xemantic.kotlin.js.dom.node
 import kotlinx.coroutines.flow.Flow
 

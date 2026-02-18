@@ -19,21 +19,11 @@
 package com.xemantic.ai.golem.web.ui
 
 import com.xemantic.kotlin.js.dom.ariaLabel
-import com.xemantic.kotlin.js.dom.html.a
-import com.xemantic.kotlin.js.dom.html.button
-import com.xemantic.kotlin.js.dom.html.div
-import com.xemantic.kotlin.js.dom.html.i
-import com.xemantic.kotlin.js.dom.html.span
+import com.xemantic.kotlin.js.dom.html.*
 import com.xemantic.kotlin.js.dom.node
 import org.w3c.dom.HTMLAnchorElement
 import org.w3c.dom.HTMLButtonElement
 import org.w3c.dom.HTMLDivElement
-import org.w3c.dom.HTMLSpanElement
-
-@Suppress("FunctionName")
-fun Icon(name: String): HTMLSpanElement = node {
-    span { +name }
-}
 
 @Suppress("FunctionName")
 fun Button(
@@ -43,7 +33,7 @@ fun Button(
 ): HTMLButtonElement = node {
     button("round") {
         if (icon != null) {
-            i { +icon }
+            icon(icon)
         }
         +label
         it.ariaLabel = ariaLabel
@@ -57,7 +47,7 @@ fun IconButton(
 ): HTMLButtonElement = node {
     button("circle transparent") {
         if (icon != null) {
-            i { +icon }
+            icon(icon)
         }
         it.ariaLabel = ariaLabel
     }
@@ -71,7 +61,7 @@ fun Link(
 ): HTMLAnchorElement = node {
     a("wave round") {
         if (icon != null) {
-            i { +icon }
+            icon(icon)
         }
         +label
         it.ariaLabel = ariaLabel

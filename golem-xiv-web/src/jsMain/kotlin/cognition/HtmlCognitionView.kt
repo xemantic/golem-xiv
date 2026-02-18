@@ -27,13 +27,7 @@ import com.xemantic.ai.golem.web.js.eventFlow
 import com.xemantic.ai.golem.web.ui.Div
 import com.xemantic.ai.golem.web.ui.IconButton
 import com.xemantic.ai.golem.web.view.HasRootHtmlElement
-import com.xemantic.kotlin.js.dom.html.article
-import com.xemantic.kotlin.js.dom.html.details
-import com.xemantic.kotlin.js.dom.html.div
-import com.xemantic.kotlin.js.dom.html.icon
-import com.xemantic.kotlin.js.dom.html.nav
-import com.xemantic.kotlin.js.dom.html.summary
-import com.xemantic.kotlin.js.dom.html.textarea
+import com.xemantic.kotlin.js.dom.html.*
 import com.xemantic.kotlin.js.dom.node
 import kotlinx.browser.window
 import kotlinx.coroutines.flow.map
@@ -59,7 +53,7 @@ class HtmlCognitionView(
         ariaLabel = "Express your intent"
     )
 
-    private val promptInput: HTMLTextAreaElement = node {
+    private val promptInput = node {
         textarea(placeholder = "Another question from the carbon side...")
     }
 

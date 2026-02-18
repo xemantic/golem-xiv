@@ -28,8 +28,7 @@ import com.xemantic.ai.golem.web.navigation.HtmlHeaderView
 import com.xemantic.ai.golem.web.navigation.HtmlNavigationRailView
 import com.xemantic.ai.golem.web.cognition.HtmlCognitionView
 import com.xemantic.ai.golem.web.view.HasRootHtmlElement
-import com.xemantic.kotlin.js.dom.html.div
-import com.xemantic.kotlin.js.dom.html.main
+import com.xemantic.kotlin.js.dom.html.*
 import com.xemantic.kotlin.js.dom.node
 import kotlinx.browser.window
 import kotlinx.coroutines.flow.Flow

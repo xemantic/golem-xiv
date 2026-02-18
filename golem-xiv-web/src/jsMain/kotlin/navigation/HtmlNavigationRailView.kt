@@ -26,12 +26,7 @@ import com.xemantic.ai.golem.web.js.clicks
 import com.xemantic.ai.golem.web.js.eventFlow
 import com.xemantic.ai.golem.web.view.HasRootHtmlElement
 import com.xemantic.kotlin.js.dom.ariaLabel
-import com.xemantic.kotlin.js.dom.html.a
-import com.xemantic.kotlin.js.dom.html.button
-import com.xemantic.kotlin.js.dom.html.div
-import com.xemantic.kotlin.js.dom.html.header
-import com.xemantic.kotlin.js.dom.html.icon
-import com.xemantic.kotlin.js.dom.html.nav
+import com.xemantic.kotlin.js.dom.html.*
 import com.xemantic.kotlin.js.dom.node
 import kotlinx.browser.window
 import kotlinx.coroutines.MainScope
@@ -46,7 +41,7 @@ class HtmlNavigationRailView : SidebarView, HasRootHtmlElement {
 
     private val initiateCognitionItem = node {
         a {
-            it.setAttribute("data-target", "initiate-cognition")
+            it.dataset["target"] = "initiate-cognition"
             it.ariaLabel = "Initiate cognitive process"
             icon("network_intel_node")
             div { +"Initiate" }
@@ -55,7 +50,7 @@ class HtmlNavigationRailView : SidebarView, HasRootHtmlElement {
 
     private val memoryItem = node {
         a {
-            it.setAttribute("data-target", "memory")
+            it.dataset["target"] = "memory"
             it.ariaLabel = "Open memory graph"
             icon("graph_3")
             div { +"Memory" }
@@ -64,7 +59,7 @@ class HtmlNavigationRailView : SidebarView, HasRootHtmlElement {
 
     private val settingsItem = node {
         a {
-            it.setAttribute("data-target", "settings")
+            it.dataset["target"] = "settings"
             it.ariaLabel = "Settings"
             icon("settings")
             div { +"Settings" }

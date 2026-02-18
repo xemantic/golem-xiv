@@ -20,7 +20,7 @@ package com.xemantic.ai.golem.web.memory
 
 import com.xemantic.ai.golem.presenter.memory.MemoryView
 import com.xemantic.ai.golem.web.view.HasRootHtmlElement
-import com.xemantic.kotlin.js.dom.html.iframe
+import com.xemantic.kotlin.js.dom.html.*
 import com.xemantic.kotlin.js.dom.node
 import org.w3c.dom.HTMLElement
 
