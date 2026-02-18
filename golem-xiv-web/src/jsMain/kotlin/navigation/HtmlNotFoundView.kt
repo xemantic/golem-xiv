@@ -19,14 +19,13 @@
 package com.xemantic.ai.golem.web.navigation
 
 import com.xemantic.ai.golem.presenter.navigation.NotFoundView
-import com.xemantic.ai.golem.web.js.dom
-import com.xemantic.ai.golem.web.js.inject
 import com.xemantic.ai.golem.web.view.HasRootHtmlElement
-import kotlinx.html.js.div
+import com.xemantic.kotlin.js.dom.html.div
+import com.xemantic.kotlin.js.dom.node
 
 class HtmlNotFoundView() : NotFoundView, HasRootHtmlElement {
 
-    private val messageDiv = dom.div("not-found-message")
+    private val messageDiv = node { div("not-found-message") }
 
     override var message: String
         get() = messageDiv.innerText
@@ -34,10 +33,10 @@ class HtmlNotFoundView() : NotFoundView, HasRootHtmlElement {
             messageDiv.innerText = value
         }
 
-    override val element = dom.div("not-found-page") {
-        inject(
-            messageDiv
-        )
+    override val element = node {
+        div("not-found-page") {
+            +messageDiv
+        }
     }
 
 }

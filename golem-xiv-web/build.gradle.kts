@@ -47,7 +47,7 @@ kotlin {
                 implementation(project(":golem-xiv-presenter"))
                 implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.kotlin.logging)
-                implementation(libs.kotlinx.html)
+                implementation(libs.xemantic.kotlin.js)
                 implementation(libs.ktor.serialization.kotlinx.json)
             }
         }

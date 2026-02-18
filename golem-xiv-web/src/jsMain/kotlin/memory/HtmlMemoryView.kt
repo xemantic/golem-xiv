@@ -20,16 +20,18 @@ package com.xemantic.ai.golem.web.memory
 
 import com.xemantic.ai.golem.presenter.memory.MemoryView
 import com.xemantic.ai.golem.web.view.HasRootHtmlElement
-import kotlinx.browser.document
-import kotlinx.html.dom.create
-import kotlinx.html.js.iframe
+import com.xemantic.kotlin.js.dom.html.iframe
+import com.xemantic.kotlin.js.dom.node
 import org.w3c.dom.HTMLElement
 
 class HtmlMemoryView() : MemoryView, HasRootHtmlElement {
 
     // TODO it should be populated with local storage if DB is remote
-    override val element: HTMLElement = document.create.iframe(classes = "memory") {
-        src = "neo4j-browser/?dbms=bolt://localhost:7687&preselectAuthMethod=NO_AUTH"
+    override val element: HTMLElement = node {
+        iframe(
+            klass = "memory",
+            src = "neo4j-browser/?dbms=bolt://localhost:7687&preselectAuthMethod=NO_AUTH"
+        )
     }
 
 }

@@ -18,34 +18,21 @@
 
 package com.xemantic.ai.golem.web.ui
 
-import com.xemantic.ai.golem.web.js.ariaLabel
-import kotlinx.browser.document
-import kotlinx.html.FlowContent
-import kotlinx.html.a
-import kotlinx.html.dom.create
-import kotlinx.html.i
-import kotlinx.html.js.button
-import kotlinx.html.js.div
-import kotlinx.html.js.span
+import com.xemantic.kotlin.js.dom.ariaLabel
+import com.xemantic.kotlin.js.dom.html.a
+import com.xemantic.kotlin.js.dom.html.button
+import com.xemantic.kotlin.js.dom.html.div
+import com.xemantic.kotlin.js.dom.html.i
+import com.xemantic.kotlin.js.dom.html.span
+import com.xemantic.kotlin.js.dom.node
 import org.w3c.dom.HTMLAnchorElement
 import org.w3c.dom.HTMLButtonElement
 import org.w3c.dom.HTMLDivElement
 import org.w3c.dom.HTMLSpanElement
 
 @Suppress("FunctionName")
-fun FlowContent.Icon(name: String) {
-    i {
-        +name
-    }
-}
-
-@Suppress("FunctionName")
-fun Icon(
-    name: String
-): HTMLSpanElement = document.create.span {
-    i {
-        +name
-    }
+fun Icon(name: String): HTMLSpanElement = node {
+    span { +name }
 }
 
 @Suppress("FunctionName")
@@ -53,27 +40,27 @@ fun Button(
     label: String,
     icon: String? = null,
     ariaLabel: String
-): HTMLButtonElement = document.create.button(
-    classes = "round"
-) {
-    if (icon != null) {
-        i { +icon }
+): HTMLButtonElement = node {
+    button("round") {
+        if (icon != null) {
+            i { +icon }
+        }
+        +label
+        it.ariaLabel = ariaLabel
     }
-    +label
-    this.ariaLabel = ariaLabel
 }
 
 @Suppress("FunctionName")
 fun IconButton(
     icon: String? = null,
     ariaLabel: String
-): HTMLButtonElement = document.create.button(
-    classes = "circle transparent"
-) {
-    if (icon != null) {
-        i { +icon }
+): HTMLButtonElement = node {
+    button("circle transparent") {
+        if (icon != null) {
+            i { +icon }
+        }
+        it.ariaLabel = ariaLabel
     }
-    this.ariaLabel = ariaLabel
 }
 
 @Suppress("FunctionName")
@@ -81,15 +68,17 @@ fun Link(
     label: String,
     icon: String? = null,
     ariaLabel: String
-): HTMLAnchorElement = document.create.a(classes = "wave round") {
-    if (icon != null) {
-        i { +icon }
+): HTMLAnchorElement = node {
+    a("wave round") {
+        if (icon != null) {
+            i { +icon }
+        }
+        +label
+        it.ariaLabel = ariaLabel
     }
-    +label
-    this.ariaLabel = ariaLabel
-} as HTMLAnchorElement
+}
 
 @Suppress("FunctionName")
-fun Div(
-    classes: String
-): HTMLDivElement = document.create.div(classes)
+fun Div(classes: String): HTMLDivElement = node {
+    div(classes)
+}

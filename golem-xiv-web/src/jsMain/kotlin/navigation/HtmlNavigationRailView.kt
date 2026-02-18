@@ -22,66 +22,81 @@ import com.xemantic.ai.golem.presenter.environment.Theme
 import com.xemantic.ai.golem.presenter.navigation.SidebarView
 import com.xemantic.ai.golem.presenter.util.Action
 import com.xemantic.ai.golem.web.js.actions
-import com.xemantic.ai.golem.web.js.ariaLabel
 import com.xemantic.ai.golem.web.js.clicks
-import com.xemantic.ai.golem.web.js.dom
-import com.xemantic.ai.golem.web.js.inject
-import com.xemantic.ai.golem.web.js.resizes
-import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
+import com.xemantic.ai.golem.web.js.eventFlow
 import com.xemantic.ai.golem.web.view.HasRootHtmlElement
+import com.xemantic.kotlin.js.dom.ariaLabel
+import com.xemantic.kotlin.js.dom.html.a
+import com.xemantic.kotlin.js.dom.html.button
+import com.xemantic.kotlin.js.dom.html.div
+import com.xemantic.kotlin.js.dom.html.header
+import com.xemantic.kotlin.js.dom.html.icon
+import com.xemantic.kotlin.js.dom.html.nav
+import com.xemantic.kotlin.js.dom.node
 import kotlinx.browser.window
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
-import kotlinx.html.*
+import kotlinx.coroutines.flow.onEach
 import org.w3c.dom.HTMLElement
+import org.w3c.dom.events.Event
 
 class HtmlNavigationRailView : SidebarView, HasRootHtmlElement {
 
-    private val initiateCognitionItem = dom.a {
-        attributes["data-target"] = "initiate-cognition"
-        ariaLabel = "Initiate cognitive process"
-        i { +"network_intel_node" }
-        div { +"Initiate" }
-    }
-
-    private val memoryItem = dom.a {
-        attributes["data-target"] = "memory"
-        ariaLabel = "Open memory graph"
-        i { +"graph_3" }
-        div { +"Memory" }
-    }
-
-    private val settingsItem = dom.a {
-        attributes["data-target"] = "settings"
-        ariaLabel = "Settings"
-        i { +"settings" }
-        div { +"Settings" }
-    }
-
-    private val menuButton = dom.button(classes = "app-menu extra circle transparent") {
-        ariaLabel = "Menu"
-        i { +"menu" }
-    }
-
-    private val themeSwitcherButton = dom.button(classes = "app-theme-switcher extra circle transparent") {
-        ariaLabel = "Theme switcher"
-        i { +"light_mode" }
-    }
-
-    override val element: HTMLElement = dom.nav(classes = "app-navigation-rail left surface-container") {
-        ariaLabel = "Main navigation"
-        header {
-            inject(menuButton)
+    private val initiateCognitionItem = node {
+        a {
+            it.setAttribute("data-target", "initiate-cognition")
+            it.ariaLabel = "Initiate cognitive process"
+            icon("network_intel_node")
+            div { +"Initiate" }
         }
-        inject(
-            initiateCognitionItem,
-            memoryItem,
-            settingsItem
-        )
-        div(classes = "max")
-        inject(themeSwitcherButton)
+    }
+
+    private val memoryItem = node {
+        a {
+            it.setAttribute("data-target", "memory")
+            it.ariaLabel = "Open memory graph"
+            icon("graph_3")
+            div { +"Memory" }
+        }
+    }
+
+    private val settingsItem = node {
+        a {
+            it.setAttribute("data-target", "settings")
+            it.ariaLabel = "Settings"
+            icon("settings")
+            div { +"Settings" }
+        }
+    }
+
+    private val menuButton = node {
+        button("app-menu extra circle transparent") {
+            it.ariaLabel = "Menu"
+            icon("menu")
+        }
+    }
+
+    private val themeSwitcherButton = node {
+        button("app-theme-switcher extra circle transparent") {
+            it.ariaLabel = "Theme switcher"
+            icon("light_mode")
+        }
+    }
+
+    override val element: HTMLElement = node {
+        nav("app-navigation-rail left surface-container") {
+            it.ariaLabel = "Main navigation"
+            header {
+                +menuButton
+            }
+            +initiateCognitionItem
+            +memoryItem
+            +settingsItem
+            div("max")
+            +themeSwitcherButton
+        }
     }
 
     private val menuIcon: HTMLElement?
@@ -100,7 +115,7 @@ class HtmlNavigationRailView : SidebarView, HasRootHtmlElement {
 
     override val themeChanges: Flow<Action> = themeSwitcherButton.actions()
 
-    override val resizes: Flow<Action> = window.resizes().map { Action }
+    override val resizes: Flow<Action> = window.eventFlow<Event>("resize").map { Action }
 
     override var opened: Boolean = false
         set(value) {

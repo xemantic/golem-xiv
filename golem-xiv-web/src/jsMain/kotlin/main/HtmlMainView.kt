@@ -23,16 +23,17 @@ import com.xemantic.ai.golem.presenter.ScreenView
 import com.xemantic.ai.golem.presenter.environment.Theme
 import com.xemantic.ai.golem.presenter.cognition.CognitionView
 import com.xemantic.ai.golem.presenter.util.Action
-import com.xemantic.ai.golem.web.js.dom
 import com.xemantic.ai.golem.web.js.eventFlow
 import com.xemantic.ai.golem.web.navigation.HtmlHeaderView
 import com.xemantic.ai.golem.web.navigation.HtmlNavigationRailView
 import com.xemantic.ai.golem.web.cognition.HtmlCognitionView
 import com.xemantic.ai.golem.web.view.HasRootHtmlElement
+import com.xemantic.kotlin.js.dom.html.div
+import com.xemantic.kotlin.js.dom.html.main
+import com.xemantic.kotlin.js.dom.node
 import kotlinx.browser.window
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import kotlinx.html.*
 import org.w3c.dom.HTMLElement
 import org.w3c.dom.events.Event
 
@@ -42,9 +43,9 @@ class HtmlMainView(
     navigationRailView: HtmlNavigationRailView,
 ): MainView {
 
-    private val mainElement = dom.main()
+    private val mainElement = node { main() }
 
-    private val overlayElement = dom.div("overlay")
+    private val overlayElement = node { div("overlay") }
 
     init {
         body.append(
@@ -80,39 +81,3 @@ class HtmlMainView(
         get() = window.eventFlow<Event>("resize").map { Action }
 
 }
-
-//private fun HTMLElement.buildMainUi(
-//    mainElement: HTMLElement
-//) = append {
-//
-//    header {
-//        h1("Golem XIV")
-//
-//        div(classes = "user-controls") {
-//            button(classes = "settings-button") {
-//                attributes["aria-label"] = "Settings"
-//                attributes["type"] = "button"
-//                span(classes = "icon") { +"⚙️" }
-//                //onClickFunction = { openSettingsDialog() }
-//            }
-//
-//            div(classes = "user-menu") {
-//                button {
-//                    attributes["aria-haspopup"] = "menu"
-//                    attributes["aria-expanded"] = "false"
-//                    img(classes = "avatar") {
-//                        src = "/api/placeholder/32/32"
-//                        alt = "User profile"
-//                    }
-//                }
-//            }
-//        }
-//    }
-//
-//    append(mainElement)
-//
-//    footer {
-//        +"© 2025 Xemantic"
-//    }
-
-//}

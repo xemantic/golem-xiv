@@ -23,24 +23,21 @@ import com.xemantic.ai.golem.api.PhenomenalExpression
 import com.xemantic.ai.golem.api.Phenomenon
 import com.xemantic.ai.golem.presenter.cognition.*
 import com.xemantic.ai.golem.web.js.actions
-import com.xemantic.ai.golem.web.js.dom
 import com.xemantic.ai.golem.web.js.eventFlow
-import com.xemantic.ai.golem.web.js.inject
 import com.xemantic.ai.golem.web.ui.Div
-import com.xemantic.ai.golem.web.ui.Icon
 import com.xemantic.ai.golem.web.ui.IconButton
 import com.xemantic.ai.golem.web.view.HasRootHtmlElement
+import com.xemantic.kotlin.js.dom.html.article
+import com.xemantic.kotlin.js.dom.html.details
+import com.xemantic.kotlin.js.dom.html.div
+import com.xemantic.kotlin.js.dom.html.icon
+import com.xemantic.kotlin.js.dom.html.nav
+import com.xemantic.kotlin.js.dom.html.summary
+import com.xemantic.kotlin.js.dom.html.textarea
+import com.xemantic.kotlin.js.dom.node
 import kotlinx.browser.window
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
-import kotlinx.html.article
-import kotlinx.html.div
-import kotlinx.html.dom.append
-import kotlinx.html.js.details
-import kotlinx.html.js.div
-import kotlinx.html.js.summary
-import kotlinx.html.js.textArea
-import kotlinx.html.nav
 import org.w3c.dom.HTMLDivElement
 import org.w3c.dom.HTMLTextAreaElement
 import org.w3c.dom.events.InputEvent
@@ -62,39 +59,43 @@ class HtmlCognitionView(
         ariaLabel = "Express your intent"
     )
 
-    private val promptInput = dom.textArea {
-        placeholder = "Another question from the carbon side..."
+    private val promptInput: HTMLTextAreaElement = node {
+        textarea(placeholder = "Another question from the carbon side...")
     }
 
-    private val promptDiv = dom.div(classes = "prompt surface-container round") {
-        inject(promptInput)
-        div("prompt-controls") {
-            div("prompt-options") {
-                inject(micButton)
-            }
-            div("prompt-actions") {
-                inject(expressButton)
+    private val promptDiv = node {
+        div("prompt surface-container round") {
+            +promptInput
+            div("prompt-controls") {
+                div("prompt-options") {
+                    +micButton
+                }
+                div("prompt-actions") {
+                    +expressButton
+                }
             }
         }
     }
 
-    override val element = dom.div("cognition") {
-        inject(
-            phenomenaDiv,
-            promptDiv
-        )
+    override val element = node {
+        div("cognition") {
+            +phenomenaDiv
+            +promptDiv
+        }
     }
 
     override fun starExpression(
         agent: EpistemicAgent
     ): ExpressionAppender {
 
-        val messageDiv = dom.div("expression surface-container round ${agent.cssClass()}") {
-            div("expression-header") {
-                when (agent) {
-                    is EpistemicAgent.Human -> { Icon("person"); +"You" }
-                    is EpistemicAgent.AI -> { Icon("smart_toy"); +"Golem XIV" }
-                    is EpistemicAgent.Computer -> { Icon("computer"); +"Computer" }
+        val messageDiv = node {
+            div("expression surface-container round ${agent.cssClass()}") {
+                div("expression-header") {
+                    when (agent) {
+                        is EpistemicAgent.Human -> { icon("person"); +"You" }
+                        is EpistemicAgent.AI -> { icon("smart_toy"); +"Golem XIV" }
+                        is EpistemicAgent.Computer -> { icon("computer"); +"Computer" }
+                    }
                 }
             }
         }
@@ -111,20 +112,20 @@ class HtmlCognitionView(
 
             override fun intentAppender(): IntentAppender {
 
-                val intentDiv = dom.details("intent")
+                val intentDiv = node { details("intent") }
                 messageDiv.append(intentDiv)
 
                 return object : IntentAppender {
 
                     override fun purposeAppender(): TextAppender {
-                        val purposeTextDiv = dom.div("max") {
-
-                        }
-                        val purposeDiv = dom.summary {
-                            article("round border no-elevate") {
-                                nav {
-                                    inject(purposeTextDiv)
-                                    Icon("keyboard_arrow_down")
+                        val purposeTextDiv = node { div("max") }
+                        val purposeDiv = node {
+                            summary {
+                                article("round border no-elevate") {
+                                    nav {
+                                        +purposeTextDiv
+                                        icon("keyboard_arrow_down")
+                                    }
                                 }
                             }
                         }
@@ -133,7 +134,7 @@ class HtmlCognitionView(
                     }
 
                     override fun codeAppender(): TextAppender {
-                        val codeDiv = dom.div("code round")
+                        val codeDiv = node { div("code round") }
                         intentDiv.append(codeDiv)
                         return { codeDiv.append(it) }
                     }
@@ -144,14 +145,16 @@ class HtmlCognitionView(
 
             override fun fulfillmentAppender(): FulfillmentAppender {
 
-                val fulfillmentDiv = dom.details("fulfillment")
+                val fulfillmentDiv = node { details("fulfillment") }
                 messageDiv.append(fulfillmentDiv)
 
-                val summaryDiv = dom.summary {
-                    article("round border no-elevate") {
-                        nav {
-                            div("max") { +"Answer" }
-                            Icon("keyboard_arrow_down")
+                val summaryDiv = node {
+                    summary {
+                        article("round border no-elevate") {
+                            nav {
+                                div("max") { +"Answer" }
+                                icon("keyboard_arrow_down")
+                            }
                         }
                     }
                 }
@@ -160,7 +163,7 @@ class HtmlCognitionView(
                 return object : FulfillmentAppender {
 
                     override fun textAppender(): TextAppender {
-                        val textDiv = dom.div("text")
+                        val textDiv = node { div("text") }
                         fulfillmentDiv.append(textDiv)
                         return { textDiv.append(it) }
                     }
@@ -175,23 +178,20 @@ class HtmlCognitionView(
 
     override fun addExpression(expression: PhenomenalExpression) {
         println("adding expression: $expression")
-        phenomenaDiv.append {
-            val role = if (expression.agent is EpistemicAgent.AI) {
-                "ai"
-            } else {
-                "human"
-            }
+        val role = expression.agent.cssClass()
+        val expressionDiv = node {
             div("expression round $role") {
-                expression.phenomena.forEach {
+                expression.phenomena.forEach { phenomenon ->
                     div("content") {
-                        when (it) {
-                            is Phenomenon.Text -> { +it.text }
-                            else -> { +it.toString() }
+                        when (phenomenon) {
+                            is Phenomenon.Text -> { +phenomenon.text }
+                            else -> { +phenomenon.toString() }
                         }
                     }
                 }
             }
         }
+        phenomenaDiv.append(expressionDiv)
     }
 
     override val promptChanges = promptInput.eventFlow<InputEvent>("input").map {
@@ -230,48 +230,6 @@ class HtmlCognitionView(
             field = value
             window.asDynamic().cognizing = value
         }
-
-//    override fun addTextResponse(text: String) {
-////        content.append {
-////            div("text") {
-////                +text
-////            }
-////        }
-//    }
-
-//    override fun addToolUseRequest(request: AgentOutput.ToolUseRequest) {
-//        content.append.div("tool-use") {
-//            div("tool") {
-//                +request.tool::class.simpleName!!
-//            }
-//            div("purpose") {
-//                +request.tool.purpose
-//            }
-//            when (request.tool) {
-//                is ExecuteShellCommand -> {
-//                    div("command") {
-//                        request.tool.command
-//                    }
-//                }
-//                else -> {}
-//            }
-//
-//        }
-//    }
-//
-//    override fun addToolUseResponse(
-//        response: AgentOutput.ToolUseResponse
-//    ) {
-//        content.append.div("tool-use-response") {
-//            response.toolResult.content!!.forEach { content ->
-//                if (content is Text) {
-//                    div("text") {
-//                        +content.text
-//                    }
-//                }
-//            }
-//        }
-//    }
 
     private fun HTMLTextAreaElement.adjustHeight() {
         style.height = "auto"
