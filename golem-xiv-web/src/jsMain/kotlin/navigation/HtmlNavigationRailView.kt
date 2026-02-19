@@ -1,6 +1,6 @@
 /*
  * Golem XIV - Autonomous metacognitive AI system with semantic memory and self-directed research
- * Copyright (C) 2025  Kazimierz Pogoda / Xemantic
+ * Copyright (C) 2026  Kazimierz Pogoda / Xemantic
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -36,6 +36,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import org.w3c.dom.HTMLElement
 import org.w3c.dom.events.Event
+import org.w3c.dom.set
 
 class HtmlNavigationRailView : SidebarView, HasRootHtmlElement {
 
