@@ -1,5 +1,7 @@
 # CLAUDE.md
 
+Both developers and AI agents are expected to add entries as they encounter surprises.
+
 This file captures only what cannot be inferred from the codebase itself.
 
 ## Rules for editing this file
@@ -11,4 +13,8 @@ This file captures only what cannot be inferred from the codebase itself.
 
 ## Known gotchas
 
+- Application requires three processes started in order: Neo4j (`./gradlew runNeo4j`), then the server (`./gradlew run`), then the web client (`./gradlew jsBrowserDevelopmentRun --continuous`). First-time setup also needs `./gradlew installNeo4jBrowser`.
+
 ## Anti-patterns to avoid
+
+- Do not add content to this file that is already discoverable by reading the source or build scripts — that inflates context without adding signal, reducing AI agent task success rates (see [arxiv 2602.11988](https://arxiv.org/abs/2602.11988)).
