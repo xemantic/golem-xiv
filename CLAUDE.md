@@ -1,84 +1,20 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file captures only what cannot be inferred from the codebase itself.
 
-## Project Overview
+## Rules for editing this file
 
-Golem XIV is a meta-cognitive recursive AI agent with memory, built as a Kotlin multiplatform project. It features:
-- Knowledge Graph memory using Neo4j
-- GolemScript - a custom Kotlin-based scripting language for agent reasoning
-- Multiple LLM backends (Anthropic Claude, Alibaba Qwen/Dashscope)
-- Real-time web interface via WebSockets
+Both developers and AI agents are expected to add entries as they encounter surprises.
 
-## Build Commands
+- **Add an entry** when you encounter something unexpected: a build quirk, a non-obvious constraint, a dependency gotcha, or any behavior that would surprise the next agent or developer.
+- **Add an entry** when a developer flags an anti-pattern produced by AI — describe the anti-pattern and the preferred alternative.
+- **Do not** add codebase overviews, directory listings, or anything discoverable by reading the source.
+- Keep entries concise: one line per lesson, grouped under a heading if a theme emerges.
 
-```shell
-# Build the entire project
-./gradlew build
+## Known gotchas
 
-# Run tests for a specific module
-./gradlew :golem-xiv-core:test
-./gradlew :golem-xiv-neo4j:test
+- Application requires three processes started in order: Neo4j (`./gradlew runNeo4j`), then the server (`./gradlew run`), then the web client (`./gradlew jsBrowserDevelopmentRun --continuous`). First-time setup also needs `./gradlew installNeo4jBrowser`.
 
-# Compile without tests
-./gradlew :golem-xiv-core:compileKotlin
-./gradlew :golem-xiv-neo4j:compileKotlin
+## Anti-patterns to avoid
 
-# Clean local neo4j and disk storage
-./gradlew cleanDevStorage
-```
-
-## Running the Application
-
-Requires three terminals running in order:
-
-1. **Neo4j database**: `./gradlew runNeo4j`
-2. **Golem server**: `export ANTHROPIC_API_KEY=your_key && ./gradlew run`
-3. **Web client**: `./gradlew jsBrowserDevelopmentRun --continuous`
-
-First-time setup requires: `./gradlew installNeo4jBrowser`
-
-## Architecture
-
-### Module Structure
-
-- **golem-xiv-api** - Multiplatform API types shared between client/server (Cognition, Phenomenon, EpistemicAgent)
-- **golem-xiv-api-backend** - Backend-only API extensions (CognitionRepository, Cognizer, GolemScriptApi)
-- **golem-xiv-api-websocket** - WebSocket protocol types
-- **golem-xiv-core** - Core cognitive processing engine (`GolemXiv` class, script execution)
-- **golem-xiv-neo4j** - Neo4j Knowledge Graph memory implementation
-- **golem-xiv-cognizer-anthropic** - Claude/Anthropic LLM integration via anthropic-sdk-kotlin
-- **golem-xiv-server** - Ktor-based WebSocket server
-- **golem-xiv-web** - Kotlin/JS browser client
-- **golem-xiv-neo4j-starter** - Embedded Neo4j launcher for development
-
-### Key Concepts
-
-- **Cognition**: A reasoning session with an ID, tracking phenomenal expressions
-- **Phenomenon**: Units of perception/expression (Text, Image, Document, Intent, Fulfillment)
-- **EpistemicAgent**: An entity that can express phenomena (AI, Human, Computer)
-- **Intent**: GolemScript code blocks that Golem wants to execute
-- **Fulfillment**: Results from executing GolemScript intents
-
-### Build Logic
-
-The `build-logic` module provides `golem.convention` plugin applied to all modules, configuring:
-- Kotlin/JVM target 21
-- Power Assert for tests (`com.xemantic.kotlin.test.assert`, `com.xemantic.kotlin.test.have`)
-- Progressive mode and extra warnings enabled
-
-## Testing
-
-Tests use JUnit Platform with `xemantic-kotlin-test` assertions. Neo4j tests use `neo4j-harness` for embedded database instances.
-
-```shell
-# Run a single test class
-./gradlew :golem-xiv-core:test --tests "com.xemantic.ai.golem.core.script.GolemScriptExecutorTest"
-
-# Run a single test method
-./gradlew :golem-xiv-neo4j:test --tests "*Neo4jMemoryTest.should*"
-```
-
-## IDE Setup
-
-Optional: Install [Graph Database](https://plugins.jetbrains.com/plugin/20417-graph-database) IntelliJ plugin for Cypher syntax highlighting.
+- Do not add content to this file that is already discoverable by reading the source or build scripts — that inflates context without adding signal, reducing AI agent task success rates (see [arxiv 2602.11988](https://arxiv.org/abs/2602.11988)).
