@@ -21,22 +21,25 @@ package com.xemantic.ai.golem.web.navigation
 import com.xemantic.ai.golem.presenter.navigation.HeaderView
 import com.xemantic.ai.golem.presenter.util.Action
 import com.xemantic.ai.golem.web.js.actions
-import com.xemantic.ai.golem.web.js.ariaLabel
-import com.xemantic.ai.golem.web.js.dom
-import com.xemantic.ai.golem.web.js.inject
 import com.xemantic.ai.golem.web.view.HasRootHtmlElement
+import com.xemantic.kotlin.js.dom.ariaLabel
+import com.xemantic.kotlin.js.dom.html.*
+import com.xemantic.kotlin.js.dom.node
 import kotlinx.coroutines.flow.Flow
-import kotlinx.html.*
 
 class HtmlHeaderView() : HeaderView, HasRootHtmlElement {
 
-    private val menuButton = dom.button(classes = "app-menu circle transparent") {
-        ariaLabel = "Toggle sidebar menu"
-        i { +"menu" }
+    private val menuButton = node {
+        button("app-menu circle transparent") {
+            it.ariaLabel = "Toggle sidebar menu"
+            icon("menu")
+        }
     }
 
-    override val element = dom.nav(classes = "app-navigation-bar top s left-align") {
-        inject(menuButton)
+    override val element = node {
+        nav("app-navigation-bar top s left-align") {
+            +menuButton
+        }
     }
 
     override val toggleMenuClicks: Flow<Action> = menuButton.actions()

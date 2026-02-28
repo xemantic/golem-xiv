@@ -44,7 +44,7 @@ export ANTHROPIC_API_KEY=your_key
 finally, run the web client:
 
 ```shell
-./gradlew jsBrowserDevelopmentRun --continuous
+./gradlew golem-xiv-web:jsBrowserDevelopmentRun --continuous
 ```
 
 The last command will open your browser pointing to:

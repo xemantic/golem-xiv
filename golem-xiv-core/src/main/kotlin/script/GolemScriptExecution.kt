@@ -1,6 +1,6 @@
 /*
  * Golem XIV - Autonomous metacognitive AI system with semantic memory and self-directed research
- * Copyright (C) 2025  Kazimierz Pogoda / Xemantic
+ * Copyright (C) 2026  Kazimierz Pogoda / Xemantic
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -21,30 +21,13 @@ package com.xemantic.ai.golem.core.script
 import com.xemantic.ai.golem.api.backend.script.ExecuteGolemScript
 import com.xemantic.ai.golem.core.kotlin.startsWithAnyOf
 import io.github.oshai.kotlinlogging.KotlinLogging
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.job
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import org.intellij.lang.annotations.Language
 import kotlin.concurrent.atomics.AtomicInt
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.concurrent.atomics.fetchAndIncrement
 import kotlin.reflect.KClass
-import kotlin.script.experimental.api.CompiledScript
-import kotlin.script.experimental.api.EvaluationResult
-import kotlin.script.experimental.api.KotlinType
-import kotlin.script.experimental.api.ResultValue
-import kotlin.script.experimental.api.ResultWithDiagnostics
-import kotlin.script.experimental.api.ScriptCompilationConfiguration
-import kotlin.script.experimental.api.ScriptDiagnostic
-import kotlin.script.experimental.api.ScriptEvaluationConfiguration
-import kotlin.script.experimental.api.SourceCode
-import kotlin.script.experimental.api.compilerOptions
-import kotlin.script.experimental.api.defaultImports
-import kotlin.script.experimental.api.providedProperties
+import kotlin.script.experimental.api.*
 import kotlin.script.experimental.host.toScriptSource
 import kotlin.script.experimental.jvm.dependenciesFromCurrentContext
 import kotlin.script.experimental.jvm.jvm
@@ -81,7 +64,9 @@ class GolemScriptExecutor {
         // TODO can be removed once the time API is stable?
         // "-Xmulti-dollar-interpolation" probably not needed anymore
         compilerOptions.append(
-            "-opt-in=kotlin.time.ExperimentalTime",
+            "-Xcontext-sensitive-resolution",
+            "-Xexplicit-backing-fields",
+            //"-opt-in=kotlin.time.ExperimentalTime",
         )
     }
 
