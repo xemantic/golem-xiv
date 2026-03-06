@@ -38,6 +38,7 @@ import io.github.oshai.kotlinlogging.KLogger
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
+import at.favre.lib.crypto.bcrypt.BCrypt
 import io.ktor.server.auth.*
 import io.ktor.server.config.*
 import io.ktor.server.http.content.*
@@ -54,7 +55,6 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.runBlocking
 import org.neo4j.driver.AuthTokens
 import org.neo4j.driver.GraphDatabase
-import java.security.MessageDigest
 
 val logger = KotlinLogging.logger {}
 
@@ -67,7 +67,7 @@ fun Application.module() {
 
     logger.info { "Starting Golem XIV server" }
 
-    val httpAuthConfig = property<HttpAuthConfig>("httpAuth")
+    val httpAuthConfig: HttpAuthConfig? = runCatching { property<HttpAuthConfig>("httpAuth") }.getOrNull()
     val neo4jConfig = property<Neo4jConfig>("neo4j")
     val authToken = if (neo4jConfig.username == "golem" && neo4jConfig.password == "golem") {
         AuthTokens.none()
@@ -139,18 +139,19 @@ fun Application.module() {
 //        LogManager.shutdown()
 //    }
 
-    install(Authentication) {
-        basic("golem-auth") {
-            realm = "Golem XIV"
-            validate { credentials ->
-                val expectedHash = httpAuthConfig.passwordHash
-                val actualHash = MessageDigest.getInstance("SHA-256")
-                    .digest(credentials.password.toByteArray())
-                    .joinToString("") { "%02x".format(it) }
-                if (credentials.name == httpAuthConfig.username && actualHash == expectedHash) {
-                    UserIdPrincipal(credentials.name)
-                } else {
-                    null
+    if (httpAuthConfig != null) {
+        install(Authentication) {
+            basic("golem-auth") {
+                realm = "Golem XIV"
+                validate { credentials ->
+                    val verified = BCrypt.verifyer()
+                        .verify(credentials.password.toCharArray(), httpAuthConfig.bcryptHash)
+                        .verified
+                    if (credentials.name == httpAuthConfig.username && verified) {
+                        UserIdPrincipal(credentials.name)
+                    } else {
+                        null
+                    }
                 }
             }
         }
@@ -170,8 +171,7 @@ fun Application.module() {
 
     routing {
 
-        authenticate("golem-auth") {
-
+        val defineRoutes: Route.() -> Unit = {
             staticResources("/", "web") {
                 // does it matter for the local server?
                 preCompressed(
@@ -198,6 +198,12 @@ fun Application.module() {
                     sendGolemOutput(it)
                 }
             }
+        }
+
+        if (httpAuthConfig != null) {
+            authenticate("golem-auth") { defineRoutes() }
+        } else {
+            defineRoutes()
         }
     }
 }

@@ -57,30 +57,35 @@ http://localhost:8081
 
 ## Authentication
 
-Golem XIV uses HTTP Basic Authentication to protect all routes. Access is restricted to a single predefined user.
+Golem XIV supports optional HTTP Basic Authentication. When the `httpAuth` section is absent from the configuration, all routes are open — this is the default for local development.
 
-### Development credentials
+### Local development
 
-The development configuration (`application.yaml`) uses:
-- **username**: `golem`
-- **password**: `golem`
+Authentication is disabled by default in `application.yaml`. No credentials are required when running locally.
 
-### Setting up credentials for deployment
+### Enabling authentication for deployment
 
-The password is stored as a SHA-256 hex digest. To generate a hash for a new password, run:
+Authentication is enabled when `application-deployment.yaml` is used. The password is stored as a bcrypt hash (cost factor 12). To generate one:
 
 ```shell
-echo -n "your_password" | sha256sum | cut -d' ' -f1
+# Using htpasswd (available on Linux/macOS via apache2-utils / httpd-tools)
+htpasswd -bnBC 12 "" "your_password" | tr -d ':\n'
+
+# Or using Python 3
+python3 -c "import bcrypt; print(bcrypt.hashpw(b'your_password', bcrypt.gensalt(12)).decode())"
 ```
 
 Then set the following environment variables before deploying:
 
 ```shell
 export GOLEM_AUTH_USERNAME=your_username
-export GOLEM_AUTH_PASSWORD_HASH=<sha256-hex-of-your-password>
+export GOLEM_AUTH_BCRYPT_HASH='$2b$12$...'   # single-quote to avoid $ expansion
 ```
 
 These are picked up by `application-deployment.yaml`.
+
+> [!WARNING]
+> HTTP Basic Auth sends credentials as base64 — effectively plaintext. Always deploy behind a TLS-terminating reverse proxy (nginx, Caddy, Traefik, etc.).
 
 ## Developing Golem
 

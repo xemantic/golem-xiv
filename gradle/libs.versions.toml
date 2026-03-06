@@ -19,6 +19,7 @@ markanywhere = "0.1.12"
 
 
 ktor = "3.3.3"
+bcrypt = "0.10.2"
 playwright = "1.57.0"
 dashscope = "2.20.1"
 neo4j = "2025.11.2"
@@ -91,6 +92,7 @@ ktor-server-auth = { module = "io.ktor:ktor-server-auth", version.ref = "ktor" }
 ktor-server-status-pages = { module = "io.ktor:ktor-server-status-pages", version.ref = "ktor" }
 ktor-server-test-host = { module = "io.ktor:ktor-server-test-host", version.ref = "ktor" }
 ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor"}
+bcrypt = { module = "at.favre.lib:bcrypt", version.ref = "bcrypt" }
 
 # transitive dependency of dashscope
 #jackson-core = { group = "com.fasterxml.jackson.core", name = "jackson-core", version.ref = "jackson" }
