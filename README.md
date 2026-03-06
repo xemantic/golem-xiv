@@ -55,6 +55,33 @@ communicating with Ktor-based Web server (with WebSockets) running on:
 
 http://localhost:8081
 
+## Authentication
+
+Golem XIV uses HTTP Basic Authentication to protect all routes. Access is restricted to a single predefined user.
+
+### Development credentials
+
+The development configuration (`application.yaml`) uses:
+- **username**: `golem`
+- **password**: `golem`
+
+### Setting up credentials for deployment
+
+The password is stored as a SHA-256 hex digest. To generate a hash for a new password, run:
+
+```shell
+echo -n "your_password" | sha256sum | cut -d' ' -f1
+```
+
+Then set the following environment variables before deploying:
+
+```shell
+export GOLEM_AUTH_USERNAME=your_username
+export GOLEM_AUTH_PASSWORD_HASH=<sha256-hex-of-your-password>
+```
+
+These are picked up by `application-deployment.yaml`.
+
 ## Developing Golem
 
 ### Optional Cypher syntax highlighting

@@ -38,6 +38,7 @@ import io.github.oshai.kotlinlogging.KLogger
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
+import io.ktor.server.auth.*
 import io.ktor.server.config.*
 import io.ktor.server.http.content.*
 import io.ktor.server.plugins.*
@@ -53,6 +54,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.runBlocking
 import org.neo4j.driver.AuthTokens
 import org.neo4j.driver.GraphDatabase
+import java.security.MessageDigest
 
 val logger = KotlinLogging.logger {}
 
@@ -65,6 +67,7 @@ fun Application.module() {
 
     logger.info { "Starting Golem XIV server" }
 
+    val httpAuthConfig = property<HttpAuthConfig>("httpAuth")
     val neo4jConfig = property<Neo4jConfig>("neo4j")
     val authToken = if (neo4jConfig.username == "golem" && neo4jConfig.password == "golem") {
         AuthTokens.none()
@@ -136,6 +139,23 @@ fun Application.module() {
 //        LogManager.shutdown()
 //    }
 
+    install(Authentication) {
+        basic("golem-auth") {
+            realm = "Golem XIV"
+            validate { credentials ->
+                val expectedHash = httpAuthConfig.passwordHash
+                val actualHash = MessageDigest.getInstance("SHA-256")
+                    .digest(credentials.password.toByteArray())
+                    .joinToString("") { "%02x".format(it) }
+                if (credentials.name == httpAuthConfig.username && actualHash == expectedHash) {
+                    UserIdPrincipal(credentials.name)
+                } else {
+                    null
+                }
+            }
+        }
+    }
+
     install(CallLogging) {
         level = org.slf4j.event.Level.DEBUG
     }
@@ -150,30 +170,33 @@ fun Application.module() {
 
     routing {
 
-        staticResources("/", "web") {
-            // does it matter for the local server?
-            preCompressed(
-                CompressedFileType.BROTLI,
-                CompressedFileType.GZIP
-            )
-        }
+        authenticate("golem-auth") {
 
-        route("/api") {
-            golemApiRoute(logger, golem)
-        }
+            staticResources("/", "web") {
+                // does it matter for the local server?
+                preCompressed(
+                    CompressedFileType.BROTLI,
+                    CompressedFileType.GZIP
+                )
+            }
 
-        sse("/events") {
-            val clientIp = call.request.origin.remoteAddress
-            logger.info { "SSE client connected: $clientIp" }
+            route("/api") {
+                golemApiRoute(logger, golem)
+            }
 
-            heartbeat()
+            sse("/events") {
+                val clientIp = call.request.origin.remoteAddress
+                logger.info { "SSE client connected: $clientIp" }
 
-            sendGolemOutput(
-                GolemOutput.Welcome("You are connected to Golem XIV")
-            )
+                heartbeat()
 
-            outputs.collect {
-                sendGolemOutput(it)
+                sendGolemOutput(
+                    GolemOutput.Welcome("You are connected to Golem XIV")
+                )
+
+                outputs.collect {
+                    sendGolemOutput(it)
+                }
             }
         }
     }

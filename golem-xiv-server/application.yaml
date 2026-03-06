@@ -8,6 +8,11 @@ ktor:
       - com.xemantic.ai.golem.server.CorsKt.cors
       - com.xemantic.ai.golem.server.GolemServerKt.module
 
+httpAuth:
+  username: golem
+  # SHA-256 hash of "golem" — for development only, change for production
+  passwordHash: 4c5cddb7859b93eebf26c551518c021a31fa0013b2c03afa5b541cbc8bd079a6
+
 neo4j:
   uri: bolt://localhost:7687
   username: golem
