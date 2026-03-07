@@ -1,6 +1,6 @@
 /*
  * Golem XIV - Autonomous metacognitive AI system with semantic memory and self-directed research
- * Copyright (C) 2025  Kazimierz Pogoda / Xemantic
+ * Copyright (C) 2026  Kazimierz Pogoda / Xemantic
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -16,12 +16,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.xemantic.ai.golem.presenter.environment
+package com.xemantic.golem.viewmodel.environment
 
 interface LocalStorage {
 
-    fun getItem(key: String): String?
+    operator fun get(key: String): String?
 
-    fun setItem(key: String, value: String)
+    operator fun set(key: String, value: String)
 
 }

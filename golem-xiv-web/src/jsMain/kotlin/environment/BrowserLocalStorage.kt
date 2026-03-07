@@ -1,6 +1,6 @@
 /*
  * Golem XIV - Autonomous metacognitive AI system with semantic memory and self-directed research
- * Copyright (C) 2025  Kazimierz Pogoda / Xemantic
+ * Copyright (C) 2026  Kazimierz Pogoda / Xemantic
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -16,19 +16,21 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.xemantic.ai.golem.web.environment
+package com.xemantic.golem.web.environment
 
-import com.xemantic.ai.golem.presenter.environment.LocalStorage
+import com.xemantic.golem.viewmodel.environment.LocalStorage
 import kotlinx.browser.localStorage
+import org.w3c.dom.get
+import org.w3c.dom.set
 
 class BrowserLocalStorage : LocalStorage {
 
-    override fun getItem(
+    override fun get(
         key: String
-    ): String? = localStorage.getItem(key)
+    ): String? = localStorage[key]
 
-    override fun setItem(key: String, value: String) {
-        localStorage.setItem(key,value)
+    override fun set(key: String, value: String) {
+        localStorage[key] = value
     }
 
 }
