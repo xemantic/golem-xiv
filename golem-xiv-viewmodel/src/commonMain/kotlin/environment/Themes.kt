@@ -1,6 +1,6 @@
 /*
  * Golem XIV - Autonomous metacognitive AI system with semantic memory and self-directed research
- * Copyright (C) 2025  Kazimierz Pogoda / Xemantic
+ * Copyright (C) 2026  Kazimierz Pogoda / Xemantic
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -16,7 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.xemantic.ai.golem.presenter.environment
+package com.xemantic.golem.viewmodel.environment
+
+import io.github.oshai.kotlinlogging.KotlinLogging
 
 enum class Theme {
 
@@ -28,6 +30,11 @@ enum class Theme {
         DARK -> LIGHT
     }
 
+}
+
+val Theme.label get() = when (this) {
+    LIGHT -> "Dark mode"
+    DARK -> "Light mode"
 }
 
 interface ThemeManager {
@@ -44,25 +51,29 @@ interface DefaultThemeProvider {
 
 class LocalStorageThemeManager(
     private val localStorage: LocalStorage,
-    defaultTheme: Theme
+    private val defaultTheme: Theme
 ) : ThemeManager {
 
-    private var currentTheme = localStorage.getItem(
-        key = "theme"
-    )?.let {
-        try {
-            Theme.valueOf(it)
-        } catch (e : IllegalArgumentException) {
-            // TODO logger here
-            null
-        }
-    } ?: defaultTheme
+    private val logger = KotlinLogging.logger {}
 
     override var theme: Theme
-        get() = currentTheme
+        get() = (localStorage["theme"]?.let {
+            try {
+                Theme.valueOf(it)
+            } catch (e : IllegalArgumentException) {
+                logger.error(e) {
+                    "Invalid theme name in local storage: $it" +
+                            ", should be one of: [${Theme.entries.joinToString(", ")}]" +
+                            ", initializing as null"
+                }
+                null
+            }
+        } ?: defaultTheme).also {
+            logger.debug { "Getting theme: $it" }
+        }
         set(value) {
-            currentTheme = value
-            localStorage.setItem("theme", value.name)
+            logger.debug { "Setting theme: $value" }
+            localStorage["theme"] = value.name
         }
 
 }
