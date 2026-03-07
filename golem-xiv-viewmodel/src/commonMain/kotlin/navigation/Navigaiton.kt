@@ -1,6 +1,6 @@
 /*
  * Golem XIV - Autonomous metacognitive AI system with semantic memory and self-directed research
- * Copyright (C) 2025  Kazimierz Pogoda / Xemantic
+ * Copyright (C) 2026  Kazimierz Pogoda / Xemantic
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -16,28 +16,34 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.xemantic.ai.golem.presenter.navigation
+package com.xemantic.golem.viewmodel.navigation
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 interface Navigation {
 
-    suspend fun navigateTo(target: Target)
+    fun navigateTo(target: Target)
 
     @Serializable
     sealed interface Target {
 
         @Serializable
-        @SerialName("InitiateCognition")
-        object InitiateCognition : Target {
-            override fun toString(): String = "InitiateCognition"
+        @SerialName("Cognitions")
+        object Cognitions : Target {
+            override fun toString(): String = "Cognitions"
         }
 
         @Serializable
         @SerialName("Memory")
         object Memory : Target {
             override fun toString(): String = "Memory"
+        }
+
+        @Serializable
+        @SerialName("Settings")
+        object Settings : Target {
+            override fun toString(): String = "Settings"
         }
 
         @Serializable
@@ -60,15 +66,18 @@ interface Navigation {
 /**
  * Parses navigation targets, it is using web pathname, but addressing is independent, from the rendering tech
  */
-fun parseNavigationTarget(
+fun Navigation.Target.Companion.parse(
     pathname: String
 ): Navigation.Target {
 
-    val segments = pathname.removePrefix("/").split("/").filter { it.isNotEmpty() }
+    val segments = pathname.removePrefix("/").split("/").filter {
+        it.isNotEmpty()
+    }
 
     return when {
-        segments.isEmpty() -> Navigation.Target.InitiateCognition
+        segments.isEmpty() -> Navigation.Target.Cognitions
         segments.size == 1 && segments[0] == "memory" -> Navigation.Target.Memory
+        segments.size == 1 && segments[0] == "settings" -> Navigation.Target.Settings
         segments.size == 2 && segments[0] == "cognitions" -> {
             try {
                 val id = segments[1].toLong()
