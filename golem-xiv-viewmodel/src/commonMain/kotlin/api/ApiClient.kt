@@ -1,6 +1,6 @@
 /*
  * Golem XIV - Autonomous metacognitive AI system with semantic memory and self-directed research
- * Copyright (C) 2025  Kazimierz Pogoda / Xemantic
+ * Copyright (C) 2026  Kazimierz Pogoda / Xemantic
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -16,12 +16,20 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.xemantic.ai.golem.web.js
+package com.xemantic.golem.viewmodel.api
 
-import kotlinx.html.HTMLTag
+import io.ktor.client.*
+import io.ktor.client.plugins.*
+import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.client.plugins.sse.*
+import io.ktor.serialization.kotlinx.json.*
 
-var HTMLTag.ariaLabel: String
-    get() = attributes["aria-label"]!!
-    set(value) {
-        attributes["aria-label"] = value
+fun apiClient(baseUrl: String) = HttpClient {
+    install(SSE)
+    install(ContentNegotiation) {
+        json()
     }
+    defaultRequest {
+        url(baseUrl)
+    }
+}
