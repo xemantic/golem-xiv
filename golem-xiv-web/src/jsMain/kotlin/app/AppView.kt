@@ -25,32 +25,24 @@ import com.xemantic.golem.web.navigation.navigationRailView
 import com.xemantic.kotlin.js.dom.NodeBuilder
 import com.xemantic.kotlin.js.dom.element.minusAssign
 import com.xemantic.kotlin.js.dom.element.plusAssign
-import com.xemantic.kotlin.js.dom.html.main
 import kotlinx.browser.window
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.dom.clear
 import org.w3c.dom.HTMLElement
 
 fun NodeBuilder.appView(
     viewModel: AppViewModel,
-    screenFlow: Flow<HTMLElement>
+    mainElement: HTMLElement,
 ) {
 
     navigationRailView(viewModel.navigationViewModel)
     headerView(viewModel.navigationViewModel)
     navigationDrawerView(viewModel.navigationViewModel)
 
-    main { main ->
-        screenFlow.onEach { screen ->
-            main.clear()
-            main.appendChild(screen)
-        }.launchIn(viewModel.scope)
-    }
+    +mainElement
 
     // the shader is reading theme from window property, so we need a generic logic setting it up
-    viewModel.navigationViewModel.themeLabel.onEach { theme ->
+    viewModel.navigationViewModel.theme.onEach { theme ->
         val body = root.unsafeCast<HTMLElement>()
         when (theme) {
             LIGHT -> {
@@ -64,5 +56,4 @@ fun NodeBuilder.appView(
         }
         window.asDynamic().theme = theme.name.lowercase()
     }.launchIn(viewModel.scope)
-
 }
