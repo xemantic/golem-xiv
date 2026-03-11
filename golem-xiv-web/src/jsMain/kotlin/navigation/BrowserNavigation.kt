@@ -1,6 +1,6 @@
 /*
  * Golem XIV - Autonomous metacognitive AI system with semantic memory and self-directed research
- * Copyright (C) 2025  Kazimierz Pogoda / Xemantic
+ * Copyright (C) 2026  Kazimierz Pogoda / Xemantic
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -16,59 +16,49 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.xemantic.ai.golem.web.navigation
+package com.xemantic.golem.web.navigation
 
 import com.xemantic.ai.golem.api.golemJson
-import com.xemantic.ai.golem.presenter.navigation.Navigation
-import com.xemantic.ai.golem.web.js.eventFlow
+import com.xemantic.golem.viewmodel.navigation.Navigation
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.browser.window
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.FlowCollector
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
-import org.w3c.dom.PopStateEvent
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 
-class HtmlNavigation(
-    scope: CoroutineScope,
-    private val navigationTargetSink: FlowCollector<Navigation.Target>
-) : Navigation {
+class BrowserNavigation : Navigation {
 
     private val logger = KotlinLogging.logger {}
 
-    init {
-        window.eventFlow<PopStateEvent>("popstate").onEach { event ->
-            event.preventDefault()
-            val target = golemJson.decodeFromString<Navigation.Target>(event.state as String)
-            navigationTargetSink.emit(target)
-        }.launchIn(scope)
-    }
+    private val _targets = MutableSharedFlow<Navigation.Target>()
+
+    override val targets: Flow<Navigation.Target> = _targets
 
     override suspend fun navigateTo(
         target: Navigation.Target
     ) {
 
-        logger.info {
-            "Navigating to: $target"
-        }
+        logger.debug { "Navigating to: $target" }
 
         val data = golemJson.encodeToString(target)
 
         when (target) {
-            is Navigation.Target.InitiateCognition -> {
+
+            is Navigation.Target.Cognitions -> {
                 window.history.pushState(
                     data = data,
                     title = "Initiate cognition",
                     url = "/"
                 )
             }
+
             is Navigation.Target.Cognition -> {
                 window.history.pushState(
                     data = data,
                     title = "Cognition",
-                    url = "/cognitions/${target.id}"
+                    url = "/cognition/${target.id}"
                 )
             }
+
             is Navigation.Target.Memory -> {
                 window.history.pushState(
                     data = data,
@@ -76,6 +66,23 @@ class HtmlNavigation(
                     url = "/memory"
                 )
             }
+
+            is Navigation.Target.Solicitations -> {
+                window.history.pushState(
+                    data = data,
+                    title = "Solicitations",
+                    url = "/solicitations"
+                )
+            }
+
+            is Navigation.Target.Settings -> {
+                window.history.pushState(
+                    data = data,
+                    title = "Settings",
+                    url = "/settings"
+                )
+            }
+
             is Navigation.Target.NotFound -> {
                 window.history.replaceState(
                     data = data,
@@ -83,11 +90,11 @@ class HtmlNavigation(
                     url = target.pathname
                 )
             }
+
         }
 
-        if (target !is Navigation.Target.NotFound) {
-            navigationTargetSink.emit(target)
-        }
+        _targets.emit(target)
+
     }
 
 }
