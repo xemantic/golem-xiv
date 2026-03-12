@@ -54,7 +54,6 @@ h1 {
 main {
     overflow-y: scroll;
     scrollbar-width: thin;
-    padding-bottom: 4rem;
 }
 
 pre {

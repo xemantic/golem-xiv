@@ -22,10 +22,16 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class Neo4jConfig(
-    val uri: String,
+    val protocol: String,
+    val host: String,
+    val port: Int,
+    val database: String,
     val username: String,
     val password: String,
-)
+) {
+    val uri: String get() = "$protocol://$host:$port"
+    val browserUrl: String get() = "https://browser.neo4j.io/?dbms=$protocol://$username@$host:$port&db=$database"
+}
 
 @Serializable
 data class HttpAuthConfig(

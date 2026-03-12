@@ -187,7 +187,10 @@ fun Application.module() {
                 heartbeat()
 
                 sendGolemOutput(
-                    GolemOutput.Welcome("You are connected to Golem XIV")
+                    GolemOutput.Welcome(
+                        message = "You are connected to Golem XIV",
+                        neo4jBrowserUrl = neo4jConfig.browserUrl
+                    )
                 )
 
                 outputs.collect {
@@ -210,13 +213,6 @@ fun Application.module() {
             defineRoutes()
         }
 
-        // SPA fallback: serve index.html for any unmatched GET request,
-        // enabling client-side routing (e.g. /cognitions/12 -> index.html)
-        get("{...}") {
-            call.resolveResource("index.html", "web")?.let {
-                call.respond(it)
-            }
-        }
     }
 }
 

@@ -8,7 +8,10 @@ ktor:
       - com.xemantic.ai.golem.server.GolemServerKt.module
 
 neo4j:
-  uri: ${NEO4J_URI}
+  protocol: ${NEO4J_PROTOCOL}
+  host: ${NEO4J_HOST}
+  port: ${NEO4J_PORT}
+  database: ${NEO4J_DATABASE}
   username: ${NEO4J_USERNAME}
   password: ${NEO4J_PASSWORD}
 

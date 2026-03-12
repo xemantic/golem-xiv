@@ -20,4 +20,8 @@ package com.xemantic.ai.golem.presenter.memory
 
 import com.xemantic.ai.golem.presenter.ScreenView
 
-interface MemoryView : ScreenView
+interface MemoryView : ScreenView {
+
+    var neo4jBrowserUrl: String
+
+}
