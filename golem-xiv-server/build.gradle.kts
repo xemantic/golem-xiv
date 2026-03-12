@@ -57,7 +57,6 @@ dependencies {
     implementation(libs.ktor.server.config.yaml)
     implementation(libs.ktor.server.content.negotiation)
     implementation(libs.ktor.server.auth)
-    implementation(libs.bcrypt)
     implementation(libs.ktor.server.status.pages)
     // cors is needed only during development
     // TODO check how to exclude it when assembling shadowJar

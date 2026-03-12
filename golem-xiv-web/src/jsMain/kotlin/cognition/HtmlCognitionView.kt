@@ -64,6 +64,7 @@ class HtmlCognitionView(
 
     private val promptInput = dom.textArea {
         placeholder = "Another question from the carbon side..."
+        autoFocus = true
     }
 
     private val promptDiv = dom.div(classes = "prompt surface-container round") {
@@ -217,6 +218,10 @@ class HtmlCognitionView(
 
     override fun clearPromptInput() {
         promptInput.value = ""
+    }
+
+    override fun focusPromptInput() {
+        promptInput.focus()
     }
 
     override var sendDisabled: Boolean

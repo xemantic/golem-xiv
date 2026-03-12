@@ -30,5 +30,5 @@ data class Neo4jConfig(
 @Serializable
 data class HttpAuthConfig(
     val username: String,
-    val bcryptHash: String,
+    val password: String,
 )

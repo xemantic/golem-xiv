@@ -7,11 +7,11 @@ ktor:
     modules:
       - com.xemantic.ai.golem.server.GolemServerKt.module
 
-httpAuth:
-  username: ${GOLEM_AUTH_USERNAME}
-  bcryptHash: ${GOLEM_AUTH_BCRYPT_HASH}
-
 neo4j:
   uri: ${NEO4J_URI}
   username: ${NEO4J_USERNAME}
   password: ${NEO4J_PASSWORD}
+
+httpAuth:
+  username: ${GOLEM_AUTH_USERNAME}
+  bcryptHash: ${GOLEM_AUTH_BCRYPT_HASH}

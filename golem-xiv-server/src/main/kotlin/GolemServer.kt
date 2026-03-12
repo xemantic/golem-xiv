@@ -38,7 +38,6 @@ import io.github.oshai.kotlinlogging.KLogger
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
-import at.favre.lib.crypto.bcrypt.BCrypt
 import io.ktor.server.auth.*
 import io.ktor.server.config.*
 import io.ktor.server.http.content.*
@@ -144,10 +143,7 @@ fun Application.module() {
             basic("golem-auth") {
                 realm = "Golem XIV"
                 validate { credentials ->
-                    val verified = BCrypt.verifyer()
-                        .verify(credentials.password.toCharArray(), httpAuthConfig.bcryptHash)
-                        .verified
-                    if (credentials.name == httpAuthConfig.username && verified) {
+                    if (credentials.name == httpAuthConfig.username && credentials.password == httpAuthConfig.password) {
                         UserIdPrincipal(credentials.name)
                     } else {
                         null
@@ -196,6 +192,14 @@ fun Application.module() {
 
                 outputs.collect {
                     sendGolemOutput(it)
+                }
+            }
+
+            // SPA fallback: serve index.html for any unmatched GET request,
+            // enabling client-side routing (e.g. /cognitions/12 -> index.html)
+            get("/cognitions/{...}") {
+                call.resolveResource("index.html", "web")?.let {
+                    call.respond(it)
                 }
             }
         }
