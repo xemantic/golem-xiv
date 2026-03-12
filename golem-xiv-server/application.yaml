@@ -9,6 +9,9 @@ ktor:
       - com.xemantic.ai.golem.server.GolemServerKt.module
 
 neo4j:
-  uri: bolt://localhost:7687
+  protocol: bolt
+  host: localhost
+  port: 7687
+  database: neo4j
   username: golem
   password: golem

@@ -232,6 +232,7 @@ class MainPresenter(
             navigation = navigation
         )
         view.display(cognitionView)
+        cognitionView.focusPromptInput()
     }
 
     @OptIn(ExperimentalTime::class)
@@ -241,6 +242,7 @@ class MainPresenter(
         when (output) {
             is GolemOutput.Welcome -> {
                 logger.info { output.message }
+                memoryView.neo4jBrowserUrl = output.neo4jBrowserUrl
             }
             else -> {
                 golemOutputs.emit(output)

@@ -25,11 +25,14 @@ import kotlinx.html.dom.create
 import kotlinx.html.js.iframe
 import org.w3c.dom.HTMLElement
 
-class HtmlMemoryView() : MemoryView, HasRootHtmlElement {
+class HtmlMemoryView : MemoryView, HasRootHtmlElement {
 
-    // TODO it should be populated with local storage if DB is remote
-    override val element: HTMLElement = document.create.iframe(classes = "memory") {
-        src = "neo4j-browser/?dbms=bolt://localhost:7687&preselectAuthMethod=NO_AUTH"
-    }
+    override val element: HTMLElement = document.create.iframe(classes = "memory") {}
+
+    override var neo4jBrowserUrl: String = ""
+        set(value) {
+            field = value
+            element.setAttribute("src", value)
+        }
 
 }

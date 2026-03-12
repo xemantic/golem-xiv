@@ -33,7 +33,8 @@ sealed interface GolemOutput {
     @Serializable
     @SerialName("Welcome")
     data class Welcome (
-        val message: String
+        val message: String,
+        val neo4jBrowserUrl: String
     ): GolemOutput
 
     @Serializable
