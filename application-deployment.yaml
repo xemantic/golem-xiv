@@ -14,4 +14,4 @@ neo4j:
 
 httpAuth:
   username: ${GOLEM_AUTH_USERNAME}
-  bcryptHash: ${GOLEM_AUTH_BCRYPT_HASH}
+  password: ${GOLEM_AUTH_BCRYPT_HASH}
