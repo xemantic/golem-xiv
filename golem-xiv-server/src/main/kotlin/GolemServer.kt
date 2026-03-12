@@ -209,6 +209,14 @@ fun Application.module() {
         } else {
             defineRoutes()
         }
+
+        // SPA fallback: serve index.html for any unmatched GET request,
+        // enabling client-side routing (e.g. /cognitions/12 -> index.html)
+        get("{...}") {
+            call.resolveResource("index.html", "web")?.let {
+                call.respond(it)
+            }
+        }
     }
 }
 
