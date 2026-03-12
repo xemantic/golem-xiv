@@ -61,34 +61,14 @@ Golem XIV supports optional HTTP Basic Authentication. When the `httpAuth` secti
 
 ### Local development
 
-Authentication is disabled by default in `application.yaml`. No credentials are required when running locally.
+Authentication is disabled by default in [application.yaml](application.yaml). No credentials are required when running locally.
 
 ### Enabling authentication for deployment
 
-Authentication is enabled when `application-deployment.yaml` is used. The password is stored as a bcrypt hash (cost factor 12). To generate one:
-
-```shell
-# Using htpasswd (available on Linux/macOS via apache2-utils / httpd-tools)
-htpasswd -bnBC 12 "" "your_password" | tr -d ':\n'
-
-# Or using Python 3
-python3 -c "import bcrypt; print(bcrypt.hashpw(b'your_password', bcrypt.gensalt(12)).decode())"
-```
-
-Then set the following environment variables before deploying:
-
-```shell
-export GOLEM_AUTH_USERNAME=your_username
-export GOLEM_AUTH_BCRYPT_HASH='$2b$12$...'   # single-quote to avoid $ expansion
-```
-
-These are picked up by `application-deployment.yaml`.
-
-> [!WARNING]
-> HTTP Basic Auth sends credentials as base64 — effectively plaintext. Always deploy behind a TLS-terminating reverse proxy (nginx, Caddy, Traefik, etc.).
+See [application-deployment.yaml](application-deployment.yaml) is used.
 
 ## Developing Golem
 
 ### Optional Cypher syntax highlighting
-The [Graph Database](https://plugins.jetbrains.com/plugin/20417-graph-database) IntelliJ plugin adds syntax highlighting to Cypher queries
 
+The [Graph Database](https://plugins.jetbrains.com/plugin/20417-graph-database) IntelliJ plugin adds syntax highlighting to Cypher queries
