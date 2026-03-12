@@ -81,7 +81,9 @@ class GolemScriptExecutor {
         // TODO can be removed once the time API is stable?
         // "-Xmulti-dollar-interpolation" probably not needed anymore
         compilerOptions.append(
-            "-opt-in=kotlin.time.ExperimentalTime",
+            "-Xcontext-sensitive-resolution",
+            "-Xexplicit-backing-fields",
+            "-opt-in=kotlin.time.ExperimentalTime"
         )
     }
 

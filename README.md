@@ -55,8 +55,20 @@ communicating with Ktor-based Web server (with WebSockets) running on:
 
 http://localhost:8081
 
+## Authentication
+
+Golem XIV supports optional HTTP Basic Authentication. When the `httpAuth` section is absent from the configuration, all routes are open — this is the default for local development.
+
+### Local development
+
+Authentication is disabled by default in [application.yaml](application.yaml). No credentials are required when running locally.
+
+### Enabling authentication for deployment
+
+See [application-deployment.yaml](application-deployment.yaml) is used.
+
 ## Developing Golem
 
 ### Optional Cypher syntax highlighting
-The [Graph Database](https://plugins.jetbrains.com/plugin/20417-graph-database) IntelliJ plugin adds syntax highlighting to Cypher queries
 
+The [Graph Database](https://plugins.jetbrains.com/plugin/20417-graph-database) IntelliJ plugin adds syntax highlighting to Cypher queries

@@ -75,6 +75,8 @@ interface CognitionView : ScreenView {
 
     fun clearPromptInput()
 
+    fun focusPromptInput()
+
 //    fun addTextResponse(text: String)
 
 //    fun addToolUseRequest(request: AgentOutput.ToolUseRequest)
@@ -108,7 +110,6 @@ class CognitionPresenter(
     private val expressionsWithIntent = mutableSetOf<Long>()
 
     init {
-
         view.sendDisabled = true
 
         view.promptInputShiftKeys.onEach {
@@ -191,6 +192,7 @@ class CognitionPresenter(
             }
         }.launchIn(scope)
 
+        view.focusPromptInput()
     }
 
     fun dispose() {

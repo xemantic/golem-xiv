@@ -3,32 +3,32 @@ kotlinTarget = "2.3"
 javaTarget = "21"
 
 kotlin = "2.3.10"
-kotlinxSerialization = "1.9.0"
+kotlinxSerialization = "1.10.0"
 kotlinxCoroutines = "1.10.2"
 kotlinxHtml = "0.12.0"
 
 kotlinLogging = "7.0.13"
 
 anthropicSdkKotlin = "0.29.0"
-xemanticKotlinCore = "0.6.1"
-xemanticKotlinTest = "1.16.0"
-xemanticKotlinJs = "0.2.0"
+xemanticKotlinCore = "0.6.4"
+xemanticKotlinTest = "1.17.5"
+xemanticKotlinJs = "0.3.0"
 xemanticAiToolSchema = "1.2.0"
 xemanticNeo4jKotlinDriver = "1.0.0"
 markanywhere = "0.1.12"
 
 
-ktor = "3.3.3"
-playwright = "1.57.0"
+ktor = "3.4.1"
+playwright = "1.58.0"
 dashscope = "2.20.1"
 neo4j = "2025.11.2"
 neo4jBrowser = "2025.8.0"
 neo4jBrowserSha256 = "4ed8ca29a27519a79f7013258acbcb020649a7fef354e1e157c1dc8f0a83cef2"
-neo4jDriver = "6.0.2"
-neo4jMigrations = "3.1.0"
+neo4jDriver = "6.0.3"
+neo4jMigrations = "3.2.1"
 
 slf4j = "2.0.17"
-logback = "1.5.23"
+logback = "1.5.32"
 
 versionsPlugin = "0.53.0"
 dokkaPlugin = "2.1.0"
@@ -87,6 +87,7 @@ ktor-server-cors = { module = "io.ktor:ktor-server-cors", version.ref = "ktor" }
 ktor-server-call-logging = { module = "io.ktor:ktor-server-call-logging", version.ref = "ktor" }
 ktor-server-config-yaml = { module = "io.ktor:ktor-server-config-yaml", version.ref = "ktor" }
 ktor-server-content-negotiation = { module = "io.ktor:ktor-server-content-negotiation", version.ref = "ktor" }
+ktor-server-auth = { module = "io.ktor:ktor-server-auth", version.ref = "ktor" }
 ktor-server-status-pages = { module = "io.ktor:ktor-server-status-pages", version.ref = "ktor" }
 ktor-server-test-host = { module = "io.ktor:ktor-server-test-host", version.ref = "ktor" }
 ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor"}
