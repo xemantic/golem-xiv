@@ -140,7 +140,6 @@ class CognitionPresenter(
 
         golemOutputs.filterIsInstance<GolemOutput.Cognition>().filter {
             it.cognitionId == cognitionId
-            true
         }.map {
             it.event
         }.onEach {
