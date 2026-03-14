@@ -28,9 +28,10 @@ data class Neo4jConfig(
     val database: String,
     val username: String,
     val password: String,
+    val readOnlyUser: String
 ) {
     val uri: String get() = "$protocol://$host:$port"
-    val browserUrl: String get() = "https://browser.neo4j.io/?dbms=$protocol://$username@$host:$port&db=$database"
+    val browserUrl: String get() = "https://browser.neo4j.io/?dbms=$protocol://$readOnlyUser@$host:$port&db=$database"
 }
 
 @Serializable

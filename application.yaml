@@ -15,3 +15,4 @@ neo4j:
   database: neo4j
   username: golem
   password: golem
+  readOnlyUser: golem
