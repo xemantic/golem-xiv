@@ -36,6 +36,7 @@ import com.xemantic.ai.golem.neo4j.Neo4jMemory
 import com.xemantic.neo4j.driver.DispatchedNeo4jOperations
 import io.github.oshai.kotlinlogging.KLogger
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.ktor.http.ContentType
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -166,6 +167,10 @@ fun Application.module() {
     }
 
     routing {
+
+        get("/health") {
+            call.respondText("OK", ContentType.Text.Plain)
+        }
 
         val defineRoutes: Route.() -> Unit = {
             staticResources("/", "web") {

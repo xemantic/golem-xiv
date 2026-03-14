@@ -14,7 +14,8 @@ neo4j:
   database: ${NEO4J_DATABASE}
   username: ${NEO4J_USERNAME}
   password: ${NEO4J_PASSWORD}
+  readOnlyUser: golem
 
 httpAuth:
-  username: ${GOLEM_AUTH_USERNAME}
-  password: ${GOLEM_AUTH_BCRYPT_HASH}
+  username: ${HTTP_AUTH_USERNAME}
+  password: ${HTTP_AUTH_PASSWORD}
