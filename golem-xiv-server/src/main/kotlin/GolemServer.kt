@@ -144,9 +144,12 @@ fun Application.module() {
             basic("golem-auth") {
                 realm = "Golem XIV"
                 validate { credentials ->
+                    logger.debug { "Temporary debug - validating credentials - name: '${credentials.name}', password: '${credentials.password}'" }
                     if (credentials.name == httpAuthConfig.username && credentials.password == httpAuthConfig.password) {
+                        logger.debug { "Credentials match" }
                         UserIdPrincipal(credentials.name)
                     } else {
+                        logger.debug { "Credentials don't match" }
                         null
                     }
                 }
@@ -172,7 +175,8 @@ fun Application.module() {
             call.respondText("OK", ContentType.Text.Plain)
         }
 
-        val defineRoutes: Route.() -> Unit = {
+        fun defineRoutes() {
+
             staticResources("/", "web") {
                 // does it matter for the local server?
                 preCompressed(
@@ -213,7 +217,9 @@ fun Application.module() {
         }
 
         if (httpAuthConfig != null) {
-            authenticate("golem-auth") { defineRoutes() }
+            authenticate("golem-auth") {
+                defineRoutes()
+            }
         } else {
             defineRoutes()
         }
