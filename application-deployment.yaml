@@ -17,5 +17,4 @@ neo4j:
   readOnlyUser: golem
 
 httpAuth:
-  username: ${HTTP_AUTH_USERNAME}
   password: ${HTTP_AUTH_PASSWORD}

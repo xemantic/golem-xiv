@@ -37,9 +37,9 @@ import com.xemantic.neo4j.driver.DispatchedNeo4jOperations
 import io.github.oshai.kotlinlogging.KLogger
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.ContentType
+import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
-import io.ktor.server.auth.*
 import io.ktor.server.config.*
 import io.ktor.server.http.content.*
 import io.ktor.server.plugins.*
@@ -55,6 +55,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.runBlocking
 import org.neo4j.driver.AuthTokens
 import org.neo4j.driver.GraphDatabase
+import java.util.UUID
 
 val logger = KotlinLogging.logger {}
 
@@ -139,24 +140,28 @@ fun Application.module() {
 //        LogManager.shutdown()
 //    }
 
-    if (httpAuthConfig != null) {
-        logger.info { "HTTP auth configured, authorized user: ${httpAuthConfig.username}" }
-        install(Authentication) {
-            basic("golem-auth") {
-                realm = "Golem XIV"
-                validate { credentials ->
-                    logger.info { "Temporary debug - validating credentials - name: '${credentials.name}', password: '${credentials.password}'" }
-                    if (credentials.name == httpAuthConfig.username && credentials.password == httpAuthConfig.password) {
-                        logger.info { "Credentials match" }
-                        UserIdPrincipal(credentials.name)
-                    } else {
-                        logger.info { "Credentials don't match" }
-                        null
-                    }
+    val sessionToken: String? = if (httpAuthConfig != null) {
+        val token = UUID.randomUUID().toString()
+        logger.info { "Password authentication configured" }
+        intercept(ApplicationCallPipeline.Plugins) {
+            val path = call.request.path()
+            if (path == "/health" || path == "/auth"
+                || path.startsWith("/css/") || path.startsWith("/js/")
+            ) {
+                return@intercept
+            }
+            val cookie = call.request.cookies["golem-session"]
+            if (cookie != token) {
+                if (path.startsWith("/api") || path.startsWith("/events")) {
+                    call.respond(HttpStatusCode.Unauthorized)
+                } else {
+                    call.respondRedirect("/auth")
                 }
+                finish()
             }
         }
-    }
+        token
+    } else null
 
     install(CallLogging) {
         level = org.slf4j.event.Level.DEBUG
@@ -218,12 +223,30 @@ fun Application.module() {
         }
 
         if (httpAuthConfig != null) {
-            authenticate("golem-auth") {
-                defineRoutes()
+            val loginPage = this::class.java.classLoader
+                .getResource("login.html")!!
+                .readText()
+
+            get("/auth") {
+                call.respondText(loginPage, ContentType.Text.Html)
             }
-        } else {
-            defineRoutes()
+            post("/auth") {
+                val params = call.receiveParameters()
+                if (params["password"] == httpAuthConfig.password) {
+                    call.response.cookies.append(
+                        name = "golem-session",
+                        value = sessionToken!!,
+                        path = "/",
+                        httpOnly = true
+                    )
+                    call.respondRedirect("/")
+                } else {
+                    call.respondRedirect("/auth?error=1")
+                }
+            }
         }
+
+        defineRoutes()
 
     }
 

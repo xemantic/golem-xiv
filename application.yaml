@@ -16,3 +16,6 @@ neo4j:
   username: golem
   password: golem
   readOnlyUser: golem
+
+#httpAuth:
+#  password: golem
