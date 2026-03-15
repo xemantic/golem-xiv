@@ -140,16 +140,17 @@ fun Application.module() {
 //    }
 
     if (httpAuthConfig != null) {
+        logger.info { "HTTP auth configured, authorized user: ${httpAuthConfig.username}" }
         install(Authentication) {
             basic("golem-auth") {
                 realm = "Golem XIV"
                 validate { credentials ->
-                    logger.debug { "Temporary debug - validating credentials - name: '${credentials.name}', password: '${credentials.password}'" }
+                    logger.info { "Temporary debug - validating credentials - name: '${credentials.name}', password: '${credentials.password}'" }
                     if (credentials.name == httpAuthConfig.username && credentials.password == httpAuthConfig.password) {
-                        logger.debug { "Credentials match" }
+                        logger.info { "Credentials match" }
                         UserIdPrincipal(credentials.name)
                     } else {
-                        logger.debug { "Credentials don't match" }
+                        logger.info { "Credentials don't match" }
                         null
                     }
                 }
@@ -169,51 +170,51 @@ fun Application.module() {
         configureStatusPages()
     }
 
+    fun Route.defineRoutes() {
+
+        staticResources("/", "web") {
+            // does it matter for the local server?
+            preCompressed(
+                CompressedFileType.BROTLI,
+                CompressedFileType.GZIP
+            )
+        }
+
+        route("/api") {
+            golemApiRoute(logger, golem)
+        }
+
+        sse("/events") {
+            val clientIp = call.request.origin.remoteAddress
+            logger.info { "SSE client connected: $clientIp" }
+
+            heartbeat()
+
+            sendGolemOutput(
+                GolemOutput.Welcome(
+                    message = "You are connected to Golem XIV",
+                    neo4jBrowserUrl = neo4jConfig.browserUrl
+                )
+            )
+
+            outputs.collect {
+                sendGolemOutput(it)
+            }
+        }
+
+        // SPA fallback: serve index.html for any unmatched GET request,
+        // enabling client-side routing (e.g. /cognitions/12 -> index.html)
+        get("/cognitions/{...}") {
+            call.resolveResource("index.html", "web")?.let {
+                call.respond(it)
+            }
+        }
+    }
+
     routing {
 
         get("/health") {
             call.respondText("OK", ContentType.Text.Plain)
-        }
-
-        fun defineRoutes() {
-
-            staticResources("/", "web") {
-                // does it matter for the local server?
-                preCompressed(
-                    CompressedFileType.BROTLI,
-                    CompressedFileType.GZIP
-                )
-            }
-
-            route("/api") {
-                golemApiRoute(logger, golem)
-            }
-
-            sse("/events") {
-                val clientIp = call.request.origin.remoteAddress
-                logger.info { "SSE client connected: $clientIp" }
-
-                heartbeat()
-
-                sendGolemOutput(
-                    GolemOutput.Welcome(
-                        message = "You are connected to Golem XIV",
-                        neo4jBrowserUrl = neo4jConfig.browserUrl
-                    )
-                )
-
-                outputs.collect {
-                    sendGolemOutput(it)
-                }
-            }
-
-            // SPA fallback: serve index.html for any unmatched GET request,
-            // enabling client-side routing (e.g. /cognitions/12 -> index.html)
-            get("/cognitions/{...}") {
-                call.resolveResource("index.html", "web")?.let {
-                    call.respond(it)
-                }
-            }
         }
 
         if (httpAuthConfig != null) {
@@ -225,6 +226,7 @@ fun Application.module() {
         }
 
     }
+
 }
 
 fun Route.golemApiRoute(
