@@ -75,8 +75,8 @@ dependencies {
 tasks.register<Copy>("copyWebResources") {
     from(
         project(":golem-xiv-web")
-            .layout.buildDirectory
-            .dir("dist/js/productionExecutable")
+            .tasks
+            .named("jsBrowserProductionExecutableDistributeResources")
     ) {
         filter { line ->
             if (line.contains("golem-dev-script")) null else line
