@@ -76,7 +76,7 @@ tasks.register<Copy>("copyWebResources") {
     from(
         project(":golem-xiv-web")
             .tasks
-            .named("jsBrowserProductionExecutableDistributeResources")
+            .named("jsBrowserDistribution")
     ) {
         filter { line ->
             if (line.contains("golem-dev-script")) null else line
