@@ -13,7 +13,7 @@ Both developers and AI agents are expected to add entries as they encounter surp
 
 ## Known gotchas
 
-- Application requires three processes started in order: Neo4j (`./gradlew runNeo4j`), then the server (`./gradlew run`), then the web client (`./gradlew jsBrowserDevelopmentRun --continuous`). First-time setup also needs `./gradlew installNeo4jBrowser`.
+- Application requires three processes started in order: Neo4j (`./gradlew runNeo4j`), then the server (`./gradlew run`), then the web client (`./gradlew jsBrowserDevelopmentRun --continuous`).
 
 ## Anti-patterns to avoid
 

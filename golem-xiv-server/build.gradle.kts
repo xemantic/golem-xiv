@@ -73,7 +73,6 @@ dependencies {
 }
 
 tasks.register<Copy>("copyWebResources") {
-    dependsOn(":golem-xiv-web:jsBrowserDistribution")
     from(
         project(":golem-xiv-web")
             .layout.buildDirectory
