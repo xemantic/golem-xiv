@@ -151,18 +151,17 @@ fun Application.module() {
         install(Sessions) {
             cookie<UserSession>("golem-session") {
                 cookie.path = "/"
-                cookie.httpOnly = true
             }
         }
 
         install(Authentication) {
             form("auth-form") {
-                userParamName = "username"
-                passwordParamName = "password"
                 validate { credentials ->
                     if (credentials.password == httpAuthConfig.password) {
                         UserIdPrincipal(credentials.name)
-                    } else null
+                    } else {
+                        null
+                    }
                 }
                 challenge("/login?error=1")
             }
@@ -170,7 +169,7 @@ fun Application.module() {
             session<UserSession>("auth-session") {
 
                 validate { session ->
-                    if (session.token == sessionToken) session else null
+                    if (session.name == "golem") session else null
                 }
 
                 challenge {
@@ -253,16 +252,25 @@ fun Application.module() {
         if (httpAuthConfig != null) {
             staticResources("/css", "web/css")
             staticResources("/js", "web/js")
+            staticResources("/favicon.ico", "web/favicon.ico")
 
             get("/login") {
                 call.respondText(loginPage!!, ContentType.Text.Html)
             }
+
+            get("/logout") {
+                call.sessions.clear<UserSession>()
+                call.respondRedirect("/login")
+            }
+
             authenticate("auth-form") {
                 post("/login") {
-                    call.sessions.set(UserSession(token = sessionToken!!))
+                    val name = call.principal<UserIdPrincipal>()?.name.toString()
+                    call.sessions.set(UserSession(name))
                     call.respondRedirect("/")
                 }
             }
+
             authenticate("auth-session") {
                 defineRoutes()
             }

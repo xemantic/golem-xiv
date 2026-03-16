@@ -40,4 +40,4 @@ data class HttpAuthConfig(
 )
 
 @Serializable
-data class UserSession(val token: String)
+data class UserSession(val name: String)
