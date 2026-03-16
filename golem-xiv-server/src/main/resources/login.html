@@ -130,7 +130,8 @@
         <p class="error center-align" id="error">
             <span>Invalid password</span>
         </p>
-        <form method="POST" action="/auth">
+        <form method="POST" action="/login">
+            <input type="hidden" name="username" value="golem">
             <div class="field label border round">
                 <input type="password" name="password" id="password" autofocus required>
                 <label for="password">Password</label>

@@ -40,6 +40,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
+import io.ktor.server.auth.*
 import io.ktor.server.config.*
 import io.ktor.server.http.content.*
 import io.ktor.server.plugins.*
@@ -49,6 +50,7 @@ import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import io.ktor.server.sessions.*
 import io.ktor.server.sse.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -140,28 +142,50 @@ fun Application.module() {
 //        LogManager.shutdown()
 //    }
 
-    val sessionToken: String? = if (httpAuthConfig != null) {
-        val token = UUID.randomUUID().toString()
+    val sessionToken = if (httpAuthConfig != null) UUID.randomUUID().toString() else null
+
+    if (httpAuthConfig != null) {
+
         logger.info { "Password authentication configured" }
-        intercept(ApplicationCallPipeline.Plugins) {
-            val path = call.request.path()
-            if (path == "/health" || path == "/auth"
-                || path.startsWith("/css/") || path.startsWith("/js/")
-            ) {
-                return@intercept
-            }
-            val cookie = call.request.cookies["golem-session"]
-            if (cookie != token) {
-                if (path.startsWith("/api") || path.startsWith("/events")) {
-                    call.respond(HttpStatusCode.Unauthorized)
-                } else {
-                    call.respondRedirect("/auth")
-                }
-                finish()
+
+        install(Sessions) {
+            cookie<UserSession>("golem-session") {
+                cookie.path = "/"
+                cookie.httpOnly = true
             }
         }
-        token
-    } else null
+
+        install(Authentication) {
+            form("auth-form") {
+                userParamName = "username"
+                passwordParamName = "password"
+                validate { credentials ->
+                    if (credentials.password == httpAuthConfig.password) {
+                        UserIdPrincipal(credentials.name)
+                    } else null
+                }
+                challenge("/login?error=1")
+            }
+
+            session<UserSession>("auth-session") {
+
+                validate { session ->
+                    if (session.token == sessionToken) session else null
+                }
+
+                challenge {
+                    if (call.request.path().startsWith("/api") || call.request.path().startsWith("/events")) {
+                        call.respond(HttpStatusCode.Unauthorized)
+                    } else {
+                        call.respondRedirect("/login")
+                    }
+                }
+
+            }
+
+        }
+
+    }
 
     install(CallLogging) {
         level = org.slf4j.event.Level.DEBUG
@@ -216,6 +240,10 @@ fun Application.module() {
         }
     }
 
+    val loginPage = httpAuthConfig?.let {
+        this::class.java.classLoader.getResource("login.html")!!.readText()
+    }
+
     routing {
 
         get("/health") {
@@ -223,30 +251,24 @@ fun Application.module() {
         }
 
         if (httpAuthConfig != null) {
-            val loginPage = this::class.java.classLoader
-                .getResource("login.html")!!
-                .readText()
+            staticResources("/css", "web/css")
+            staticResources("/js", "web/js")
 
-            get("/auth") {
-                call.respondText(loginPage, ContentType.Text.Html)
+            get("/login") {
+                call.respondText(loginPage!!, ContentType.Text.Html)
             }
-            post("/auth") {
-                val params = call.receiveParameters()
-                if (params["password"] == httpAuthConfig.password) {
-                    call.response.cookies.append(
-                        name = "golem-session",
-                        value = sessionToken!!,
-                        path = "/",
-                        httpOnly = true
-                    )
+            authenticate("auth-form") {
+                post("/login") {
+                    call.sessions.set(UserSession(token = sessionToken!!))
                     call.respondRedirect("/")
-                } else {
-                    call.respondRedirect("/auth?error=1")
                 }
             }
+            authenticate("auth-session") {
+                defineRoutes()
+            }
+        } else {
+            defineRoutes()
         }
-
-        defineRoutes()
 
     }
 
