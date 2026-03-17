@@ -1,6 +1,6 @@
 # Golem XIV
 
-A meta-cognitive recursive AI agent with memory.
+In a nutshell, Golem XIV is a metacognitive AI system that autonomously performs knowledge work — producing code, documents, designs, and data — by reasoning over a persistent knowledge graph memory while dynamically integrating private and public information sources.
 
 ## Features
 

@@ -142,8 +142,6 @@ fun Application.module() {
 //        LogManager.shutdown()
 //    }
 
-    val sessionToken = if (httpAuthConfig != null) UUID.randomUUID().toString() else null
-
     if (httpAuthConfig != null) {
 
         logger.info { "Password authentication configured" }
