@@ -44,7 +44,7 @@ export ANTHROPIC_API_KEY=your_key
 finally, run the web client:
 
 ```shell
-./gradlew jsBrowserDevelopmentRun --continuous
+./gradlew golem-xiv-web:jsBrowserDevelopmentRun --continuous
 ```
 
 The last command will open your browser pointing to:
@@ -59,4 +59,3 @@ http://localhost:8081
 
 ### Optional Cypher syntax highlighting
 The [Graph Database](https://plugins.jetbrains.com/plugin/20417-graph-database) IntelliJ plugin adds syntax highlighting to Cypher queries
-
