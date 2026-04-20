@@ -329,9 +329,7 @@ private class GolemScriptErrorReporter(
 
         error.stackTrace.forEachIndexed { index, trace ->
 
-            val isScriptTrace = trace.className.startsWith(
-                "Script"
-            ) && (trace.fileName == "script.kts")
+            val isScriptTrace = trace.fileName?.endsWith(".kts") == true
 
             if (isScriptTrace || index == 0) {
                 val className = if (isScriptTrace) {

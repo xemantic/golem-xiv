@@ -1,6 +1,6 @@
 /*
  * Golem XIV - Autonomous metacognitive AI system with semantic memory and self-directed research
- * Copyright (C) 2025  Kazimierz Pogoda / Xemantic
+ * Copyright (C) 2026  Kazimierz Pogoda / Xemantic
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -277,12 +277,8 @@ class GolemScriptExecutorTest {
                   | println(<error>foo</error>)
 
                 [ERROR] Initializer type mismatch: expected 'Int', actual 'String'.
-                  at lines 3-7
-                  | val number: Int = <error>""${'"'}
-                  |     This is a
-                  |     multiline string,
-                  |     not an Int.
-                  | ""${'"'}</error>; "foo"
+                  at line 3
+                  | val number: Int <error>=</error> ""${'"'}
 
                 </golem:impediment>
                 
@@ -340,7 +336,7 @@ class GolemScriptExecutorTest {
             be<ExecuteGolemScript.Result.Error>()
             message sameAs """
                 <golem:impediment phase="COMPILATION">
-                [ERROR] Expecting '"'
+                [ERROR] Syntax error: Expecting '"'.
                   at line 3
                   | and is missing a closing quote<error></error>
 
@@ -530,7 +526,7 @@ class GolemScriptExecutorTest {
             be<ExecuteGolemScript.Result.Error>()
             message sameAs """
                 <golem:impediment phase="COMPILATION">
-                [ERROR] Expecting '}'
+                [ERROR] Syntax error: Expecting '}'.
                   at line 1
                   | {<error></error>
 
@@ -554,11 +550,11 @@ class GolemScriptExecutorTest {
             be<ExecuteGolemScript.Result.Error>()
             message sameAs """
                 <golem:impediment phase="COMPILATION">
-                [ERROR] Expected annotation identifier after '@'
+                [ERROR] Syntax error: Expected annotation identifier after '@'.
                   at line 1
                   |    <error>@</error>
 
-                [ERROR] Expecting an expression
+                [ERROR] Syntax error: Expecting an expression.
                   at line 1
                   |    @<error></error>
 
@@ -582,10 +578,14 @@ class GolemScriptExecutorTest {
             be<ExecuteGolemScript.Result.Error>()
             message sameAs """
                 <golem:impediment phase="COMPILATION">
-                [ERROR] Expecting an expression
+                [ERROR] This variable must either have an explicit type or be initialized.
+                  at line 1
+                  | val <error>x</error> =
+                
+                [ERROR] Syntax error: Expecting an expression.
                   at line 1
                   | val x =<error></error>
-
+                
                 </golem:impediment>
 
             """.trimIndent()
@@ -606,7 +606,7 @@ class GolemScriptExecutorTest {
             be<ExecuteGolemScript.Result.Error>()
             message sameAs """
                 <golem:impediment phase="COMPILATION">
-                [ERROR] Unexpected symbol
+                [ERROR] Syntax error: Unexpected symbol.
                   at line 1
                   | }<error></error>
 
@@ -633,7 +633,7 @@ class GolemScriptExecutorTest {
             be<ExecuteGolemScript.Result.Error>()
             message sameAs """
                 <golem:impediment phase="COMPILATION">
-                [ERROR] Unexpected symbol
+                [ERROR] Syntax error: Unexpected symbol.
                   at line 2
                   | }<error></error>
 
@@ -657,15 +657,15 @@ class GolemScriptExecutorTest {
             be<ExecuteGolemScript.Result.Error>()
             message sameAs """
                 <golem:impediment phase="COMPILATION">
-                [ERROR] Unexpected symbol
+                [ERROR] Syntax error: Unexpected symbol.
                   at line 1
                   | }<error>}</error>}
 
-                [ERROR] Unexpected symbol
+                [ERROR] Syntax error: Unexpected symbol.
                   at line 1
                   | }}<error>}</error>
 
-                [ERROR] Unexpected symbol
+                [ERROR] Syntax error: Unexpected symbol.
                   at line 1
                   | }}}<error></error>
 
@@ -717,7 +717,7 @@ class GolemScriptExecutorTest {
             be<ExecuteGolemScript.Result.Error>()
             message sameAs """
                 <golem:impediment phase="COMPILATION">
-                [ERROR] Unexpected symbol
+                [ERROR] Syntax error: Unexpected symbol.
                   at line 1
                   | {}}<error></error>
 
