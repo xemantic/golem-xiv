@@ -18,10 +18,10 @@
 
 package com.xemantic.golem.viewmodel.navigation
 
-import com.xemantic.golem.viewmodel.environment.Theme
 import com.xemantic.golem.viewmodel.environment.ThemeManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 
 class NavigationViewModel(
     private val navigation: Navigation,
@@ -31,46 +31,73 @@ class NavigationViewModel(
 ) {
 
     init {
-        resizes.onEach { closeMenu() }.launchIn(scope)
+        resizes.onEach { closeSideMenu() }.launchIn(scope)
     }
 
-    val opened: StateFlow<Boolean>
+    val sideMenuOpened: StateFlow<Boolean>
         field = MutableStateFlow(false)
 
-    val themeLabel: StateFlow<Theme>
-        field = MutableStateFlow(
-            theme.opposite()
-        )
+    val railOpened: StateFlow<Boolean>
+        field = MutableStateFlow(false)
 
-    var theme
-        get() = themeManager.theme
-        set(value) {
-            themeManager.theme = value
-            themeLabel.value = value.opposite()
-        }
+    val cognitionCount: StateFlow<Int>
+        field = MutableStateFlow(1)
+
+    val theme = MutableStateFlow(themeManager.theme)
+
+    val activeTarget: StateFlow<Navigation.Target> = navigation.activeTarget
+
+    init {
+        theme.onEach { theme ->
+            themeManager.theme = theme
+        }.launchIn(scope)
+    }
 
     fun onCognitions() {
-        navigation.navigateTo(Navigation.Target.Cognitions)
+        goTo(Navigation.Target.Cognition())
+    }
+
+    fun onWorkspace(path: String? = null) {
+        goTo(Navigation.Target.Workspace(path))
     }
 
     fun onMemory() {
-        navigation.navigateTo(Navigation.Target.Memory)
+        goTo(Navigation.Target.Memory)
+    }
+
+    fun onSolicitations() {
+        goTo(Navigation.Target.Solicitations)
+    }
+
+    fun onComputers(id: Long? = null) {
+        goTo(Navigation.Target.Computers(id))
     }
 
     fun onSettings() {
-        navigation.navigateTo(Navigation.Target.Settings)
+        goTo(Navigation.Target.Settings)
     }
 
     fun onThemeToggle() {
-        theme = theme.opposite()
+        theme.value = theme.value.opposite()
     }
 
-    fun onMenuToggle() {
-        opened.value = !opened.value
+    fun onSideMenuToggle() {
+        sideMenuOpened.value = !sideMenuOpened.value
     }
 
-    fun closeMenu() {
-        opened.value = false
+    fun onRailToggle() {
+        railOpened.value = !railOpened.value
+    }
+
+    fun closeSideMenu() {
+        sideMenuOpened.value = false
+    }
+
+    private fun goTo(target: Navigation.Target) {
+        sideMenuOpened.value = false
+        scope.launch {
+            navigation.navigateTo(target)
+        }
     }
 
 }

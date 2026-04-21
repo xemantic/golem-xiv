@@ -21,16 +21,13 @@ package com.xemantic.golem.viewmodel.navigation
 import com.xemantic.golem.viewmodel.environment.Theme
 import com.xemantic.golem.viewmodel.environment.ThemeManager
 import com.xemantic.kotlin.test.assert
+import dev.mokkery.*
 import dev.mokkery.answering.returns
-import dev.mokkery.every
 import dev.mokkery.matcher.any
-import dev.mokkery.mock
-import dev.mokkery.verify
 import dev.mokkery.verify.VerifyMode
-import dev.mokkery.verifyNoMoreCalls
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
@@ -39,94 +36,59 @@ import kotlin.test.Test
 class NavigationViewModelTest {
 
     @Test
-    fun `should initialize themeLabel as opposite of current theme`() = runTest {
+    fun `should initialize themeLabel according to the current theme`() = runTest {
         // given
-        val navigation = mock<Navigation>()
-        val themeManager = mock<ThemeManager>()
+        val navigation = mock<Navigation> {
+            every { activeTarget } returns MutableStateFlow(Navigation.Target.Cognition())
+        }
+        val themeManager = mock<ThemeManager> {
+            every { theme = any() } returns Unit
+            every { theme } returns Theme.LIGHT
+        }
         val resizes = emptyFlow<Unit>()
-        every { themeManager.theme } returns Theme.LIGHT
         val viewModel = NavigationViewModel(
             navigation,
             resizes,
             themeManager,
-            scope = this,
+            scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler)),
         )
 
         // then
-        assert(viewModel.themeLabel.value == Theme.DARK)
-        verify { themeManager.theme }
-        verifyNoMoreCalls(navigation, themeManager)
-    }
-
-    @Test
-    fun `should initialize themeLabel as LIGHT when current theme is DARK`() = runTest {
-        // given
-        val navigation = mock<Navigation>()
-        val themeManager = mock<ThemeManager>()
-        val resizes = emptyFlow<Unit>()
-        every { themeManager.theme } returns Theme.DARK
-        val viewModel = NavigationViewModel(
-            navigation,
-            resizes,
-            themeManager,
-            scope = this,
-        )
-
-        // then
-        assert(viewModel.themeLabel.value == Theme.LIGHT)
-        verify { themeManager.theme }
+        assert(viewModel.theme.value == Theme.LIGHT)
+        verify(VerifyMode.exhaustiveOrder) {
+            themeManager.theme
+            navigation.activeTarget
+            themeManager.theme = Theme.LIGHT
+        }
         verifyNoMoreCalls(navigation, themeManager)
     }
 
     @Test
     fun `should change theme and update themeLabel`() = runTest {
         // given
-        val navigation = mock<Navigation>()
-        val themeManager = mock<ThemeManager>()
-        val resizes = emptyFlow<Unit>()
-        every { themeManager.theme } returns Theme.LIGHT
-        every { themeManager.theme = any() } returns Unit
-        val viewModel = NavigationViewModel(
-            navigation,
-            resizes,
-            themeManager,
-            scope = this,
-        )
-
-        // when
-        viewModel.theme = Theme.DARK
-
-        // then
-        verify(VerifyMode.exhaustiveOrder) {
-            themeManager.theme
-            themeManager.theme = Theme.DARK
+        val navigation = mock<Navigation> {
+            every { activeTarget } returns MutableStateFlow(Navigation.Target.Cognition())
         }
-        verifyNoMoreCalls(navigation, themeManager)
-    }
-
-    @Test
-    fun `should toggle theme from LIGHT to DARK`() = runTest {
-        // given
-        val navigation = mock<Navigation>()
-        val themeManager = mock<ThemeManager>()
+        val themeManager = mock<ThemeManager> {
+            every { theme = any() } returns Unit
+            every { theme } returns Theme.LIGHT
+        }
         val resizes = emptyFlow<Unit>()
-        every { themeManager.theme } returns Theme.LIGHT
-        every { themeManager.theme = any() } returns Unit
         val viewModel = NavigationViewModel(
             navigation,
             resizes,
             themeManager,
-            scope = this,
+            scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler)),
         )
 
         // when
-        viewModel.onThemeToggle()
+        viewModel.theme.value = Theme.DARK
 
         // then
-        assert(viewModel.themeLabel.value == Theme.LIGHT)
         verify(VerifyMode.exhaustiveOrder) {
             themeManager.theme
-            themeManager.theme
+            navigation.activeTarget
+            themeManager.theme = Theme.LIGHT
             themeManager.theme = Theme.DARK
         }
         verifyNoMoreCalls(navigation, themeManager)
@@ -135,25 +97,63 @@ class NavigationViewModelTest {
     @Test
     fun `should navigate to Cognitions`() = runTest {
         // given
-        val navigation = mock<Navigation>()
-        val themeManager = mock<ThemeManager>()
+        val navigation = mock<Navigation> {
+            every { activeTarget } returns MutableStateFlow(Navigation.Target.Settings)
+            everySuspend { navigateTo(any()) } returns Unit
+        }
+        val themeManager = mock<ThemeManager> {
+            every { theme = any() } returns Unit
+            every { theme } returns Theme.LIGHT
+        }
         val resizes = emptyFlow<Unit>()
-        every { navigation.navigateTo(any()) } returns Unit
-        every { themeManager.theme } returns Theme.LIGHT
         val viewModel = NavigationViewModel(
             navigation,
             resizes,
             themeManager,
-            scope = this,
+            scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler)),
         )
 
         // when
         viewModel.onCognitions()
 
         // then
-        verify(VerifyMode.exhaustiveOrder) {
+        verifySuspend(VerifyMode.exhaustiveOrder) {
             themeManager.theme
-            navigation.navigateTo(Navigation.Target.Cognitions)
+            navigation.activeTarget
+            themeManager.theme = Theme.LIGHT
+            navigation.navigateTo(Navigation.Target.Cognition())
+        }
+        verifyNoMoreCalls(navigation, themeManager)
+    }
+
+    @Test
+    fun `should navigate to Workspace`() = runTest {
+        // given
+        val navigation = mock<Navigation> {
+            every { activeTarget } returns MutableStateFlow(Navigation.Target.Cognition())
+            everySuspend { navigateTo(any()) } returns Unit
+        }
+        val themeManager = mock<ThemeManager> {
+            every { theme = any() } returns Unit
+            every { theme } returns Theme.LIGHT
+        }
+        val resizes = emptyFlow<Unit>()
+        val viewModel = NavigationViewModel(
+            navigation,
+            resizes,
+            themeManager,
+            scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler)),
+        )
+
+        // when
+        viewModel.onWorkspace()
+
+        // then
+        verifySuspend(VerifyMode.exhaustiveOrder) {
+            themeManager.theme
+            navigation.activeTarget
+            themeManager.theme = Theme.LIGHT
+            navigation.navigateTo(Navigation.Target.Workspace())
         }
         verifyNoMoreCalls(navigation, themeManager)
     }
@@ -161,25 +161,95 @@ class NavigationViewModelTest {
     @Test
     fun `should navigate to Memory`() = runTest {
         // given
-        val navigation = mock<Navigation>()
-        val themeManager = mock<ThemeManager>()
+        val navigation = mock<Navigation> {
+            every { activeTarget } returns MutableStateFlow(Navigation.Target.Cognition())
+            everySuspend { navigateTo(any()) } returns Unit
+        }
+        val themeManager = mock<ThemeManager> {
+            every { theme = any() } returns Unit
+            every { theme } returns Theme.LIGHT
+        }
         val resizes = emptyFlow<Unit>()
-        every { navigation.navigateTo(any()) } returns Unit
-        every { themeManager.theme } returns Theme.LIGHT
         val viewModel = NavigationViewModel(
             navigation,
             resizes,
             themeManager,
-            scope = this,
+            scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler)),
         )
 
         // when
         viewModel.onMemory()
 
         // then
-        verify(VerifyMode.exhaustiveOrder) {
+        verifySuspend(VerifyMode.exhaustiveOrder) {
             themeManager.theme
+            navigation.activeTarget
+            themeManager.theme = Theme.LIGHT
             navigation.navigateTo(Navigation.Target.Memory)
+        }
+        verifyNoMoreCalls(navigation, themeManager)
+    }
+
+    @Test
+    fun `should navigate to Solicitations`() = runTest {
+        // given
+        val navigation = mock<Navigation> {
+            every { activeTarget } returns MutableStateFlow(Navigation.Target.Cognition())
+            everySuspend { navigateTo(any()) } returns Unit
+        }
+        val themeManager = mock<ThemeManager> {
+            every { theme = any() } returns Unit
+            every { theme } returns Theme.LIGHT
+        }
+        val resizes = emptyFlow<Unit>()
+        val viewModel = NavigationViewModel(
+            navigation,
+            resizes,
+            themeManager,
+            scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler)),
+        )
+
+        // when
+        viewModel.onSolicitations()
+
+        // then
+        verifySuspend(VerifyMode.exhaustiveOrder) {
+            themeManager.theme
+            navigation.activeTarget
+            themeManager.theme = Theme.LIGHT
+            navigation.navigateTo(Navigation.Target.Solicitations)
+        }
+        verifyNoMoreCalls(navigation, themeManager)
+    }
+
+    @Test
+    fun `should navigate to Computers`() = runTest {
+        // given
+        val navigation = mock<Navigation> {
+            every { activeTarget } returns MutableStateFlow(Navigation.Target.Cognition())
+            everySuspend { navigateTo(any()) } returns Unit
+        }
+        val themeManager = mock<ThemeManager> {
+            every { theme = any() } returns Unit
+            every { theme } returns Theme.LIGHT
+        }
+        val resizes = emptyFlow<Unit>()
+        val viewModel = NavigationViewModel(
+            navigation,
+            resizes,
+            themeManager,
+            scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler)),
+        )
+
+        // when
+        viewModel.onComputers()
+
+        // then
+        verifySuspend(VerifyMode.exhaustiveOrder) {
+            themeManager.theme
+            navigation.activeTarget
+            themeManager.theme = Theme.LIGHT
+            navigation.navigateTo(Navigation.Target.Computers())
         }
         verifyNoMoreCalls(navigation, themeManager)
     }
@@ -187,24 +257,30 @@ class NavigationViewModelTest {
     @Test
     fun `should navigate to Settings`() = runTest {
         // given
-        val navigation = mock<Navigation>()
-        val themeManager = mock<ThemeManager>()
+        val navigation = mock<Navigation> {
+            every { activeTarget } returns MutableStateFlow(Navigation.Target.Cognition())
+            everySuspend { navigateTo(any()) } returns Unit
+        }
+        val themeManager = mock<ThemeManager> {
+            every { theme = any() } returns Unit
+            every { theme } returns Theme.LIGHT
+        }
         val resizes = emptyFlow<Unit>()
-        every { navigation.navigateTo(any()) } returns Unit
-        every { themeManager.theme } returns Theme.LIGHT
         val viewModel = NavigationViewModel(
             navigation,
             resizes,
             themeManager,
-            scope = this,
+            scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler)),
         )
 
         // when
         viewModel.onSettings()
 
         // then
-        verify(VerifyMode.exhaustiveOrder) {
+        verifySuspend(VerifyMode.exhaustiveOrder) {
             themeManager.theme
+            navigation.activeTarget
+            themeManager.theme = Theme.LIGHT
             navigation.navigateTo(Navigation.Target.Settings)
         }
         verifyNoMoreCalls(navigation, themeManager)
@@ -213,117 +289,161 @@ class NavigationViewModelTest {
     @Test
     fun `should initialize with menu closed`() = runTest {
         // given
-        val navigation = mock<Navigation>()
-        val themeManager = mock<ThemeManager>()
+        val navigation = mock<Navigation> {
+            every { activeTarget } returns MutableStateFlow(Navigation.Target.Cognition())
+            everySuspend { navigateTo(any()) } returns Unit
+        }
+        val themeManager = mock<ThemeManager> {
+            every { theme = any() } returns Unit
+            every { theme } returns Theme.LIGHT
+        }
         val resizes = emptyFlow<Unit>()
-        every { themeManager.theme } returns Theme.LIGHT
-        val viewModel = NavigationViewModel(
-            navigation,
-            resizes,
-            themeManager,
-            scope = this,
-        )
-
-        // then
-        assert(!viewModel.opened.value)
-        verify { themeManager.theme }
-        verifyNoMoreCalls(navigation, themeManager)
-    }
-
-    @Test
-    fun `should open menu on toggle`() = runTest {
-        // given
-        val navigation = mock<Navigation>()
-        val themeManager = mock<ThemeManager>()
-        val resizes = emptyFlow<Unit>()
-        every { themeManager.theme } returns Theme.LIGHT
-        val viewModel = NavigationViewModel(
-            navigation,
-            resizes,
-            themeManager,
-            scope = this,
-        )
-
-        // when
-        viewModel.onMenuToggle()
-
-        // then
-        assert(viewModel.opened.value)
-        verify { themeManager.theme }
-        verifyNoMoreCalls(navigation, themeManager)
-    }
-
-    @Test
-    fun `should close menu on second toggle`() = runTest {
-        // given
-        val navigation = mock<Navigation>()
-        val themeManager = mock<ThemeManager>()
-        val resizes = emptyFlow<Unit>()
-        every { themeManager.theme } returns Theme.LIGHT
-        val viewModel = NavigationViewModel(
-            navigation,
-            resizes,
-            themeManager,
-            scope = this,
-        )
-        viewModel.onMenuToggle()
-
-        // when
-        viewModel.onMenuToggle()
-
-        // then
-        assert(!viewModel.opened.value)
-        verify { themeManager.theme }
-        verifyNoMoreCalls(navigation, themeManager)
-    }
-
-    @Test
-    fun `should close menu explicitly`() = runTest {
-        // given
-        val navigation = mock<Navigation>()
-        val themeManager = mock<ThemeManager>()
-        val resizes = emptyFlow<Unit>()
-        every { themeManager.theme } returns Theme.LIGHT
-        val viewModel = NavigationViewModel(
-            navigation,
-            resizes,
-            themeManager,
-            scope = this,
-        )
-        viewModel.onMenuToggle() // open it first
-
-        // when
-        viewModel.closeMenu()
-
-        // then
-        assert(!viewModel.opened.value)
-        verify { themeManager.theme }
-        verifyNoMoreCalls(navigation, themeManager)
-    }
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    @Test
-    fun `should close menu on resize`() = runTest {
-        // given
-        val navigation = mock<Navigation>()
-        val themeManager = mock<ThemeManager>()
-        val resizes = MutableSharedFlow<Unit>()
-        every { themeManager.theme } returns Theme.LIGHT
         val viewModel = NavigationViewModel(
             navigation,
             resizes,
             themeManager,
             scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler)),
         )
-        viewModel.onMenuToggle() // open it first
-        assert(viewModel.opened.value)
+
+        // then
+        assert(!viewModel.sideMenuOpened.value)
+        verifySuspend(VerifyMode.exhaustiveOrder) {
+            themeManager.theme
+            navigation.activeTarget
+            themeManager.theme = Theme.LIGHT
+        }
+        verifyNoMoreCalls(navigation, themeManager)
+    }
+
+    @Test
+    fun `should open menu on toggle`() = runTest {
+        // given
+        val navigation = mock<Navigation> {
+            every { activeTarget } returns MutableStateFlow(Navigation.Target.Cognition())
+            everySuspend { navigateTo(any()) } returns Unit
+        }
+        val themeManager = mock<ThemeManager> {
+            every { theme = any() } returns Unit
+            every { theme } returns Theme.LIGHT
+        }
+        val resizes = emptyFlow<Unit>()
+        val viewModel = NavigationViewModel(
+            navigation,
+            resizes,
+            themeManager,
+            scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler)),
+        )
+
+        // when
+        viewModel.onSideMenuToggle()
+
+        // then
+        assert(viewModel.sideMenuOpened.value)
+        verifySuspend(VerifyMode.exhaustiveOrder) {
+            themeManager.theme
+            navigation.activeTarget
+            themeManager.theme = Theme.LIGHT
+        }
+        verifyNoMoreCalls(navigation, themeManager)
+    }
+
+    @Test
+    fun `should close menu on second toggle`() = runTest {
+        // given
+        val navigation = mock<Navigation> {
+            every { activeTarget } returns MutableStateFlow(Navigation.Target.Cognition())
+            everySuspend { navigateTo(any()) } returns Unit
+        }
+        val themeManager = mock<ThemeManager> {
+            every { theme = any() } returns Unit
+            every { theme } returns Theme.LIGHT
+        }
+        val resizes = emptyFlow<Unit>()
+        val viewModel = NavigationViewModel(
+            navigation,
+            resizes,
+            themeManager,
+            scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler)),
+        )
+        viewModel.onSideMenuToggle()
+
+        // when
+        viewModel.onSideMenuToggle()
+
+        // then
+        assert(!viewModel.sideMenuOpened.value)
+        verifySuspend(VerifyMode.exhaustiveOrder) {
+            themeManager.theme
+            navigation.activeTarget
+            themeManager.theme = Theme.LIGHT
+        }
+        verifyNoMoreCalls(navigation, themeManager)
+    }
+
+    @Test
+    fun `should close menu explicitly`() = runTest {
+        // given
+        val navigation = mock<Navigation> {
+            every { activeTarget } returns MutableStateFlow(Navigation.Target.Cognition())
+            everySuspend { navigateTo(any()) } returns Unit
+        }
+        val themeManager = mock<ThemeManager> {
+            every { theme = any() } returns Unit
+            every { theme } returns Theme.LIGHT
+        }
+        val resizes = emptyFlow<Unit>()
+        val viewModel = NavigationViewModel(
+            navigation,
+            resizes,
+            themeManager,
+            scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler)),
+        )
+        viewModel.onSideMenuToggle() // open first
+
+        // when
+        viewModel.closeSideMenu()
+
+        // then
+        assert(!viewModel.sideMenuOpened.value)
+        verifySuspend(VerifyMode.exhaustiveOrder) {
+            themeManager.theme
+            navigation.activeTarget
+            themeManager.theme = Theme.LIGHT
+        }
+        verifyNoMoreCalls(navigation, themeManager)
+    }
+
+    @Test
+    fun `should close menu on resize`() = runTest {
+        // given
+        val navigation = mock<Navigation> {
+            every { activeTarget } returns MutableStateFlow(Navigation.Target.Cognition())
+            everySuspend { navigateTo(any()) } returns Unit
+        }
+        val themeManager = mock<ThemeManager> {
+            every { theme = any() } returns Unit
+            every { theme } returns Theme.LIGHT
+        }
+        val resizes = MutableSharedFlow<Unit>()
+
+        val viewModel = NavigationViewModel(
+            navigation,
+            resizes,
+            themeManager,
+            scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler)),
+        )
+        viewModel.onSideMenuToggle() // open first
 
         // when
         resizes.emit(Unit)
 
         // then
-        assert(!viewModel.opened.value)
-        verify { themeManager.theme }
+        assert(!viewModel.sideMenuOpened.value)
+        verifySuspend(VerifyMode.exhaustiveOrder) {
+            themeManager.theme
+            navigation.activeTarget
+            themeManager.theme = Theme.LIGHT
+        }
         verifyNoMoreCalls(navigation, themeManager)
     }
 

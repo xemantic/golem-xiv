@@ -18,46 +18,66 @@
 
 package com.xemantic.golem.viewmodel.navigation
 
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
+import com.xemantic.ai.golem.api.golemJson
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.serialization.*
 
 interface Navigation {
 
-    fun navigateTo(target: Target)
+    suspend fun navigateTo(target: Target)
+
+    val activeTarget: StateFlow<Target>
 
     @Serializable
-    sealed interface Target {
+    sealed class Target(
+        @Transient
+        val icon: String = ""
+    ) {
+
+        @OptIn(InternalSerializationApi::class)
+        @Contextual
+        val name: String get() = this::class.serializer().descriptor.serialName
+
+        @OptIn(InternalSerializationApi::class)
+        fun toJson(): String = golemJson.encodeToString<Target>(this)
 
         @Serializable
-        @SerialName("Cognitions")
-        object Cognitions : Target {
-            override fun toString(): String = "Cognitions"
+        @SerialName("cognition")
+        data class Cognition(val id: Long? = null) : Target(icon = "network_intel_node") {
         }
 
         @Serializable
-        @SerialName("Memory")
-        object Memory : Target {
-            override fun toString(): String = "Memory"
+        @SerialName("workspace")
+        data class Workspace(val path: String? = null) : Target(icon = "construction") {
         }
 
         @Serializable
-        @SerialName("Settings")
-        object Settings : Target {
-            override fun toString(): String = "Settings"
+        @SerialName("memory")
+        object Memory : Target(icon = "graph_3") {
         }
 
         @Serializable
-        @SerialName("Cognition")
-        data class Cognition(
-            val id: Long
-        ) : Target
+        @SerialName("solicitations")
+        object Solicitations : Target(icon = "sensors") {
+        }
 
         @Serializable
-        @SerialName("NotFound")
+        @SerialName("computers")
+        data class Computers(val id: Long? = null) : Target(icon = "desktop_cloud_stack") {
+        }
+
+        @Serializable
+        @SerialName("settings")
+        object Settings : Target(icon = "settings") {
+        }
+
+        @Serializable
+        @SerialName("notFound")
         data class NotFound(
             val message: String,
             val pathname: String
-        ) : Target
+        ) : Target(icon = "N/A") {
+        }
 
     }
 
@@ -70,29 +90,44 @@ fun Navigation.Target.Companion.parse(
     pathname: String
 ): Navigation.Target {
 
-    val segments = pathname.removePrefix("/").split("/").filter {
+    val split = pathname.removePrefix("/").split("/").filter {
         it.isNotEmpty()
     }
-
-    return when {
-        segments.isEmpty() -> Navigation.Target.Cognitions
-        segments.size == 1 && segments[0] == "memory" -> Navigation.Target.Memory
-        segments.size == 1 && segments[0] == "settings" -> Navigation.Target.Settings
-        segments.size == 2 && segments[0] == "cognitions" -> {
-            try {
-                val id = segments[1].toLong()
+    return when (split.size) {
+        0 -> Navigation.Target.Cognition()
+        1 -> when (split[0]) {
+            "workspace" -> Navigation.Target.Workspace()
+            "memory" -> Navigation.Target.Memory
+            "solicitations" -> Navigation.Target.Solicitations
+            "computers" -> Navigation.Target.Computers()
+            "settings" -> Navigation.Target.Settings
+            else -> Navigation.Target.NotFound(
+                message = "No such path: $pathname",
+                pathname = pathname
+            )
+        }
+        else -> when (split[0]) {
+            "cognition" -> try {
+                val id = split[1].toLong()
                 Navigation.Target.Cognition(id)
-            } catch (e: NumberFormatException) {
+            } catch (_: NumberFormatException) {
                 Navigation.Target.NotFound(
-                    message = "Invalid cognition id (must be a number): ${segments[1]}",
+                    message = "Invalid cognition id (must be a number): ${split[1]}",
                     pathname = pathname
                 )
             }
+            "workspace" -> Navigation.Target.Workspace(
+                path = "/" + split.drop(1).joinToString("/")
+            )
+            else -> Navigation.Target.NotFound(
+                message = "No such path: $pathname",
+                pathname = pathname
+            )
         }
-        else -> Navigation.Target.NotFound(
-            message = "No such path: $pathname",
-            pathname = pathname
-        )
     }
 
 }
+
+fun Navigation.Target.Companion.fromJson(
+    json: String
+): Navigation.Target = golemJson.decodeFromString<Navigation.Target>(json)

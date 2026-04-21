@@ -26,36 +26,69 @@ import kotlin.test.Test
 class ParseNavigationTargetTest {
 
     @Test
-    fun `should parse empty path as cognitions`() {
+    fun `should parse empty path as Cognition`() {
         Navigation.Target.parse("") should {
-            be<Navigation.Target.Cognitions>()
+            be<Navigation.Target.Cognition>()
+            have(id == null)
         }
     }
 
     @Test
-    fun `should parse root target as unspecified cognition list`() {
+    fun `should parse root target as unspecified Cognition`() {
         Navigation.Target.parse("/") should {
-            be<Navigation.Target.Cognitions>()
+            be<Navigation.Target.Cognition>()
+            have(id == null)
         }
     }
 
     @Test
-    fun `should parse cognition target`() {
-        Navigation.Target.parse("/cognitions/42") should {
+    fun `should parse Cognition target with id`() {
+        Navigation.Target.parse("/cognition/42") should {
             be<Navigation.Target.Cognition>()
             have(id == 42L)
         }
     }
 
     @Test
-    fun `should parse memory target`() {
+    fun `should parse Workspace target`() {
+        Navigation.Target.parse("/workspace") should {
+            be<Navigation.Target.Workspace>()
+            have(path == null)
+        }
+    }
+
+    @Test
+    fun `should parse Workspace target with path`() {
+        Navigation.Target.parse("/workspace/foo/bar") should {
+            be<Navigation.Target.Workspace>()
+            have(path == "/foo/bar")
+        }
+    }
+
+    @Test
+    fun `should parse Memory target`() {
         Navigation.Target.parse("/memory") should {
             be<Navigation.Target.Memory>()
         }
     }
 
     @Test
-    fun `should parse settings target`() {
+    fun `should parse Solicitations target`() {
+        Navigation.Target.parse("/solicitations") should {
+            be<Navigation.Target.Solicitations>()
+        }
+    }
+
+    @Test
+    fun `should parse Computers target`() {
+        Navigation.Target.parse("/computers") should {
+            be<Navigation.Target.Computers>()
+            have(id == null)
+        }
+    }
+
+    @Test
+    fun `should parse Settings target`() {
         Navigation.Target.parse("/settings") should {
             be<Navigation.Target.Settings>()
         }
@@ -63,10 +96,10 @@ class ParseNavigationTargetTest {
 
     @Test
     fun `should parse invalid cognition id as not found`() {
-        Navigation.Target.parse("/cognitions/abc") should {
+        Navigation.Target.parse("/cognition/abc") should {
             be<Navigation.Target.NotFound>()
             have(message == "Invalid cognition id (must be a number): abc")
-            have(pathname == "/cognitions/abc")
+            have(pathname == "/cognition/abc")
         }
     }
 
