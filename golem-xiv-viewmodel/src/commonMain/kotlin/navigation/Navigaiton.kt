@@ -43,7 +43,7 @@ interface Navigation {
 
         @Serializable
         @SerialName("cognition")
-        data class Cognition(val id: Long? = null) : Target(icon = "network_intel_node") {
+        data class Cognition(val cogitationId: Long? = null) : Target(icon = "network_intel_node") {
         }
 
         @Serializable

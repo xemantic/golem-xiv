@@ -29,7 +29,7 @@ class ParseNavigationTargetTest {
     fun `should parse empty path as Cognition`() {
         Navigation.Target.parse("") should {
             be<Navigation.Target.Cognition>()
-            have(id == null)
+            have(cogitationId == null)
         }
     }
 
@@ -37,7 +37,7 @@ class ParseNavigationTargetTest {
     fun `should parse root target as unspecified Cognition`() {
         Navigation.Target.parse("/") should {
             be<Navigation.Target.Cognition>()
-            have(id == null)
+            have(cogitationId == null)
         }
     }
 
@@ -45,7 +45,7 @@ class ParseNavigationTargetTest {
     fun `should parse Cognition target with id`() {
         Navigation.Target.parse("/cognition/42") should {
             be<Navigation.Target.Cognition>()
-            have(id == 42L)
+            have(cogitationId == 42L)
         }
     }
 

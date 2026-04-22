@@ -57,14 +57,14 @@ class NavigationTargetSerializationTest {
         // then
         target should {
             be<Navigation.Target.Cognition>()
-            have(id == null)
+            have(cogitationId == null)
         }
     }
 
     @Test
     fun `should serialize Cognitions with id`() {
         // given
-        val target = Navigation.Target.Cognition(id = 42L)
+        val target = Navigation.Target.Cognition(cogitationId = 42L)
 
         // when
         val json = target.toJson()
@@ -73,7 +73,7 @@ class NavigationTargetSerializationTest {
         json sameAsJson """
             {
               "type": "cognition",
-              "id": 42
+              "cogitationId": 42
             }
         """.trimIndent()
     }
@@ -84,7 +84,7 @@ class NavigationTargetSerializationTest {
         val json = /* language=json */ """
             {
               "type": "cognition",
-              "id": 42
+              "cogitationId": 42
             }
         """
 
@@ -94,7 +94,7 @@ class NavigationTargetSerializationTest {
         // then
         target should {
             be<Navigation.Target.Cognition>()
-            have(id == 42L)
+            have(cogitationId == 42L)
         }
     }
 
