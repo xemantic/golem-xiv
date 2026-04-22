@@ -1,6 +1,6 @@
 /*
  * Golem XIV - Autonomous metacognitive AI system with semantic memory and self-directed research
- * Copyright (C) 2025  Kazimierz Pogoda / Xemantic
+ * Copyright (C) 2025-2026  Kazimierz Pogoda / Xemantic
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -101,4 +101,24 @@ sealed interface Phenomenon {
         val impeded: Boolean = false
     ) : Phenomenon
 
+}
+
+data class Cognition(
+    val id: Long,
+    val status: Status,
+    val goal: String
+) {
+
+
+    data class Summary(
+        val id: Long,
+        val status: Status,
+        val goal: String
+    )
+
+    enum class Status {
+        ACTIVE,
+        INACTIVE,
+        HUMAN_IN_THE_LOOP
+    }
 }
