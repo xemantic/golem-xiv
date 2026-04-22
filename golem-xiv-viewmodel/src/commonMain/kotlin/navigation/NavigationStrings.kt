@@ -30,18 +30,39 @@ data class NavigationStrings(
     val computers: String,
     val computersAccessibilityLabel: String,
     val settings: String,
-    val settingsAccessibilityLabel: String
+    val settingsAccessibilityLabel: String,
+
+    val mainNavigationAccessibilityLabel: String,
+    val mainMenuAccessibilityLabel: String,
+
+    val lightMode: String,
+    val darkMode: String,
+    val themeSwitcherAccessibilityLabel: String,
+
+    val searchCognitions: String
 ) {
+
+    fun labelOf(
+        target: Navigation.Target
+    ): String = when (target) {
+        is Cognition -> cognition
+        is Workspace -> workspace
+        is Memory -> memory
+        is Solicitations -> solicitations
+        is Computers -> computers
+        is Settings -> settings
+        else -> throw IllegalArgumentException("No label found for $target")
+    }
 
     fun accessibilityLabelOf(
         target: Navigation.Target
     ): String = when (target) {
-        is Navigation.Target.Cognition -> cognitionAccessibilityLabel
-        is Navigation.Target.Workspace -> workspaceAccessibilityLabel
-        is Navigation.Target.Computers -> computersAccessibilityLabel
-        is Navigation.Target.Memory -> memoryAccessibilityLabel
-        is Navigation.Target.Solicitations -> solicitationsAccessibilityLabel
-        is Navigation.Target.Settings -> settingsAccessibilityLabel
+        is Cognition -> cognitionAccessibilityLabel
+        is Workspace -> workspaceAccessibilityLabel
+        is Computers -> computersAccessibilityLabel
+        is Memory -> memoryAccessibilityLabel
+        is Solicitations -> solicitationsAccessibilityLabel
+        is Settings -> settingsAccessibilityLabel
         else -> throw IllegalArgumentException("No accessibility label found for $target")
     }
 

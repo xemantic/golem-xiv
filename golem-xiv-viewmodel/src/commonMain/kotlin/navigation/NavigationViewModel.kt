@@ -40,7 +40,7 @@ class NavigationViewModel(
     val railOpened: StateFlow<Boolean>
         field = MutableStateFlow(false)
 
-    val cognitionCount: StateFlow<Int>
+    val cognitionBadge: StateFlow<Int>
         field = MutableStateFlow(1)
 
     val theme = MutableStateFlow(themeManager.theme)

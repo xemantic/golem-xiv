@@ -30,5 +30,11 @@ val navigationStringsEn = NavigationStrings(
     computers = "Computers",
     computersAccessibilityLabel = "View computers",
     settings = "Settings",
-    settingsAccessibilityLabel = "Application settings"
+    settingsAccessibilityLabel = "Application settings",
+    mainNavigationAccessibilityLabel = "Main navigation",
+    mainMenuAccessibilityLabel = "Main menu",
+    lightMode = "Light mode",
+    darkMode = "Dark mode",
+    themeSwitcherAccessibilityLabel = "Theme switcher",
+    searchCognitions = "Search cognitions"
 )
