@@ -18,51 +18,59 @@
 
 package com.xemantic.golem.viewmodel.navigation
 
+@Suppress("PropertyName")
 data class NavigationStrings(
-    val cognition: String,
-    val cognitionAccessibilityLabel: String,
-    val workspace: String,
-    val workspaceAccessibilityLabel: String,
-    val memory: String,
-    val memoryAccessibilityLabel: String,
-    val solicitations: String,
-    val solicitationsAccessibilityLabel: String,
-    val computers: String,
-    val computersAccessibilityLabel: String,
-    val settings: String,
-    val settingsAccessibilityLabel: String,
+    val Cognition: String,
+    val `View cognition`: String,
+    val Workspace: String,
+    val `View workspace`: String,
+    val Memory: String,
+    val `View memory graph`: String,
+    val Solicitations: String,
+    val `View solicitations`: String,
+    val Exchanges: String,
+    val `View exchanges`: String,
+    val Computers: String,
+    val `View computers`: String,
+    val Settings: String,
+    val `Application settings`: String,
 
-    val mainNavigationAccessibilityLabel: String,
-    val mainMenuAccessibilityLabel: String,
+    val `Main navigation`: String,
+    val `Main menu`: String,
 
-    val lightMode: String,
-    val darkMode: String,
-    val themeSwitcherAccessibilityLabel: String,
+    val `Light mode`: String,
+    val `Dark mode`: String,
+    val `Theme switcher`: String,
 
-    val searchCognitions: String
+    val `Search cognitions`: String,
+
+    val `Toggle sidebar menu`: String,
+    val Error: String,
 ) {
 
     fun labelOf(
         target: Navigation.Target
     ): String = when (target) {
-        is Cognition -> cognition
-        is Workspace -> workspace
-        is Memory -> memory
-        is Solicitations -> solicitations
-        is Computers -> computers
-        is Settings -> settings
+        is Cognition -> Cognition
+        is Workspace -> Workspace
+        is Memory -> Memory
+        is Solicitations -> Solicitations
+        is Exchanges -> Exchanges
+        is Computers -> Computers
+        is Settings -> Settings
         else -> throw IllegalArgumentException("No label found for $target")
     }
 
     fun accessibilityLabelOf(
         target: Navigation.Target
     ): String = when (target) {
-        is Cognition -> cognitionAccessibilityLabel
-        is Workspace -> workspaceAccessibilityLabel
-        is Computers -> computersAccessibilityLabel
-        is Memory -> memoryAccessibilityLabel
-        is Solicitations -> solicitationsAccessibilityLabel
-        is Settings -> settingsAccessibilityLabel
+        is Cognition -> `View cognition`
+        is Workspace -> `View workspace`
+        is Computers -> `View computers`
+        is Memory -> `View memory graph`
+        is Solicitations -> `View solicitations`
+        is Exchanges -> `View exchanges`
+        is Settings -> `Application settings`
         else -> throw IllegalArgumentException("No accessibility label found for $target")
     }
 

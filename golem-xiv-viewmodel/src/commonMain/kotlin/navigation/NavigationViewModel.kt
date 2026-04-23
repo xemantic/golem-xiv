@@ -69,6 +69,10 @@ class NavigationViewModel(
         goTo(Navigation.Target.Solicitations)
     }
 
+    fun onExchanges() {
+        goTo(Navigation.Target.Exchanges)
+    }
+
     fun onComputers(id: Long? = null) {
         goTo(Navigation.Target.Computers(id))
     }

@@ -62,6 +62,11 @@ interface Navigation {
         }
 
         @Serializable
+        @SerialName("exchanges")
+        object Exchanges : Target(icon = "swap_horiz") {
+        }
+
+        @Serializable
         @SerialName("computers")
         data class Computers(val id: Long? = null) : Target(icon = "desktop_cloud_stack") {
         }
@@ -99,6 +104,7 @@ fun Navigation.Target.Companion.parse(
             "workspace" -> Navigation.Target.Workspace()
             "memory" -> Navigation.Target.Memory
             "solicitations" -> Navigation.Target.Solicitations
+            "exchanges" -> Navigation.Target.Exchanges
             "computers" -> Navigation.Target.Computers()
             "settings" -> Navigation.Target.Settings
             else -> Navigation.Target.NotFound(
