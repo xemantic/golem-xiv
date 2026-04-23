@@ -39,7 +39,7 @@ fun ElementBuilder.settingView(
     article("large-padding") {
         h6 {
             icon("warning", klass = "extra")
-            +" Under construction"
+            +" The Settings section is under construction"
         }
         p {
             +"Currently only server side configuration is supported. The Settings will allow to:"
