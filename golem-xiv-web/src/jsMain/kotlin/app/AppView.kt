@@ -19,10 +19,10 @@
 package com.xemantic.golem.web.app
 
 import com.xemantic.golem.viewmodel.app.AppViewModel
-import com.xemantic.golem.web.navigation.headerView
+import com.xemantic.golem.viewmodel.navigation.NavigationStrings
+import com.xemantic.golem.web.ElementBuilder
 import com.xemantic.golem.web.navigation.navigationDrawerView
 import com.xemantic.golem.web.navigation.navigationRailView
-import com.xemantic.kotlin.js.dom.NodeBuilder
 import com.xemantic.kotlin.js.dom.element.minusAssign
 import com.xemantic.kotlin.js.dom.element.plusAssign
 import kotlinx.browser.window
@@ -30,28 +30,29 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import org.w3c.dom.HTMLElement
 
-fun NodeBuilder.appView(
+fun ElementBuilder.appView(
     viewModel: AppViewModel,
+    headerElement: HTMLElement,
     mainElement: HTMLElement,
+    strings: NavigationStrings
 ) {
 
-    navigationRailView(viewModel.navigationViewModel)
-    headerView(viewModel.navigationViewModel)
-    navigationDrawerView(viewModel.navigationViewModel)
+    navigationRailView(viewModel.navigationViewModel, strings)
+    navigationDrawerView(viewModel.navigationViewModel, strings)
 
+    +headerElement
     +mainElement
 
     // the shader is reading theme from window property, so we need a generic logic setting it up
     viewModel.navigationViewModel.theme.onEach { theme ->
-        val body = root.unsafeCast<HTMLElement>()
         when (theme) {
             LIGHT -> {
-                body -= "dark"
-                body += "light"
+                node -= "dark"
+                node += "light"
             }
             DARK -> {
-                body -= "light"
-                body += "dark"
+                node -= "light"
+                node += "dark"
             }
         }
         window.asDynamic().theme = theme.name.lowercase()
