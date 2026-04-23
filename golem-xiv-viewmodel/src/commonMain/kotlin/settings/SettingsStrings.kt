@@ -19,8 +19,10 @@
 package com.xemantic.golem.viewmodel.settings
 
 @Suppress("PropertyName")
-data class SettingsString(
+data class SettingsStrings(
     val Profile: String,
     val Secrets: String,
-    val People: String
+    val Users: String,
+    val Appearance: String,
+    val Devices: String
 )

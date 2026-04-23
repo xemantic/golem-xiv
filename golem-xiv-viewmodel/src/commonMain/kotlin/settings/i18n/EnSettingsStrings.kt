@@ -18,10 +18,12 @@
 
 package com.xemantic.golem.viewmodel.settings.i18n
 
-import com.xemantic.golem.viewmodel.settings.SettingsString
+import com.xemantic.golem.viewmodel.settings.SettingsStrings
 
-val enSettingsStrings = SettingsString(
+val enSettingsStrings = SettingsStrings(
     Profile = "Profile",
     Secrets = "Secrets",
-    People = "People"
+    Users = "Users",
+    Appearance = "Appearance",
+    Devices = "Devices"
 )
