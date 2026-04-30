@@ -94,8 +94,17 @@ fun Application.module() {
         )
     )
 
+    val modelName = System.getenv("GOLEM_MODEL")
+    val selectedModel = if (modelName != null) {
+        Model.entries.find { it.id == modelName }
+            ?: error("Unknown model: $modelName. Available: ${Model.entries.map { it.id }}")
+    } else {
+        Model.CLAUDE_OPUS_4_5_20251101
+    }
+    logger.info { "Using model: ${selectedModel.id}" }
+
     val anthropic = Anthropic {
-        defaultModel = Model.CLAUDE_OPUS_4_6
+        defaultModel = selectedModel
         anthropicBeta = listOf(
             "fine-grained-tool-streaming-2025-05-14",
             "token-efficient-tools-2025-02-19",

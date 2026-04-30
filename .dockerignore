@@ -1,6 +1,20 @@
-# Exclude everything
-*
+# Build artifacts (will be created inside container)
+**/build/
+**/out/
+**/.gradle/
 
-# Include only specific uberjar and deployment config
-!golem-xiv-server/build/libs/golem-xiv-server-all.jar
-!application-deployment.yaml
+# IDE
+.idea/
+*.iml
+
+# Git
+.git/
+.github/
+
+# Misc
+*.md
+LICENSE
+var/
+design/
+docs/
+kotlin-js-store/

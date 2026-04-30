@@ -1,0 +1,42 @@
+services:
+  neo4j:
+    image: neo4j:2025.11.2-community
+    ports:
+      - "7474:7474"  # HTTP (browser)
+      - "7687:7687"  # Bolt
+    environment:
+      NEO4J_AUTH: neo4j/golempassword
+      NEO4J_PLUGINS: '["apoc"]'
+      NEO4J_apoc_export_file_enabled: "true"
+      NEO4J_apoc_import_file_enabled: "true"
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:7474 || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  golem:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      GOLEM_MODEL: ${GOLEM_MODEL:-claude-opus-4-5-20251101}
+      NEO4J_PROTOCOL: bolt
+      NEO4J_HOST: neo4j
+      NEO4J_PORT: 7687
+      NEO4J_DATABASE: neo4j
+      NEO4J_USERNAME: neo4j
+      NEO4J_PASSWORD: golempassword
+      HTTP_AUTH_PASSWORD: golem
+    depends_on:
+      neo4j:
+        condition: service_healthy
+
+volumes:
+  neo4j_data:
+  neo4j_logs:
