@@ -28,16 +28,15 @@ kotlin {
     js {
         browser()
         binaries.executable()
-        useEsModules()
         compilerOptions {
-            moduleKind.set(JsModuleKind.MODULE_ES)
+            moduleKind.set(JsModuleKind.MODULE_PLAIN)
             target = "es2015"
             freeCompilerArgs.addAll(
                 "-Xir-generate-inline-anonymous-functions",
                 "-Xir-minimized-member-names",
                 "-Xir-dce",
                 "-Xoptimize-generated-js",
-                "-Xes-arrow-functions"
+                "-Xir-per-module=false",
             )
             optIn.addAll(
                 "kotlin.js.ExperimentalJsExport",
@@ -60,6 +59,7 @@ kotlin {
                 implementation(libs.kotlinx.coroutines.test)
                 implementation(libs.xemantic.kotlin.test)
                 implementation(libs.markanywhere.test)
+                implementation(libs.kotlinx.serialization.json)
             }
         }
 

@@ -20,8 +20,6 @@ package com.xemantic.golem.dom.export
 
 import com.xemantic.markanywhere.SemanticEvent
 import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.serialization.json.Json
 
-fun String.toSemanticEvents() = lines().asFlow().map {
-    SemanticEvent.fromJson(it)
-}
+fun String.toSemanticEvents() = Json.decodeFromString<List<SemanticEvent>>(this).asFlow()

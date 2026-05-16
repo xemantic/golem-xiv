@@ -35,14 +35,14 @@ sealed external interface Event {
 @JsPlainObject
 external interface MarkEvent : Event {
     val name: String
-    val isTag: Boolean
+    val tagged: Boolean
     val attributes: JsObject?
 }
 
 @Suppress("unused")
 @JsPlainObject
 external interface UnmarkEvent : Event {
-    val isTag: Boolean
+    val tagged: Boolean
     val name: String
 }
 
@@ -55,19 +55,19 @@ external interface TextEvent : Event {
 @Suppress("NOTHING_TO_INLINE")
 inline fun MarkEvent(
     name: String,
-    isTag: Boolean = true,
+    isTagged: Boolean = true,
     attributes: JsObject? = null
 ) = if (attributes.isNullOrEmpty()) {
     MarkEvent(
         type = "mark",
         name = name,
-        isTag = isTag
+        tagged = isTagged
     )
 } else {
     MarkEvent(
         type = "mark",
         name = name,
-        isTag = isTag,
+        tagged = isTagged,
         attributes = attributes
     )
 }
@@ -75,11 +75,11 @@ inline fun MarkEvent(
 @Suppress("NOTHING_TO_INLINE")
 inline fun UnmarkEvent(
     name: String,
-    isTag: Boolean = true
+    isTagged: Boolean = true
 ) = UnmarkEvent(
     type = "unmark",
     name = name,
-    isTag = isTag
+    tagged = isTagged
 )
 
 @Suppress("NOTHING_TO_INLINE")

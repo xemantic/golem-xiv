@@ -38,9 +38,7 @@ fun exportSemanticEvents(document: Document): String {
     val registry = JsMap<String, Element>()
     globalThis[GOLEM_ELEMENTS_KEY] = registry
     document.childNodes.traverse(events, registry)
-    return events.map { event ->
-        JSON.stringify(event)
-    }.join("\n")
+    return JSON.stringify(events)
 }
 
 @JsExport

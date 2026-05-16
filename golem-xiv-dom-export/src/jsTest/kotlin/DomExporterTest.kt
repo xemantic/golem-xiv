@@ -49,7 +49,7 @@ class DomExporterTest {
         val events = exportSemanticEvents(document).toSemanticEvents()
 
         // then
-        events sameAs semanticEvents(produceTags = true) {
+        events sameAs semanticEvents(tagged = true) {
             "html"("lang" to "en") {
                 "head" {
                     +"\n"
@@ -99,7 +99,7 @@ class DomExporterTest {
         val events = exportSemanticEvents(document).toSemanticEvents()
 
         // then
-        events sameAs semanticEvents(produceTags = true) {
+        events sameAs semanticEvents(tagged = true) {
             "html"("lang" to "en") {
                 "head" {
                     +"\n"
