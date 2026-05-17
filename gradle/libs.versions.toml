@@ -9,7 +9,7 @@ kotlinxHtml = "0.12.0"
 
 kotlinLogging = "7.0.13"
 
-anthropicSdkKotlin = "0.29.0"
+anthropicSdkKotlin = "0.32.3"
 xemanticKotlinCore = "0.6.4"
 xemanticKotlinTest = "1.17.5"
 xemanticKotlinJs = "0.3.0"

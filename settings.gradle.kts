@@ -40,5 +40,6 @@ include(
     ":golem-xiv-cli",
     ":golem-xiv-neo4j-starter",
     ":golem-xiv-kotlin-metadata",
-    ":golem-xiv-dom-export"
+    ":golem-xiv-dom-export",
+    ":golem-xiv-mini"
 )
