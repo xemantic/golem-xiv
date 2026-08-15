@@ -95,7 +95,7 @@ fun Application.module() {
     )
 
     val anthropic = Anthropic {
-        defaultModel = Model.CLAUDE_OPUS_4_6
+        defaultModel = Model.CLAUDE_OPUS_4_6.id
         anthropicBeta = listOf(
             "fine-grained-tool-streaming-2025-05-14",
             "token-efficient-tools-2025-02-19",
