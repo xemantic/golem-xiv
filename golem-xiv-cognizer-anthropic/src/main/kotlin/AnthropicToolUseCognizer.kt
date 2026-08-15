@@ -169,6 +169,8 @@ class AnthropicToolUseCognizer(
                             // no emission
                         }
 
+                        else -> {} // thinking is not enabled, ignore thinking blocks
+
                     }
                 }
 
@@ -198,6 +200,8 @@ class AnthropicToolUseCognizer(
                                 emit(result)
                             }
                         }
+
+                        else -> {} // thinking is not enabled, ignore thinking deltas
 
                     }
                 }
